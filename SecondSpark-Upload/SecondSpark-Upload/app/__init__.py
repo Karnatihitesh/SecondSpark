@@ -50,6 +50,33 @@ def create_app(config_name='default'):
                 for name, icon, desc in categories_data:
                     cat = Category(name=name, slug=slugify(name), icon=icon, description=desc)
                     db.session.add(cat)
+                
+                # Seed Admin and default creator accounts if no users exist
+                if User.query.count() == 0:
+                    admin = User(
+                        username='admin',
+                        email='admin@secondspark.com',
+                        full_name='SecondSpark Admin',
+                        bio='Platform Administrator and community moderator.',
+                        skills='System Architecture, Python, Flask',
+                        location='Global',
+                        role='admin'
+                    )
+                    admin.set_password('Admin@12345')
+                    db.session.add(admin)
+
+                    hitesh = User(
+                        username='karnatihitesh',
+                        email='karnatihitesh@gmail.com',
+                        full_name='Karnati Hitesh',
+                        bio='Team Lead & Full-Stack Integration at SecondSpark.',
+                        skills='Python, Flask, Full-Stack, IoT, Embedded Systems',
+                        location='India',
+                        role='user'
+                    )
+                    hitesh.set_password('Hitesh@12345')
+                    db.session.add(hitesh)
+
                 db.session.commit()
         except Exception:
             db.session.rollback()
