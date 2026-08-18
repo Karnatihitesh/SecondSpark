@@ -28,7 +28,7 @@
       {% if messages %}
         {% for category, message in messages %}
           <div class="flash-toast {{ category }}">
-            <span>{{ message }}</span>
+            <span>{{ message | safe }}</span>
             <button class="flash-close" aria-label="Close">&times;</button>
           </div>
         {% endfor %}
