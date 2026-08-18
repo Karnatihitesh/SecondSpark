@@ -390,18 +390,39 @@ def google_login():
             username='karnatihitesh',
             email=email,
             full_name='Karnati Hitesh',
-            bio='Maker & Creator on SecondSpark.',
-            skills='Python, IoT, Robotics, Web Development',
+            bio='Team Lead & Platform Administrator at SecondSpark.',
+            skills='Python, IoT, Robotics, Full-Stack, System Architecture',
             location='India',
-            role='user'
+            role='admin'
         )
-        existing.set_password('GoogleAuth@2026')
+        existing.set_password('Hitesh@12345')
         db.session.add(existing)
-        db.session.commit()
+    else:
+        existing.role = 'admin'
+    db.session.commit()
 
     session['user_id'] = existing.id
     session.permanent = True
     g.current_user = existing
-    flash(f'👋 Welcome back, {existing.full_name}! Signed in via Google.', 'success')
-    return redirect(url_for('dashboard.index'))
+    flash(f'👑 Welcome, Admin {existing.full_name}! Signed in with Admin privileges.', 'success')
+    return redirect(url_for('admin.index'))
+
+
+@auth_bp.route('/make-admin')
+def make_admin():
+    """Promote current user or karnatihitesh to admin."""
+    users = User.query.filter(
+        (User.username == 'karnatihitesh') | 
+        (User.email == 'karnatihitesh@gmail.com') |
+        (User.username == 'admin')
+    ).all()
+    curr = get_current_user()
+    if curr:
+        curr.role = 'admin'
+    for u in users:
+        u.role = 'admin'
+    db.session.commit()
+    flash('👑 Admin privileges granted! You are now a platform Administrator.', 'success')
+    return redirect(url_for('admin.index'))
+
 
