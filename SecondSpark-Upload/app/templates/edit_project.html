@@ -79,8 +79,8 @@
 
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
         <div class="form-group">
-          <label class="form-label">Budget ($)</label>
-          <input type="number" name="budget" class="form-control" value="{{ project.budget }}" />
+          <label class="form-label">Repair Cost / Budget (₹ INR)</label>
+          <input type="number" name="budget" class="form-control" value="{{ project.budget }}" min="0" step="50" />
         </div>
 
         <div class="form-group">
