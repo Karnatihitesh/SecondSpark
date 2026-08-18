@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Payment History — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:3rem 1.5rem 5rem;">
+  <h1 style="font-size:1.9rem;margin-bottom:0.35rem;">Payment History</h1>
+  <p style="color:var(--text-muted);margin-bottom:2.5rem;">Track all payments made and received through SecondSpark.</p>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:0.5rem;margin-bottom:2rem;border-bottom:2px solid var(--border-subtle);padding-bottom:0;">
+    <button id="tab-made" onclick="showTab('made')" style="padding:0.6rem 1.25rem;font-size:0.92rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid var(--primary);color:var(--primary);margin-bottom:-2px;">
+      Payments Made ({{ made|length }})
+    </button>
+    <button id="tab-recv" onclick="showTab('recv')" style="padding:0.6rem 1.25rem;font-size:0.92rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--text-muted);margin-bottom:-2px;">
+      Payments Received ({{ received|length }})
+    </button>
+  </div>
+
+  <!-- Made -->
+  <div id="panel-made">
+    {% if made %}
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        {% for txn in made %}
+        <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;padding:1.5rem;display:flex;align-items:center;gap:1.25rem;box-shadow:0 4px 12px rgba(0,0,0,0.04);">
+          <div style="width:48px;height:48px;border-radius:12px;background:{% if txn.status=='Completed' %}#F0FDF4{% elif txn.status=='Failed' %}#FEF2F2{% else %}#FFF7ED{% endif %};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-{% if txn.status=='Completed' %}circle-check{% elif txn.status=='Failed' %}circle-xmark{% else %}clock{% endif %}" style="font-size:1.3rem;color:{% if txn.status=='Completed' %}#16A34A{% elif txn.status=='Failed' %}#DC2626{% else %}#D97706{% endif %};"></i>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;color:var(--dark-900);margin-bottom:0.2rem;">{{ txn.project.title if txn.project else 'Project Deleted' }}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Order: <code style="background:var(--bg-subtle);padding:0.1rem 0.35rem;border-radius:4px;">{{ txn.order_id }}</code> · {{ txn.created_at.strftime('%d %b %Y') }}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:1.15rem;font-weight:800;color:var(--dark-900);">₹{{ txn.amount_inr | int }}</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);">fee ₹{{ txn.commission_inr }}</div>
+            <span style="display:inline-block;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.72rem;font-weight:700;background:{% if txn.status=='Completed' %}#F0FDF4{% elif txn.status=='Failed' %}#FEF2F2{% else %}#FFF7ED{% endif %};color:{% if txn.status=='Completed' %}#16A34A{% elif txn.status=='Failed' %}#DC2626{% else %}#D97706{% endif %};">{{ txn.status }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align:center;padding:4rem 2rem;color:var(--text-muted);">
+        <i class="fa-solid fa-receipt" style="font-size:3rem;opacity:0.3;margin-bottom:1rem;display:block;"></i>
+        No payments made yet.
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Received -->
+  <div id="panel-recv" style="display:none;">
+    {% if received %}
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        {% for txn in received %}
+        <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;padding:1.5rem;display:flex;align-items:center;gap:1.25rem;box-shadow:0 4px 12px rgba(0,0,0,0.04);">
+          <div style="width:48px;height:48px;border-radius:12px;background:#F0FDF4;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa-solid fa-arrow-down" style="font-size:1.3rem;color:#16A34A;"></i>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;color:var(--dark-900);margin-bottom:0.2rem;">{{ txn.project.title if txn.project else 'Project Deleted' }}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">from {{ txn.payer.full_name if txn.payer else 'User' }} · {{ txn.created_at.strftime('%d %b %Y') }}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:1.15rem;font-weight:800;color:#16A34A;">+₹{{ txn.net_amount_inr }}</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);">total ₹{{ txn.amount_inr | int }}</div>
+            <span style="display:inline-block;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.72rem;font-weight:700;background:#F0FDF4;color:#16A34A;">{{ txn.status }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align:center;padding:4rem 2rem;color:var(--text-muted);">
+        <i class="fa-solid fa-wallet" style="font-size:3rem;opacity:0.3;margin-bottom:1rem;display:block;"></i>
+        No payments received yet.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(tab) {
+  document.getElementById('panel-made').style.display = tab==='made' ? 'block' : 'none';
+  document.getElementById('panel-recv').style.display = tab==='recv' ? 'block' : 'none';
+  const made = document.getElementById('tab-made');
+  const recv = document.getElementById('tab-recv');
+  if (tab==='made') {
+    made.style.borderBottomColor='var(--primary)'; made.style.color='var(--primary)';
+    recv.style.borderBottomColor='transparent'; recv.style.color='var(--text-muted)';
+  } else {
+    recv.style.borderBottomColor='var(--primary)'; recv.style.color='var(--primary)';
+    made.style.borderBottomColor='transparent'; made.style.color='var(--text-muted)';
+  }
+}
+</script>
+{% endblock %}
