@@ -8,6 +8,73 @@ from app.services.email_service import send_otp_email
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
+# ── Emergency DB Setup (run once on fresh Render deployment) ──────────────────
+@auth_bp.route('/setup')
+def setup():
+    """Creates default accounts and categories if missing. Safe to run multiple times."""
+    from app.models.category import Category
+    from app.services.auth_service import slugify
+    results = []
+
+    # Seed categories if missing
+    if Category.query.count() == 0:
+        categories_data = [
+            ("AI & Machine Learning","fa-brain"),("Web Development","fa-code"),
+            ("Mobile Development","fa-mobile-screen"),("Electronics","fa-bolt"),
+            ("Embedded Systems","fa-microchip"),("IoT","fa-wifi"),
+            ("Arduino","fa-memory"),("Raspberry Pi","fa-cubes"),
+            ("Robotics","fa-robot"),("Automation","fa-gears"),
+            ("Mechanical","fa-wrench"),("Electrical","fa-plug"),
+            ("Civil","fa-building"),("Research","fa-flask"),
+            ("College Projects","fa-graduation-cap"),("Other","fa-folder-open"),
+        ]
+        for name, icon in categories_data:
+            db.session.add(Category(name=name, slug=slugify(name), icon=icon, description=name))
+        db.session.commit()
+        results.append("Categories created: 16")
+    else:
+        results.append(f"Categories already exist: {Category.query.count()}")
+
+    # Create admin account
+    if not User.query.filter_by(username='admin').first():
+        u = User(username='admin', email='admin@secondspark.com',
+                 full_name='SecondSpark Admin', role='admin')
+        u.set_password('Admin@12345')
+        db.session.add(u)
+        results.append("Admin account created: admin / Admin@12345")
+    else:
+        results.append("Admin already exists")
+
+    # Create Hitesh account
+    if not User.query.filter_by(username='karnatihitesh').first():
+        u = User(username='karnatihitesh', email='karnatihitesh@gmail.com',
+                 full_name='Karnati Hitesh',
+                 skills='Python, Flask, IoT', location='India', role='user')
+        u.set_password('Hitesh@12345')
+        db.session.add(u)
+        results.append("Creator account created: karnatihitesh / Hitesh@12345")
+    else:
+        results.append("karnatihitesh already exists")
+
+    try:
+        db.session.commit()
+        results.append("All changes saved to database!")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"DB Error: {e}")
+
+    total_users = User.query.count()
+    results.append(f"Total users in DB: {total_users}")
+
+    html = "<h2>SecondSpark Setup</h2><ul>"
+    for r in results:
+        html += f"<li>{r}</li>"
+    html += "</ul><br><a href='/auth/login'>Go to Login</a>"
+    return html
+
+
+
+
 # ── Forgot Password Step 1: Request OTP ───────────────────────────────────────
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
