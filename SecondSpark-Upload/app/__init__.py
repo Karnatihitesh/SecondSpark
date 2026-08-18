@@ -23,6 +23,64 @@ def create_app(config_name='default'):
     db.init_app(app)
     mail.init_app(app)
 
+    # Automatically create tables and seed default categories if fresh database
+    with app.app_context():
+        try:
+            db.create_all()
+            if Category.query.count() == 0:
+                from app.services.auth_service import slugify
+                categories_data = [
+                    ("AI & Machine Learning", "fa-brain", "Computer vision, NLP, edge AI, model optimization and dataset pipelines."),
+                    ("Web Development", "fa-code", "Full-stack web applications, REST APIs, frontend frameworks, and cloud hosting."),
+                    ("Mobile Development", "fa-mobile-screen", "Native and cross-platform iOS & Android apps, BLE integration, and UX."),
+                    ("Electronics", "fa-bolt", "PCB schematics, power supplies, analog circuits, and component soldering."),
+                    ("Embedded Systems", "fa-microchip", "Microcontroller firmware, RTOS, ARM Cortex, and low-level drivers."),
+                    ("IoT", "fa-wifi", "Connected sensors, MQTT, cloud telemetry, ESP32, and smart home modules."),
+                    ("Arduino", "fa-memory", "Prototyping, sensor shields, C/C++ sketches, and actuator controllers."),
+                    ("Raspberry Pi", "fa-cubes", "Single-board computing, Linux automation, camera modules, and home servers."),
+                    ("Robotics", "fa-robot", "Autonomous rovers, robotic arms, kinematics, motor drivers, and ROS2."),
+                    ("Automation", "fa-gears", "PLC logic, industrial control, smart relays, and automated test benches."),
+                    ("Mechanical", "fa-wrench", "3D printing, CAD design, CNC fabrication, gearboxes, and chassis mechanics."),
+                    ("Electrical", "fa-plug", "High-voltage circuits, battery management systems (BMS), motors, and inverters."),
+                    ("Civil", "fa-building", "Structural models, GIS mapping, survey automation, and smart infrastructure."),
+                    ("Research", "fa-flask", "Academic prototypes, scientific instruments, data analysis, and laboratory tools."),
+                    ("College Projects", "fa-graduation-cap", "Engineering capstones, hackathon prototypes, and senior design builds."),
+                    ("Other", "fa-folder-open", "Multidisciplinary experiments, artistic installations, and niche inventions.")
+                ]
+                for name, icon, desc in categories_data:
+                    cat = Category(name=name, slug=slugify(name), icon=icon, description=desc)
+                    db.session.add(cat)
+                
+                # Seed Admin and default creator accounts if no users exist
+                if User.query.count() == 0:
+                    admin = User(
+                        username='admin',
+                        email='admin@secondspark.com',
+                        full_name='SecondSpark Admin',
+                        bio='Platform Administrator and community moderator.',
+                        skills='System Architecture, Python, Flask',
+                        location='Global',
+                        role='admin'
+                    )
+                    admin.set_password('Admin@12345')
+                    db.session.add(admin)
+
+                    hitesh = User(
+                        username='karnatihitesh',
+                        email='karnatihitesh@gmail.com',
+                        full_name='Karnati Hitesh',
+                        bio='Team Lead & Full-Stack Integration at SecondSpark.',
+                        skills='Python, Flask, Full-Stack, IoT, Embedded Systems',
+                        location='India',
+                        role='user'
+                    )
+                    hitesh.set_password('Hitesh@12345')
+                    db.session.add(hitesh)
+
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     # Context processors to make user and global stats accessible in all templates
     @app.context_processor
     def inject_globals():
