@@ -87,6 +87,10 @@ def upload():
             flash('Please fill in all required fields.', 'danger')
             return render_template('upload_project.html', categories=categories, form_data=request.form)
 
+        if budget is not None and 0 < budget < 500:
+            flash('Minimum repair cost / budget must be at least ₹500 INR (or 0 for open volunteer collaboration).', 'danger')
+            return render_template('upload_project.html', categories=categories, form_data=request.form)
+
         base_slug = slugify(title)
         slug = base_slug
         counter = 1
