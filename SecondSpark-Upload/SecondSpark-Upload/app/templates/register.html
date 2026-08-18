@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 1.5rem; display: flex; justify-content: center; align-items: center;">
+  <div class="glass-card" style="max-width: 520px; width: 100%; padding: 2.5rem; background: #fff;">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <span class="brand-icon" style="margin: 0 auto 1rem; width: 44px; height: 44px; font-size: 1.4rem;"><i class="fa-solid fa-bolt"></i></span>
+      <h1 style="font-size: 1.8rem; margin-bottom: 0.35rem;">Join SecondSpark</h1>
+      <p style="color: var(--text-muted); font-size: 0.92rem;">Connect with makers, upload projects, and revive ideas</p>
+    </div>
+
+    <form id="register-form" action="{{ url_for('auth.register') }}" method="POST">
+      
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input type="text" name="full_name" class="form-control" placeholder="Alex Morgan" value="{{ form_data.get('full_name', '') }}" required />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input type="text" name="username" class="form-control" placeholder="alex_m" value="{{ form_data.get('username', '') }}" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input type="email" name="email" class="form-control" placeholder="alex@domain.com" value="{{ form_data.get('email', '') }}" required />
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="Min. 8 characters" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password *</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="••••••••" required />
+        </div>
+      </div>
+
+      <!-- Password Strength Meter -->
+      <div style="margin-bottom: 1.25rem;">
+        <div style="height: 4px; width: 100%; background: #E5E7EB; border-radius: 2px; overflow: hidden; margin-bottom: 0.3rem;">
+          <div id="password-strength-bar" style="height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+        </div>
+        <div id="password-strength-text" style="font-size: 0.75rem; color: var(--text-muted);">Enter password to check strength</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Primary Skills (Optional, comma separated)</label>
+        <input type="text" name="skills" class="form-control" placeholder="e.g. Embedded C, ROS2, React, PyTorch, PCB Design" value="{{ form_data.get('skills', '') }}" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Location (Optional)</label>
+        <input type="text" name="location" class="form-control" placeholder="e.g. San Francisco CA, London UK, Remote" value="{{ form_data.get('location', '') }}" />
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 1rem;">Create My Account</button>
+
+      <div style="text-align: center; margin-top: 1.75rem; font-size: 0.9rem; color: var(--text-muted);">
+        Already registered? <a href="{{ url_for('auth.login') }}" style="color: var(--primary); font-weight: 600;">Log in</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

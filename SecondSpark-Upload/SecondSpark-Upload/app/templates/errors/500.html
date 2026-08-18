@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Internal Server Error — 500{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 6rem 1.5rem; text-align: center;">
+  <div style="font-size: 5rem; font-weight: 800; color: #F59E0B; line-height: 1; margin-bottom: 1rem;">500</div>
+  <h1 style="font-size: 2rem; margin-bottom: 1rem;">Temporary System Spark Issue</h1>
+  <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 2rem; font-size: 1.05rem;">
+    Our engineers have been notified and are actively debugging this component. Please try again shortly.
+  </p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-lg">Return to Home</a>
+</div>
+{% endblock %}

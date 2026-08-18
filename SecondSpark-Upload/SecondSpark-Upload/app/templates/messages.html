@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+
+  <div class="chat-container">
+    
+    <!-- Left Sidebar: Conversations List -->
+    <div class="chat-sidebar">
+      <div class="chat-sidebar-header">
+        <span><i class="fa-regular fa-comments"></i> Conversations</span>
+      </div>
+
+      <div class="chat-threads-list">
+        {% if conversations %}
+          {% for conv in conversations %}
+            {% set other = conv.get_other_user(current_user.id) %}
+            {% set unread = conv.unread_count_for(current_user.id) %}
+            <a href="{{ url_for('messages.index', conversation_id=conv.id) }}" class="chat-thread-item {% if active_conversation and active_conversation.id == conv.id %}active{% endif %}">
+              <img src="{{ other.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" class="thread-avatar" alt="{{ other.full_name }}" />
+              <div class="thread-info">
+                <div class="thread-top">
+                  <span class="thread-name">{{ other.full_name }}</span>
+                  <span class="thread-time">{{ conv.last_message_at | timeago }}</span>
+                </div>
+                <div class="thread-preview" {% if unread > 0 %}style="font-weight: 700; color: var(--dark-900);"{% endif %}>
+                  {{ conv.last_message or 'No messages yet' }}
+                </div>
+              </div>
+              {% if unread > 0 %}
+                <span class="badge-count" style="position: static; margin-left: 0.5rem;">{{ unread }}</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        {% else %}
+          <div style="padding: 2.5rem 1.5rem; text-align: center; color: var(--text-muted);">
+            <i class="fa-regular fa-comment-dots" style="font-size: 2rem; margin-bottom: 0.75rem; color: var(--text-light); display: block;"></i>
+            <div style="font-size: 0.9rem; font-weight: 600;">No conversations yet</div>
+            <div style="font-size: 0.8rem; margin-top: 0.25rem;">Start one by offering help on a project.</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Pane: Active Chat Window -->
+    <div class="chat-main">
+      {% if active_conversation and other_user %}
+        <!-- Header -->
+        <div class="chat-header">
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <img src="{{ other_user.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="{{ other_user.full_name }}" />
+            <div>
+              <div style="font-weight: 700; font-size: 0.98rem;">
+                <a href="{{ url_for('auth.public_profile', username=other_user.username) }}">{{ other_user.full_name }}</a>
+              </div>
+              {% if active_conversation.project %}
+                <div style="font-size: 0.78rem; color: var(--text-muted);">
+                  Regarding: <a href="{{ url_for('projects.details', id=active_conversation.project.id) }}" style="color: var(--primary); font-weight: 600;">{{ active_conversation.project.title }}</a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div>
+            <a href="{{ url_for('auth.public_profile', username=other_user.username) }}" class="btn btn-outline btn-sm">
+              <i class="fa-solid fa-user"></i> View Profile
+            </a>
+          </div>
+        </div>
+
+        <!-- Messages Box -->
+        <div class="chat-messages-box" id="chat-messages-box" data-conversation-id="{{ active_conversation.id }}" data-last-id="{{ messages[-1].id if messages else 0 }}">
+          {% for msg in messages %}
+            <div class="message-bubble {% if msg.sender_id == current_user.id %}outgoing{% else %}incoming{% endif %}" data-id="{{ msg.id }}">
+              <div class="message-content">{{ msg.content }}</div>
+              <div class="message-time">{{ msg.created_at.strftime('%I:%M %p') }}</div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Input Bar -->
+        <form class="chat-input-bar" id="chat-form">
+          <input type="text" id="chat-input" class="form-control" placeholder="Type your message or technical solution..." autocomplete="off" required />
+          <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.25rem;">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+
+      {% else %}
+        <!-- Empty Selection -->
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;">
+          <i class="fa-regular fa-comments" style="font-size: 3.5rem; color: var(--primary); opacity: 0.5; margin-bottom: 1rem;"></i>
+          <h3 style="margin-bottom: 0.5rem;">Select a Conversation</h3>
+          <p style="color: var(--text-muted); max-width: 400px; font-size: 0.95rem;">
+            Choose an ongoing thread from the sidebar or click "Offer Help" on any project to start collaborating.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Maker Reviews &amp; Success Stories — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
+
+  <!-- Header Banner -->
+  <div style="text-align: center; max-width: 720px; margin: 0 auto 3rem;">
+    <span class="section-tag">Community Feedback</span>
+    <h1 style="font-size: 2.5rem; margin-bottom: 0.75rem;">Maker Reviews &amp; Ratings</h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem;">
+      Real reviews and feedback from project owners and skilled makers who revived stalled hardware and software builds.
+    </p>
+
+    <!-- Stats Summary Pill -->
+    <div style="display: inline-flex; gap: 2rem; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); padding: 0.85rem 1.75rem; border-radius: var(--radius-full); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 4px 18px rgba(0,0,0,0.04); margin-top: 1.5rem;">
+      <div>
+        <span style="font-size: 1.25rem; font-weight: 800; color: var(--primary-dark);"><i class="fa-solid fa-star" style="color: #F59E0B;"></i> {{ avg_rating }}</span>
+        <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 4px;">Avg Rating</span>
+      </div>
+      <div style="width: 1px; background: var(--border-subtle);"></div>
+      <div>
+        <span style="font-size: 1.25rem; font-weight: 800; color: var(--dark-900);">{{ total_reviews }}</span>
+        <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 4px;">Reviews</span>
+      </div>
+      <div style="width: 1px; background: var(--border-subtle);"></div>
+      <div>
+        <span style="font-size: 1.25rem; font-weight: 800; color: var(--dark-900);">{{ five_stars }}</span>
+        <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 4px;">5-Star Revivals</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rating Filter Chips -->
+  <div style="display: flex; justify-content: center; gap: 0.6rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
+    <a href="{{ url_for('reviews.index') }}" class="filter-chip {% if not selected_rating %}active{% endif %}">
+      All Reviews
+    </a>
+    {% for r in [5, 4, 3, 2, 1] %}
+      <a href="{{ url_for('reviews.index', rating=r) }}" class="filter-chip {% if selected_rating == r %}active{% endif %}">
+        {{ r }} ★ Only
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Reviews Grid -->
+  {% if reviews %}
+    <div class="reviews-grid">
+      {% for rev in reviews %}
+        <div class="review-card glass-card">
+          <div class="review-stars">
+            {% for i in range(rev.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
+            {% for i in range(5 - rev.rating) %}<i class="fa-regular fa-star" style="color: #D1D5DB;"></i>{% endfor %}
+          </div>
+          <p class="review-text">"{{ rev.comment }}"</p>
+          
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 0.75rem;">
+            <img src="{{ rev.reviewer.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;" alt="{{ rev.reviewer.full_name }}" />
+            <div>
+              <div class="review-author">{{ rev.reviewer.full_name }}</div>
+              <div class="review-meta">Reviewed on <a href="{{ url_for('projects.details', id=rev.project_id) }}" style="color: var(--primary-dark); font-weight: 600;">{{ rev.project.title if rev.project else 'Project' }}</a> &middot; {{ rev.created_at | timeago }}</div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+      <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 3.5rem;">
+        {% if pagination.has_prev %}
+          <a href="{{ url_for('reviews.index', page=pagination.prev_num, rating=selected_rating) }}" class="btn btn-outline btn-sm">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </a>
+        {% endif %}
+
+        {% for p in pagination.iter_pages() %}
+          {% if p %}
+            <a href="{{ url_for('reviews.index', page=p, rating=selected_rating) }}" class="btn btn-sm {% if p == pagination.page %}btn-primary{% else %}btn-outline{% endif %}">
+              {{ p }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+          <a href="{{ url_for('reviews.index', page=pagination.next_num, rating=selected_rating) }}" class="btn btn-outline btn-sm">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state">
+      <i class="fa-solid fa-comments empty-state-icon"></i>
+      <h3>No Reviews Found</h3>
+      <p>Be the first to collaborate and leave feedback for fellow makers!</p>
+      <a href="{{ url_for('projects.browse') }}" class="btn btn-primary">Browse Projects to Revive</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

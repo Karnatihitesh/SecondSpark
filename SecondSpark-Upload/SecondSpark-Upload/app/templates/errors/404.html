@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found — 404{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 6rem 1.5rem; text-align: center;">
+  <div style="font-size: 5rem; font-weight: 800; color: var(--primary); line-height: 1; margin-bottom: 1rem;">404</div>
+  <h1 style="font-size: 2rem; margin-bottom: 1rem;">Lost Spark</h1>
+  <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 2rem; font-size: 1.05rem;">
+    The project or page you are searching for might have been moved, renamed, or completed.
+  </p>
+  <div style="display: flex; gap: 1rem; justify-content: center;">
+    <a href="{{ url_for('projects.browse') }}" class="btn btn-primary btn-lg">Browse Projects</a>
+    <a href="{{ url_for('main.index') }}" class="btn btn-outline btn-lg">Home</a>
+  </div>
+</div>
+{% endblock %}

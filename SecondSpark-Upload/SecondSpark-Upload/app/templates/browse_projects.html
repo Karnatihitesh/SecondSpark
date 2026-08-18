@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse Projects — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
+  
+  <!-- Header & Live Search Bar -->
+  <div style="margin-bottom: 2.5rem; text-align: center;">
+    <span class="section-tag">Explore The Marketplace</span>
+    <h1 style="font-size: 2.5rem; margin-bottom: 0.75rem;">Discover Projects to Revive</h1>
+    <p style="color: var(--text-muted); max-width: 620px; margin: 0 auto 2rem;">
+      Find unfinished hardware, AI models, electronics, robotics, and software builds seeking skilled makers.
+    </p>
+
+    <!-- Search Form with Glass Styling -->
+    <div style="max-width: 680px; margin: 0 auto; position: relative;">
+      <form action="{{ url_for('projects.browse') }}" method="GET" style="display: flex; gap: 0.65rem;">
+        <div style="position: relative; flex: 1;">
+          <input 
+            type="text" 
+            name="q" 
+            id="search-input" 
+            class="form-control" 
+            placeholder="Search by keyword, component (e.g. ESP32, PyTorch), or skill..." 
+            value="{{ current_filters.q or '' }}" 
+            autocomplete="off"
+            style="padding-left: 2.75rem; height: 52px; font-size: 1rem; border-radius: var(--radius-full);"
+          />
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1.15rem; top: 50%; transform: translateY(-50%); color: var(--primary);"></i>
+        </div>
+        <button type="submit" class="btn btn-primary" style="height: 52px; padding: 0 1.85rem; border-radius: var(--radius-full);">
+          <i class="fa-solid fa-sparkles"></i> Search
+        </button>
+      </form>
+
+      <!-- Live Search Autocomplete Dropdown -->
+      <div id="search-results-dropdown" class="glass-card" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; width: 100%; z-index: 100; text-align: left; max-height: 360px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- Quick Status Chips Navigation -->
+  <div style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
+    <a href="{{ url_for('projects.browse', q=current_filters.q, category=current_filters.category, sort=current_filters.sort) }}" class="filter-chip {% if not current_filters.status or current_filters.status == 'all' %}active{% endif %}">
+      <i class="fa-solid fa-layer-group"></i> All Statuses
+    </a>
+    <a href="{{ url_for('projects.browse', status='Open', q=current_filters.q, category=current_filters.category, sort=current_filters.sort) }}" class="filter-chip {% if current_filters.status == 'Open' %}active{% endif %}">
+      <i class="fa-solid fa-door-open"></i> Open
+    </a>
+    <a href="{{ url_for('projects.browse', status='Help Needed', q=current_filters.q, category=current_filters.category, sort=current_filters.sort) }}" class="filter-chip {% if current_filters.status == 'Help Needed' %}active{% endif %}">
+      <i class="fa-solid fa-hand-holding-hand"></i> Help Needed
+    </a>
+    <a href="{{ url_for('projects.browse', status='In Progress', q=current_filters.q, category=current_filters.category, sort=current_filters.sort) }}" class="filter-chip {% if current_filters.status == 'In Progress' %}active{% endif %}">
+      <i class="fa-solid fa-spinner"></i> In Progress
+    </a>
+    <a href="{{ url_for('projects.browse', status='Completed', q=current_filters.q, category=current_filters.category, sort=current_filters.sort) }}" class="filter-chip {% if current_filters.status == 'Completed' %}active{% endif %}">
+      <i class="fa-solid fa-circle-check"></i> Completed
+    </a>
+  </div>
+
+  <!-- Detailed Filters & Sorting Controls (Glass Panel) -->
+  <div class="glass-card" style="padding: 1.5rem 1.75rem; margin-bottom: 2.5rem; border-radius: var(--radius-lg);">
+    <form action="{{ url_for('projects.browse') }}" method="GET">
+      <input type="hidden" name="q" value="{{ current_filters.q or '' }}">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; align-items: flex-end;">
+        
+        <!-- Category Dropdown -->
+        <div>
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Category</label>
+          <select name="category" class="form-control" style="padding: 0.6rem 0.85rem;">
+            <option value="all">All Categories</option>
+            {% for cat in categories %}
+              <option value="{{ cat.slug }}" {% if current_filters.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Status</label>
+          <select name="status" class="form-control" style="padding: 0.6rem 0.85rem;">
+            <option value="all">All Statuses</option>
+            <option value="Open" {% if current_filters.status == 'Open' %}selected{% endif %}>Open</option>
+            <option value="Help Needed" {% if current_filters.status == 'Help Needed' %}selected{% endif %}>Help Needed</option>
+            <option value="In Discussion" {% if current_filters.status == 'In Discussion' %}selected{% endif %}>In Discussion</option>
+            <option value="In Progress" {% if current_filters.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+            <option value="Completed" {% if current_filters.status == 'Completed' %}selected{% endif %}>Completed</option>
+          </select>
+        </div>
+
+        <!-- Min Budget -->
+        <div>
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Min Budget ($)</label>
+          <input type="number" name="min_budget" class="form-control" placeholder="0" value="{{ current_filters.min_budget or '' }}" style="padding: 0.6rem 0.85rem;" />
+        </div>
+
+        <!-- Max Budget -->
+        <div>
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Max Budget ($)</label>
+          <input type="number" name="max_budget" class="form-control" placeholder="Max" value="{{ current_filters.max_budget or '' }}" style="padding: 0.6rem 0.85rem;" />
+        </div>
+
+        <!-- Sort By -->
+        <div>
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Sort By</label>
+          <select name="sort" class="form-control" style="padding: 0.6rem 0.85rem;">
+            <option value="newest" {% if current_filters.sort == 'newest' %}selected{% endif %}>Newest First</option>
+            <option value="oldest" {% if current_filters.sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+            <option value="budget_high" {% if current_filters.sort == 'budget_high' %}selected{% endif %}>Budget: High to Low</option>
+            <option value="budget_low" {% if current_filters.sort == 'budget_low' %}selected{% endif %}>Budget: Low to High</option>
+          </select>
+        </div>
+
+        <!-- Submit & Reset Buttons -->
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="submit" class="btn btn-primary btn-block" style="padding: 0.65rem 1rem;">
+            <i class="fa-solid fa-filter"></i> Apply
+          </button>
+          <a href="{{ url_for('projects.browse') }}" class="btn btn-outline" title="Reset Filters" style="padding: 0.65rem 0.9rem;">
+            <i class="fa-solid fa-rotate-left"></i>
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Results Count Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div style="font-size: 0.9rem; color: var(--text-muted);">
+      Showing <strong style="color: var(--dark-900);">{{ pagination.total }}</strong> project{{ 's' if pagination.total != 1 else '' }}
+      {% if current_filters.category and current_filters.category != 'all' %} in <strong style="color: var(--primary-dark);">{{ current_filters.category }}</strong>{% endif %}
+      {% if current_filters.status and current_filters.status != 'all' %} with status <strong style="color: var(--primary-dark);">{{ current_filters.status }}</strong>{% endif %}
+    </div>
+    <div>
+      <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-plus"></i> Post New Project
+      </a>
+    </div>
+  </div>
+
+  <!-- Projects Grid -->
+  {% if projects %}
+    <div class="projects-grid">
+      {% for project in projects %}
+        <div class="project-card">
+          <div class="project-card-media">
+            <img src="{{ project.primary_image }}" alt="{{ project.title }}" class="project-card-img" />
+            <button class="project-card-save-btn save-project-btn {% if project.id in saved_project_ids %}saved{% endif %}" data-project-id="{{ project.id }}" title="Bookmark Project">
+              <i class="{% if project.id in saved_project_ids %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %}"></i>
+            </button>
+            <div class="project-card-badge">
+              <span class="badge badge-open"><i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> {{ project.status }}</span>
+            </div>
+          </div>
+
+          <div class="project-card-body">
+            <div class="project-card-cat">{{ project.category.name if project.category else 'General' }}</div>
+            <h3 class="project-card-title">
+              <a href="{{ url_for('projects.details', id=project.id) }}">{{ project.title }}</a>
+            </h3>
+            <p class="project-card-summary">{{ project.short_summary }}</p>
+
+            <div class="project-card-skills">
+              {% for skill in project.skills_list[:3] %}
+                <span class="skill-tag">{{ skill }}</span>
+              {% endfor %}
+              {% if project.skills_list|length > 3 %}
+                <span class="skill-tag">+{{ project.skills_list|length - 3 }}</span>
+              {% endif %}
+            </div>
+
+            <div class="project-card-footer">
+              <div class="project-card-owner">
+                <img src="{{ project.owner.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" class="owner-thumb" alt="{{ project.owner.full_name }}">
+                <span>{{ project.owner.full_name.split(' ')[0] }}</span>
+              </div>
+              <div class="project-card-budget">
+                {{ project.budget | currency }}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pagination.pages > 1 %}
+      <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 3.5rem;">
+        {% if pagination.has_prev %}
+          <a href="{{ url_for('projects.browse', page=pagination.prev_num, **current_filters) }}" class="btn btn-outline btn-sm">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </a>
+        {% endif %}
+
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+            <a href="{{ url_for('projects.browse', page=p, **current_filters) }}" class="btn btn-sm {% if p == pagination.page %}btn-primary{% else %}btn-outline{% endif %}">
+              {{ p }}
+            </a>
+          {% else %}
+            <span style="padding: 0.4rem 0.6rem; color: var(--text-light);">...</span>
+          {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+          <a href="{{ url_for('projects.browse', page=pagination.next_num, **current_filters) }}" class="btn btn-outline btn-sm">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state">
+      <i class="fa-solid fa-filter empty-state-icon"></i>
+      <h3>No Projects Found</h3>
+      <p>Try adjusting your search keywords, broadening your budget range, or clearing status filters.</p>
+      <a href="{{ url_for('projects.browse') }}" class="btn btn-primary">Clear All Filters</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/projects.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}About SecondSpark — Our Mission & Team{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3.5rem; padding-bottom: 5rem;">
+
+  <!-- Hero Banner -->
+  <div style="text-align: center; max-width: 760px; margin: 0 auto 4rem;">
+    <span class="section-tag">About Our Platform</span>
+    <h1 style="font-size: 2.8rem; line-height: 1.2; margin-bottom: 1rem;">
+      Give Unfinished Ideas a <span class="highlight-green">Second Spark.</span>
+    </h1>
+    <p class="text-lead">
+      We believe that one person's unfinished project can become another person's breakthrough opportunity.
+    </p>
+  </div>
+
+  <!-- What is SecondSpark / Problem & Solution Grid -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 4.5rem;">
+    
+    <div class="glass-card" style="padding: 2.5rem; background: #fff;">
+      <div style="width: 48px; height: 48px; border-radius: 12px; background: #FEF2F2; color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 1.25rem;">
+        <i class="fa-solid fa-box-archive"></i>
+      </div>
+      <h3 style="font-size: 1.4rem; margin-bottom: 0.75rem;">The Problem</h3>
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.98rem;">
+        Every year, millions of dollars worth of electronic components, microcontrollers, AI models, and software repositories are abandoned in drawers and private GitHub repositories. Makers hit a wall on a single hardware bug or run out of time, leaving brilliant concepts permanently incomplete.
+      </p>
+    </div>
+
+    <div class="glass-card" style="padding: 2.5rem; background: #fff;">
+      <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 1.25rem;">
+        <i class="fa-solid fa-lightbulb"></i>
+      </div>
+      <h3 style="font-size: 1.4rem; margin-bottom: 0.75rem;">Our Solution</h3>
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.98rem;">
+        SecondSpark provides a dedicated marketplace where project creators can upload their incomplete builds with exact details on where they are stuck. Skilled engineers, developers, and students step in to repair, improve, complete, or co-develop these builds.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Mission & Vision Cards -->
+  <div style="background: linear-gradient(135deg, var(--dark-900) 0%, #172554 100%); border-radius: var(--radius-lg); padding: 3.5rem; color: #fff; margin-bottom: 5rem; position: relative; overflow: hidden;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; position: relative; z-index: 2;">
+      <div>
+        <span style="color: var(--primary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.5rem;">Our Mission</span>
+        <h2 style="color: #fff; font-size: 1.75rem; line-height: 1.35; margin-bottom: 1rem;">
+          "To give unfinished ideas another opportunity to become useful, complete, and successful."
+        </h2>
+        <p style="color: #9CA3AF; font-size: 0.95rem; line-height: 1.6;">
+          Eliminating waste in hardware and software innovation by empowering creators to collaborate globally.
+        </p>
+      </div>
+
+      <div>
+        <span style="color: var(--primary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.5rem;">Our Vision</span>
+        <h2 style="color: #fff; font-size: 1.75rem; line-height: 1.35; margin-bottom: 1rem;">
+          A Global Ecosystem Where No Innovation Goes to Waste
+        </h2>
+        <p style="color: #9CA3AF; font-size: 0.95rem; line-height: 1.6;">
+          Creating the world's most vibrant network for maker collaboration, practical skill development, and peer-to-peer engineering solutions.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Team Showcase -->
+  <div id="team">
+    <div class="section-header">
+      <span class="section-tag">Engineering Leadership</span>
+      <h2 class="section-title">Meet Our Team</h2>
+      <p class="section-desc">The talented engineers driving SecondSpark's mission and full-stack architecture.</p>
+    </div>
+
+    <div class="team-grid">
+      {% for member in team_members %}
+        <div class="team-card">
+          <div class="team-avatar-placeholder">{{ member.initials }}</div>
+          <h3>{{ member.name }}</h3>
+          <div class="team-role">{{ member.role }}</div>
+          <p class="team-bio">{{ member.bio }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
