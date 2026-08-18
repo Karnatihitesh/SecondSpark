@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Unfinished Project — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3rem; padding-bottom: 5rem; max-width: 860px;">
+  
+  <div style="margin-bottom: 2.5rem; text-align: center;">
+    <span class="section-tag">New Listing</span>
+    <h1 style="font-size: 2.3rem; margin-bottom: 0.5rem;">Post Your Unfinished Project</h1>
+    <p style="color: var(--text-muted);">
+      Describe where you got stuck, what parts you have, and connect with engineers ready to help you complete it.
+    </p>
+  </div>
+
+  <div class="glass-card" style="padding: 2.5rem; background: #fff;">
+    <form action="{{ url_for('projects.upload') }}" method="POST" enctype="multipart/form-data">
+      
+      <!-- Basic Details -->
+      <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem; color: var(--dark-900); border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+        1. Core Project Information
+      </h3>
+
+      <div class="form-group">
+        <label class="form-label">Project Title *</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Autonomous Robotic Lawn Mower with LiDAR Navigation" value="{{ form_data.get('title', '') }}" required />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select name="category_id" class="form-control" required>
+            <option value="">Select Category</option>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if form_data.get('category_id') == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Current Condition *</label>
+          <select name="current_condition" class="form-control" required>
+            <option value="Incomplete">Incomplete (Partially Built)</option>
+            <option value="Abandoned">Abandoned (Shelved Idea)</option>
+            <option value="Faulty">Faulty (Hardware/Software Bugs)</option>
+            <option value="Hardware Issues">Hardware / PCB Issue</option>
+            <option value="Untested">Untested Prototype</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Short Summary *</label>
+        <input type="text" name="short_summary" class="form-control" placeholder="A concise 1-2 sentence pitch of what this project is and what it aims to achieve." value="{{ form_data.get('short_summary', '') }}" maxlength="300" required />
+        <div class="form-hint">Shown on browse cards and search results.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Detailed Description *</label>
+        <textarea name="description" class="form-control" rows="5" placeholder="Explain the project background, hardware architecture, microcontrollers or tech stack used, and the overall vision..." required>{{ form_data.get('description', '') }}</textarea>
+      </div>
+
+      <!-- Problem & Collaboration -->
+      <h3 style="font-size: 1.2rem; margin: 2rem 0 1.25rem; color: var(--dark-900); border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+        2. Where You Got Stuck & Needed Skills
+      </h3>
+
+      <div class="form-group">
+        <label class="form-label" style="color: #B45309;">Current Problems / Faults *</label>
+        <textarea name="problems_faults" class="form-control" rows="4" placeholder="Detail the specific error, electrical short, sensor calibration issue, or firmware bug preventing completion..." required style="border-color: #FDE68A; background: #FFFDF5;">{{ form_data.get('problems_faults', '') }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" style="color: var(--primary-dark);">Specific Help Required *</label>
+        <textarea name="help_required" class="form-control" rows="4" placeholder="What role do you need a collaborator to play? (e.g. Write ROS2 control loop, debug PCB trace, design CAD enclosure...)" required>{{ form_data.get('help_required', '') }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Required Skills * (Comma separated)</label>
+        <input type="text" name="required_skills" class="form-control" placeholder="e.g. ESP32, C++, ROS2, PCB Design, Python" value="{{ form_data.get('required_skills', '') }}" required />
+      </div>
+
+      <!-- Logistics & Budget -->
+      <h3 style="font-size: 1.2rem; margin: 2rem 0 1.25rem; color: var(--dark-900); border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+        3. Logistics & Media
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Repair Cost / Budget (₹ INR)</label>
+          <input type="number" name="budget" id="budget-field" class="form-control" placeholder="e.g. 500, 1500 (or 0 for Open)" min="0" step="50" value="{{ form_data.get('budget', '') }}" />
+          <div class="form-hint">Min ₹500 for paid repair / parts budget (or ₹0 for open volunteer collaboration).</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Budget Type</label>
+          <select name="budget_type" class="form-control">
+            <option value="Fixed">Fixed Amount</option>
+            <option value="Hourly">Hourly Rate</option>
+            <option value="Collaboration/Open">Open / Mutual Collaboration</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Location / Mode</label>
+          <input type="text" name="location" class="form-control" placeholder="e.g. Remote, Dallas TX, Bangalore" value="{{ form_data.get('location', 'Remote') }}" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Target Completion Timeline</label>
+        <input type="text" name="deadline" class="form-control" placeholder="e.g. 2-3 weeks, By end of month, Flexible" value="{{ form_data.get('deadline', '') }}" />
+      </div>
+
+      <!-- Image Upload with Previews -->
+      <div class="form-group">
+        <label class="form-label">Project Images (Upload multiple photos of the prototype/schematics)</label>
+        <input type="file" name="images" id="project-images-input" class="form-control" multiple accept="image/*" />
+        <div class="form-hint">Accepted: JPG, PNG, WEBP, GIF. First uploaded image will be used as the primary card image.</div>
+        <div id="image-previews-container" style="display: flex; gap: 0.75rem; margin-top: 0.75rem; flex-wrap: wrap;"></div>
+      </div>
+
+      <!-- Technical Documents -->
+      <div class="form-group">
+        <label class="form-label">Supporting Documents (Optional)</label>
+        <input type="file" name="documents" class="form-control" multiple accept=".pdf,.zip,.txt,.ino,.py,.cpp,.stl,.step" />
+        <div class="form-hint">Accepted: PDF, ZIP, STL, STEP, Arduino (.ino), Python (.py), C/C++ source.</div>
+      </div>
+
+      <!-- Submit Button -->
+      <div style="margin-top: 2.5rem; text-align: right;">
+        <a href="{{ url_for('projects.browse') }}" class="btn btn-outline" style="margin-right: 0.75rem;">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-rocket"></i> Publish Project Listing
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/projects.js') }}"></script>
+{% endblock %}
