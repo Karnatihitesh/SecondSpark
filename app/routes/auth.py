@@ -377,35 +377,51 @@ def public_profile(username):
 # ── Google OAuth Sign-in ──────────────────────────────────────────────────────
 @auth_bp.route('/google')
 def google_login():
-    """Seamless Sign in with Google."""
+    """Sign in with selected Google account."""
     user = get_current_user()
     if user:
         return redirect(url_for('dashboard.index'))
 
-    # Retrieve or create Google user account
-    email = 'karnatihitesh@gmail.com'
-    existing = User.query.filter_by(email=email).first()
+    email = request.values.get('email', '').strip().lower() or 'karnatihitesh@gmail.com'
+    name = request.values.get('name', '').strip()
+    
+    if not name:
+        name = email.split('@')[0].replace('.', ' ').title()
+
+    username = email.split('@')[0].replace('.', '_').lower()
+    
+    existing = User.query.filter((db.func.lower(User.email) == email) | (db.func.lower(User.username) == username)).first()
+    
+    # Check if admin email
+    is_admin_user = (email in ['karnatihitesh@gmail.com', 'admin@secondspark.com'] or username in ['karnatihitesh', 'admin'])
+    role = 'admin' if is_admin_user else 'user'
+    
     if not existing:
         existing = User(
-            username='karnatihitesh',
+            username=username,
             email=email,
-            full_name='Karnati Hitesh',
-            bio='Team Lead & Platform Administrator at SecondSpark.',
-            skills='Python, IoT, Robotics, Full-Stack, System Architecture',
+            full_name=name,
+            bio='Maker & Creator on SecondSpark via Google.',
+            skills='Hardware Prototyping, Web Development, Maker',
             location='India',
-            role='admin'
+            role=role
         )
-        existing.set_password('Hitesh@12345')
+        existing.set_password('GoogleAuth@2026')
         db.session.add(existing)
     else:
-        existing.role = 'admin'
+        if is_admin_user:
+            existing.role = 'admin'
+    
     db.session.commit()
-
+    
     session['user_id'] = existing.id
     session.permanent = True
     g.current_user = existing
-    flash(f'👑 Welcome, Admin {existing.full_name}! Signed in with Admin privileges.', 'success')
-    return redirect(url_for('admin.index'))
+    flash(f'👋 Signed in as <strong>{existing.full_name}</strong> ({existing.email})', 'success')
+    
+    if existing.role == 'admin':
+        return redirect(url_for('admin.index'))
+    return redirect(url_for('dashboard.index'))
 
 
 @auth_bp.route('/make-admin')
