@@ -1,0 +1,122 @@
+from datetime import datetime, timedelta
+import secrets, string
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    full_name = db.Column(db.String(100), nullable=False)
+    bio = db.Column(db.Text, nullable=True)
+    skills = db.Column(db.String(255), nullable=True)  # Comma-separated or JSON string
+    location = db.Column(db.String(100), nullable=True)
+    avatar_url = db.Column(db.String(255), nullable=True, default='/static/images/default-avatar.svg')
+    role = db.Column(db.String(20), nullable=False, default='user')  # 'user', 'admin'
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    projects = db.relationship('Project', back_populates='owner', lazy='dynamic', cascade='all, delete-orphan')
+    saved_projects = db.relationship('SavedProject', back_populates='user', lazy='dynamic', cascade='all, delete-orphan')
+    sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', back_populates='sender', lazy='dynamic')
+    received_messages = db.relationship('Message', foreign_keys='Message.receiver_id', back_populates='receiver', lazy='dynamic')
+    notifications = db.relationship('Notification', back_populates='user', lazy='dynamic', cascade='all, delete-orphan')
+    reviews_given = db.relationship('Review', foreign_keys='Review.reviewer_id', back_populates='reviewer', lazy='dynamic')
+    reviews_received = db.relationship('Review', foreign_keys='Review.reviewee_id', back_populates='reviewee', lazy='dynamic')
+    reports_filed = db.relationship('Report', foreign_keys='Report.reporter_id', back_populates='reporter', lazy='dynamic')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+
+    @property
+    def skills_list(self):
+        if not self.skills:
+            return []
+        return [s.strip() for s in self.skills.split(',') if s.strip()]
+
+    @property
+    def rating_summary(self):
+        reviews = self.reviews_received.all()
+        if not reviews:
+            return {'average': 0.0, 'count': 0}
+        avg = sum(r.rating for r in reviews) / len(reviews)
+        return {'average': round(avg, 1), 'count': len(reviews)}
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'full_name': self.full_name,
+            'bio': self.bio,
+            'skills': self.skills_list,
+            'location': self.location,
+            'avatar_url': self.avatar_url,
+            'role': self.role,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+
+
+class VerificationCode(db.Model):
+    """Short-lived OTP for password reset / email verification."""
+    __tablename__ = 'verification_codes'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    email       = db.Column(db.String(120), nullable=False, index=True)
+    code        = db.Column(db.String(6), nullable=False)
+    purpose     = db.Column(db.String(30), default='password_reset')
+    is_used     = db.Column(db.Boolean, default=False)
+    expires_at  = db.Column(db.DateTime, nullable=False)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @classmethod
+    def generate(cls, email: str, purpose: str = 'password_reset', ttl_minutes: int = 10):
+        """Create and return a new OTP for the given email."""
+        code = ''.join(secrets.choice(string.digits) for _ in range(6))
+        otp = cls(
+            email=email.lower().strip(),
+            code=code,
+            purpose=purpose,
+            expires_at=datetime.utcnow() + timedelta(minutes=ttl_minutes)
+        )
+        db.session.add(otp)
+        db.session.commit()
+        return otp
+
+    @classmethod
+    def verify(cls, email: str, code: str, purpose: str = 'password_reset'):
+        """Return the OTP record if valid, else None."""
+        otp = cls.query.filter_by(
+            email=email.lower().strip(),
+            code=code,
+            purpose=purpose,
+            is_used=False
+        ).order_by(cls.created_at.desc()).first()
+        if otp and otp.expires_at > datetime.utcnow():
+            return otp
+        return None
+
+    def mark_used(self):
+        self.is_used = True
+        db.session.commit()
+
+    def __repr__(self):
+        return f'<OTP {self.email} [{self.purpose}]>'
