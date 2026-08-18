@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Us — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3.5rem; padding-bottom: 5rem;">
+
+  <div style="text-align: center; max-width: 600px; margin: 0 auto 3.5rem;">
+    <span class="section-tag">Get in Touch</span>
+    <h1 style="font-size: 2.6rem; margin-bottom: 0.75rem;">Contact SecondSpark</h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem;">
+      Have a question, partnership proposal, or feedback? We’d love to hear from you.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 3rem; align-items: start; max-width: 1000px; margin: 0 auto;">
+    
+    <!-- Direct Contact Info -->
+    <div>
+      <div class="glass-card" style="padding: 2rem; background: #fff; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Direct Reach</h3>
+        
+        <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1.5rem;">
+          <div style="width: 42px; height: 42px; border-radius: 10px; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+            <i class="fa-solid fa-envelope"></i>
+          </div>
+          <div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase;">Email Us</div>
+            <a href="mailto:karnatihitesh@gmail.com" style="font-size: 1.05rem; font-weight: 600; color: var(--dark-900);">karnatihitesh@gmail.com</a>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem;">
+          <div style="width: 42px; height: 42px; border-radius: 10px; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+            <i class="fa-solid fa-phone"></i>
+          </div>
+          <div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase;">Call / WhatsApp</div>
+            <a href="tel:+919490682602" style="font-size: 1.05rem; font-weight: 600; color: var(--dark-900);">+91 9490682602</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card" style="padding: 1.75rem; background: var(--bg-subtle);">
+        <h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--dark-900);">Office & Collaboration Hub</h4>
+        <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
+          Open for hardware prototypes testing, Maker-Faire collaborations, and university capstone integrations.
+        </p>
+      </div>
+    </div>
+
+    <!-- Contact Form -->
+    <div class="glass-card" style="padding: 2.5rem; background: #fff;">
+      <h3 style="font-size: 1.35rem; margin-bottom: 1.5rem;">Send a Direct Message</h3>
+      
+      <form action="{{ url_for('main.contact') }}" method="POST">
+        
+        <div class="form-group">
+          <label class="form-label">Your Name *</label>
+          <input type="text" name="name" class="form-control" placeholder="John Doe" value="{{ form_data.get('name', '') }}" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input type="email" name="email" class="form-control" placeholder="john@example.com" value="{{ form_data.get('email', '') }}" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Subject *</label>
+          <input type="text" name="subject" class="form-control" placeholder="Partnership, Platform Inquiry, or Feedback" value="{{ form_data.get('subject', '') }}" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message *</label>
+          <textarea name="message" class="form-control" rows="5" placeholder="How can we assist you?" required>{{ form_data.get('message', '') }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">
+          <i class="fa-solid fa-paper-plane"></i> Send Message
+        </button>
+
+      </form>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

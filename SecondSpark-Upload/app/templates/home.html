@@ -1,0 +1,504 @@
+{% extends 'base.html' %}
+
+{% block title %}SecondSpark — Give Unfinished Ideas a Second Spark{% endblock %}
+
+{% block content %}
+  <!-- HERO SECTION -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="hero-tag">
+            <i class="fa-solid fa-sparkles"></i> The Collaboration Marketplace for Incomplete Builds
+          </div>
+          <h1 class="hero-title">
+            Give Unfinished Ideas a <span class="highlight-green">Second Spark.</span>
+          </h1>
+          <p class="hero-description">
+            Discover abandoned and incomplete hardware, software, AI, and electronics projects. Connect with skilled makers and engineers to turn stalled ideas into completed possibilities.
+          </p>
+          <div class="hero-actions">
+            <a href="{{ url_for('projects.browse') }}" class="btn btn-primary btn-lg">
+              <i class="fa-solid fa-compass"></i> Browse Projects
+            </a>
+            <a href="{{ url_for('projects.upload') }}" class="btn btn-secondary btn-lg">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Upload a Project
+            </a>
+          </div>
+
+          <!-- Hero Micro Stats — Real-time DB counts with animated counters -->
+          <div class="hero-stats">
+            <div class="stat-item">
+              <h4 data-target="{{ stats.total_projects }}" data-suffix="">{{ stats.total_projects }}</h4>
+              <p><span class="live-dot"></span>Projects Listed</p>
+            </div>
+            <div class="stat-item">
+              <h4 data-target="{{ stats.completed_projects }}" data-suffix="">{{ stats.completed_projects }}</h4>
+              <p><span class="live-dot"></span>Successfully Revived</p>
+            </div>
+            <div class="stat-item">
+              <h4 data-target="{{ stats.active_collaborators }}" data-suffix="">{{ stats.active_collaborators }}</h4>
+              <p><span class="live-dot"></span>Active Makers</p>
+            </div>
+            <div class="stat-item">
+              <h4 data-target="{{ stats.categories_count }}" data-suffix="">{{ stats.categories_count }}</h4>
+              <p><span class="live-dot"></span>Categories</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Interactive Canvas with floating glass badges & drag hints -->
+        <div class="hero-canvas-wrap" id="hero-3d-canvas-wrap">
+
+          <!-- Badge: Top-left -->
+          <div class="canvas-floating-badge" style="top: 15px; left: 15px; bottom: auto;">
+            <i class="fa-solid fa-microchip"></i>
+            <div>
+              <div style="font-weight:700;font-size:0.85rem;color:var(--dark-900);">Hardware &amp; AI Synergy</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">Real-time interactive quantum core</div>
+            </div>
+          </div>
+
+          <!-- Badge: Top-right -->
+          <div class="canvas-badge-extra canvas-badge-top">
+            <i class="fa-solid fa-bolt"></i>
+            <div>
+              <div style="font-weight:700;">Second Spark</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);">Reviving stalled builds</div>
+            </div>
+          </div>
+
+          <!-- Badge: Middle-right -->
+          <div class="canvas-badge-extra canvas-badge-mid">
+            <i class="fa-solid fa-robot"></i>
+            <div>
+              <div style="font-weight:700;">{{ stats.total_projects }} Projects</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);">waiting for your skills</div>
+            </div>
+          </div>
+
+          <!-- Drag Interaction Hint -->
+          <div class="canvas-drag-hint">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Drag to rotate &bull; Click to pulse</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 1: HOW IT WORKS -->
+  <section class="section" id="how-it-works" style="background: #FFFFFF;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Simple 4-Step Process</span>
+        <h2 class="section-title">How SecondSpark Works</h2>
+        <p class="section-desc">From abandoned prototypes to production-ready triumphs in four straightforward steps.</p>
+      </div>
+
+      <div class="process-grid">
+        <div class="process-card">
+          <div class="process-step-num">01</div>
+          <h3>Upload</h3>
+          <p>Share your unfinished hardware, app, or prototype with details on current faults, required skills, and budget.</p>
+        </div>
+
+        <div class="process-card">
+          <div class="process-step-num">02</div>
+          <h3>Connect</h3>
+          <p>Skilled specialists, students, and engineers discover your listing and reach out with targeted solutions.</p>
+        </div>
+
+        <div class="process-card">
+          <div class="process-step-num">03</div>
+          <h3>Collaborate</h3>
+          <p>Discuss the technical blueprint, exchange schematics, write code, and solve bugs together via direct messaging.</p>
+        </div>
+
+        <div class="process-card">
+          <div class="process-step-num">04</div>
+          <h3>Revive</h3>
+          <p>Complete the build, celebrate the working project, leave peer ratings, and inspire the community.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: EXPLORE CATEGORIES -->
+  <section class="section" id="categories">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Diverse Domains</span>
+        <h2 class="section-title">Explore by Category</h2>
+        <p class="section-desc">Find projects matching your exact skill set and engineering passions.</p>
+      </div>
+
+      <div class="categories-grid">
+        {% for cat in categories %}
+          <a href="{{ url_for('projects.browse', category=cat.slug) }}" class="category-card">
+            <div class="category-icon">
+              <i class="fa-solid {{ cat.icon or 'fa-microchip' }}"></i>
+            </div>
+            <div class="category-info">
+              <h4>{{ cat.name }}</h4>
+              <p>{{ cat.project_count }} open project{{ 's' if cat.project_count != 1 else '' }}</p>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: FEATURED PROJECTS -->
+  <section class="section" style="background: #FFFFFF;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Top Opportunities</span>
+        <h2 class="section-title">Featured Projects</h2>
+        <p class="section-desc">Exciting incomplete projects waiting for an experienced hand to bring them across the finish line.</p>
+      </div>
+
+      {% if featured_projects %}
+        <div class="projects-grid">
+          {% for project in featured_projects %}
+            <div class="project-card">
+              <div class="project-card-media">
+                <img src="{{ project.primary_image }}" alt="{{ project.title }}" class="project-card-img" />
+                <button class="project-card-save-btn save-project-btn" data-project-id="{{ project.id }}" title="Save Project">
+                  <i class="fa-regular fa-heart"></i>
+                </button>
+                <div class="project-card-badge">
+                  <span class="badge badge-open"><i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> {{ project.status }}</span>
+                </div>
+              </div>
+
+              <div class="project-card-body">
+                <div class="project-card-cat">{{ project.category.name if project.category else 'General' }}</div>
+                <h3 class="project-card-title">
+                  <a href="{{ url_for('projects.details', id=project.id) }}">{{ project.title }}</a>
+                </h3>
+                <p class="project-card-summary">{{ project.short_summary }}</p>
+
+                <div class="project-card-skills">
+                  {% for skill in project.skills_list[:3] %}
+                    <span class="skill-tag">{{ skill }}</span>
+                  {% endfor %}
+                  {% if project.skills_list|length > 3 %}
+                    <span class="skill-tag">+{{ project.skills_list|length - 3 }}</span>
+                  {% endif %}
+                </div>
+
+                <div class="project-card-footer">
+                  <div class="project-card-owner">
+                    <img src="{{ project.owner.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" class="owner-thumb" alt="{{ project.owner.full_name }}">
+                    <span>{{ project.owner.full_name.split(' ')[0] }}</span>
+                  </div>
+                  <div class="project-card-budget">
+                    {{ project.budget | currency }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div style="text-align: center; margin-top: 3rem;">
+          <a href="{{ url_for('projects.browse') }}" class="btn btn-outline">View All Projects <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <i class="fa-solid fa-folder-open empty-state-icon"></i>
+          <h3>No Featured Projects Yet</h3>
+          <p>Be the first innovator to share an unfinished build with the community.</p>
+          <a href="{{ url_for('projects.upload') }}" class="btn btn-primary">Upload Project</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- SECTION 4: LATEST PROJECTS -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Fresh Submissions</span>
+        <h2 class="section-title">Latest Incomplete Projects</h2>
+        <p class="section-desc">Recently posted challenges ready for immediate collaboration.</p>
+      </div>
+
+      {% if latest_projects %}
+        <div class="projects-grid">
+          {% for project in latest_projects %}
+            <div class="project-card">
+              <div class="project-card-media">
+                <img src="{{ project.primary_image }}" alt="{{ project.title }}" class="project-card-img" />
+                <button class="project-card-save-btn save-project-btn" data-project-id="{{ project.id }}" title="Save Project">
+                  <i class="fa-regular fa-heart"></i>
+                </button>
+                <div class="project-card-badge">
+                  <span class="badge badge-open"><i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> {{ project.status }}</span>
+                </div>
+              </div>
+
+              <div class="project-card-body">
+                <div class="project-card-cat">{{ project.category.name if project.category else 'General' }}</div>
+                <h3 class="project-card-title">
+                  <a href="{{ url_for('projects.details', id=project.id) }}">{{ project.title }}</a>
+                </h3>
+                <p class="project-card-summary">{{ project.short_summary }}</p>
+
+                <div class="project-card-skills">
+                  {% for skill in project.skills_list[:3] %}
+                    <span class="skill-tag">{{ skill }}</span>
+                  {% endfor %}
+                  {% if project.skills_list|length > 3 %}
+                    <span class="skill-tag">+{{ project.skills_list|length - 3 }}</span>
+                  {% endif %}
+                </div>
+
+                <div class="project-card-footer">
+                  <div class="project-card-owner">
+                    <img src="{{ project.owner.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" class="owner-thumb" alt="{{ project.owner.full_name }}">
+                    <span>{{ project.owner.full_name.split(' ')[0] }}</span>
+                  </div>
+                  <div class="project-card-budget">
+                    {{ project.budget | currency }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- SECTION 5: WHY SECONDSPARK -->
+  <section class="section" style="background: #FFFFFF;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Value Proposition</span>
+        <h2 class="section-title">Why SecondSpark?</h2>
+        <p class="section-desc">Unfinished ideas don't belong in desk drawers. They belong in the hands of someone who knows what to do next.</p>
+      </div>
+
+      <div class="process-grid">
+        <div class="process-card">
+          <i class="fa-solid fa-recycle" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem; display: block;"></i>
+          <h3>Turn Stalled Ideas into Reality</h3>
+          <p>Never let costly components or brilliant software architectures go to waste because you got stuck on a single bug.</p>
+        </div>
+
+        <div class="process-card">
+          <i class="fa-solid fa-graduation-cap" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem; display: block;"></i>
+          <h3>Real Problem-Solving Experience</h3>
+          <p>Gain hands-on debugging experience on real hardware prototypes and complex multi-layered codebases.</p>
+        </div>
+
+        <div class="process-card">
+          <i class="fa-solid fa-certificate" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem; display: block;"></i>
+          <h3>Build a Verified Portfolio</h3>
+          <p>Prove your practical engineering skills with verified completed collaborations and peer reviews.</p>
+        </div>
+
+        <div class="process-card">
+          <i class="fa-solid fa-shield-halved" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem; display: block;"></i>
+          <h3>Safe & Direct Collaboration</h3>
+          <p>Connect with authenticated developers and makers through dedicated messaging channels.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6: PLATFORM STATISTICS -->
+  <section class="section" style="background: linear-gradient(180deg, var(--bg-subtle) 0%, #FFFFFF 100%);">
+    <div class="container">
+      <div class="dashboard-grid">
+        <div class="stat-widget">
+          <div class="stat-icon-wrap"><i class="fa-solid fa-cubes"></i></div>
+          <div>
+            <div class="stat-val">{{ stats.total_projects }}</div>
+            <div class="stat-lbl">Projects Registered</div>
+          </div>
+        </div>
+
+        <div class="stat-widget">
+          <div class="stat-icon-wrap"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <div class="stat-val">{{ stats.completed_projects }}</div>
+            <div class="stat-lbl">Completed Revivals</div>
+          </div>
+        </div>
+
+        <div class="stat-widget">
+          <div class="stat-icon-wrap"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <div class="stat-val">{{ stats.active_collaborators }}</div>
+            <div class="stat-lbl">Active Engineers</div>
+          </div>
+        </div>
+
+        <div class="stat-widget">
+          <div class="stat-icon-wrap"><i class="fa-solid fa-tags"></i></div>
+          <div>
+            <div class="stat-val">{{ stats.categories_count }}</div>
+            <div class="stat-lbl">Specialized Categories</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7: SUCCESS STORIES -->
+  {% if success_reviews %}
+    <section class="section" style="background: #FFFFFF;">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Community Feedback</span>
+          <h2 class="section-title">Success Stories</h2>
+          <p class="section-desc">Hear how makers revived stalled prototypes through SecondSpark collaboration.</p>
+        </div>
+
+        <div class="team-grid">
+          {% for rev in success_reviews %}
+            <div class="team-card" style="text-align: left;">
+              <div style="color: #F59E0B; margin-bottom: 0.75rem;">
+                {% for i in range(rev.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
+              </div>
+              <p style="font-style: italic; font-size: 0.95rem; color: var(--dark-800); margin-bottom: 1.25rem;">"{{ rev.comment }}"</p>
+              <div style="font-size: 0.85rem; font-weight: 700; color: var(--dark-900);">{{ rev.reviewer.full_name if rev.reviewer else 'Collaborator' }}</div>
+              <div style="font-size: 0.78rem; color: var(--primary);">on {{ rev.project.title if rev.project else 'Project' }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- SECTION 8: FAQS -->
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Common Questions</span>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-desc">Everything you need to know about uploading and reviving projects on SecondSpark.</p>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-item active">
+          <div class="faq-question">
+            <span>What kind of projects can I post on SecondSpark?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            Any project that is stalled, incomplete, or broken! This includes hardware prototypes (Arduino, Raspberry Pi, ESP32, robotics), web & mobile applications, AI/ML models, IoT systems, mechanical CAD designs, and college capstones.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Is it free to list and collaborate on projects?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            Yes! Listing projects and contacting creators on SecondSpark is completely free. Project owners can also define compensation/budgets if they are looking for paid specialized assistance.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>How do I protect my intellectual property?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            You can share high-level summaries publicly while keeping proprietary schematics, CAD files, and API keys private until you establish a direct conversation and NDA agreement with your collaborator.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>How do I communicate with project owners?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            Simply click "Offer Help" or "Contact Owner" on any project details page to launch a direct real-time conversation thread within the SecondSpark messaging portal.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 9: CALL TO ACTION -->
+  <section class="section" style="padding-top: 0;">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Have an Unfinished Project Sitting in a Drawer?</h2>
+        <p>Upload it in under 2 minutes. Get connected with passionate engineers and developers ready to help you complete it.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-lg">Post Your Project Now</a>
+          <a href="{{ url_for('projects.browse') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">Explore Projects</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 10: MEET OUR TEAM -->
+  <section class="section" id="team" style="background: #FFFFFF;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Core Engineers</span>
+        <h2 class="section-title">Meet Our Team</h2>
+        <p class="section-desc">The engineering team powering SecondSpark's vision and infrastructure.</p>
+      </div>
+
+      <div class="team-grid">
+        <div class="team-card">
+          <div class="team-avatar-placeholder">KH</div>
+          <h3>Karnati Hitesh</h3>
+          <div class="team-role">Team Lead & Full-Stack Integration</div>
+          <p class="team-bio">Architecting system pipelines, database models, and end-to-end integration.</p>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar-placeholder">SM</div>
+          <h3>Sadineni Mrudul</h3>
+          <div class="team-role">Frontend Development</div>
+          <p class="team-bio">Building responsive glassmorphism interfaces and interactive web components.</p>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar-placeholder">AJ</div>
+          <h3>Annepalli Jashwanth Reddy</h3>
+          <div class="team-role">Authentication & Backend</div>
+          <p class="team-bio">Developing secure session authentication, cryptography, and REST API controllers.</p>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar-placeholder">MK</div>
+          <h3>Siripanga Manikumar</h3>
+          <div class="team-role">Project Management Module</div>
+          <p class="team-bio">Building multi-criteria filters, project lifecycle states, and media management.</p>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar-placeholder">NS</div>
+          <h3>Nandala Supriya</h3>
+          <div class="team-role">Communication Module</div>
+          <p class="team-bio">Creating real-time messaging, conversation channels, and notification services.</p>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar-placeholder">MV</div>
+          <h3>Mamidi Vydhika</h3>
+          <div class="team-role">Testing & Documentation</div>
+          <p class="team-bio">Directing quality assurance, integration testing, and comprehensive API documentation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/three-hero.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/projects.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}Secure Payment — {{ project.title }} — SecondSpark{% endblock %}
+
+{% block extra_css %}
+<style>
+.pay-card { background:#fff; border-radius:20px; padding:2rem; box-shadow:0 8px 30px rgba(0,0,0,0.06); border:1px solid var(--border-subtle); }
+.gateway-option { border:2px solid var(--border-subtle); border-radius:14px; padding:1rem 1.25rem; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:0.85rem; }
+.gateway-option:hover, .gateway-option.selected { border-color:var(--primary); background:var(--primary-light); }
+.gateway-option input[type=radio] { display:none; }
+.upi-logos { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; }
+.upi-logo { height:28px; width:auto; border-radius:6px; }
+.split-row { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; font-size:0.9rem; border-bottom:1px solid var(--border-subtle); }
+.split-row:last-child { border:none; font-weight:700; font-size:1.05rem; }
+.security-badge { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:#065F46; background:#F0FDF4; padding:0.5rem 0.85rem; border-radius:8px; border:1px solid #BBF7D0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:3rem 1.5rem 5rem; max-width:960px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="margin-bottom:2rem;">
+    <a href="{{ url_for('projects.details', id=project.id) }}" style="color:var(--text-muted);font-size:0.88rem;display:inline-flex;align-items:center;gap:0.4rem;margin-bottom:1rem;">
+      <i class="fa-solid fa-arrow-left"></i> Back to Project
+    </a>
+    <h1 style="font-size:1.9rem;margin-bottom:0.3rem;">Secure Checkout</h1>
+    <p style="color:var(--text-muted);">You are paying for: <strong style="color:var(--dark-900);">{{ project.title }}</strong></p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:2rem;align-items:start;">
+
+    <!-- Left: Payment Form -->
+    <div>
+      <form action="{{ url_for('payments.initiate') }}" method="POST" id="checkout-form">
+        <input type="hidden" name="project_id" value="{{ project.id }}">
+
+        <!-- Step 1: Amount -->
+        <div class="pay-card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1.25rem;display:flex;align-items:center;gap:0.5rem;">
+            <span style="width:26px;height:26px;background:var(--primary);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;">1</span>
+            Repair Cost (INR)
+          </h3>
+
+          <div style="position:relative;margin-bottom:0.75rem;">
+            <span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);font-size:1.2rem;font-weight:700;color:var(--dark-700);">₹</span>
+            <input
+              type="number"
+              name="amount"
+              id="amount-input"
+              class="form-control"
+              style="padding-left:2.5rem;font-size:1.25rem;font-weight:700;height:56px;"
+              value="{{ default_amount | int }}"
+              min="{{ min_amount | int }}"
+              step="50"
+              required
+            >
+          </div>
+          <p style="font-size:0.8rem;color:var(--text-muted);">Minimum ₹{{ min_amount | int }}. Agreed upon repair cost in Indian Rupees.</p>
+        </div>
+
+        <!-- Step 2: Gateway Selection -->
+        <div class="pay-card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1.25rem;display:flex;align-items:center;gap:0.5rem;">
+            <span style="width:26px;height:26px;background:var(--primary);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;">2</span>
+            Choose Payment Gateway
+          </h3>
+
+          <div style="display:flex;flex-direction:column;gap:0.85rem;">
+            <!-- Gateway 1 -->
+            <label class="gateway-option selected" id="g1-label">
+              <input type="radio" name="gateway" value="gateway1" checked onchange="selectGateway(1)">
+              <div>
+                <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;">Primary Gateway — Recommended</div>
+                <div class="upi-logos">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" class="upi-logo" alt="Google Pay" onerror="this.style.display='none'">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" class="upi-logo" alt="PhonePe" onerror="this.style.display='none'">
+                  <span style="font-size:0.82rem;color:var(--text-muted);font-weight:600;">GPay · PhonePe · BHIM · Any UPI</span>
+                </div>
+              </div>
+              <i class="fa-solid fa-circle-check" id="g1-check" style="margin-left:auto;color:var(--primary);font-size:1.2rem;"></i>
+            </label>
+
+            <!-- Gateway 2 -->
+            <label class="gateway-option" id="g2-label">
+              <input type="radio" name="gateway" value="gateway2" onchange="selectGateway(2)">
+              <div>
+                <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;">Alternate Gateway — Backup</div>
+                <div class="upi-logos">
+                  <span style="font-size:0.82rem;color:var(--text-muted);font-weight:600;">Paytm · Amazon Pay · Any UPI App</span>
+                </div>
+              </div>
+              <i class="fa-regular fa-circle" id="g2-check" style="margin-left:auto;color:var(--text-light);font-size:1.2rem;"></i>
+            </label>
+          </div>
+        </div>
+
+        <!-- Step 3: Terms Agreement -->
+        <div class="pay-card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;">
+            <span style="width:26px;height:26px;background:var(--primary);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;">3</span>
+            Confirm & Agree
+          </h3>
+          <label style="display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer;font-size:0.88rem;color:var(--dark-700);line-height:1.6;">
+            <input type="checkbox" name="agreed" id="agreed-check" required style="margin-top:3px;width:16px;height:16px;accent-color:var(--primary);">
+            <span>
+              I agree that <strong>₹<span id="commission-display">{{ commission | round(2) }}</span></strong> (2%) will be deducted as SecondSpark platform fee, and the remaining
+              <strong>₹<span id="net-display">{{ net | round(2) }}</span></strong> will be credited to the project owner upon successful repair verification.
+              I confirm this payment is final and non-refundable unless fraud is proven.
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="pay-btn" style="font-size:1.05rem;height:54px;">
+          <i class="fa-solid fa-lock"></i> Proceed to Pay ₹<span id="total-display">{{ default_amount | int }}</span>
+        </button>
+
+        <div style="display:flex;justify-content:center;gap:1.5rem;margin-top:1rem;flex-wrap:wrap;">
+          <div class="security-badge"><i class="fa-solid fa-shield-halved"></i> 256-bit SSL Encrypted</div>
+          <div class="security-badge"><i class="fa-solid fa-lock"></i> RBI Compliant UPI</div>
+          <div class="security-badge"><i class="fa-brands fa-google-pay" style="font-size:1rem;"></i> GPay Supported</div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right: Order Summary -->
+    <div style="position:sticky;top:90px;">
+      <div class="pay-card" style="margin-bottom:1.25rem;">
+        <h4 style="margin-bottom:1.25rem;font-size:1.05rem;">Order Summary</h4>
+        <div style="display:flex;align-items:center;gap:0.85rem;padding-bottom:1rem;border-bottom:1px solid var(--border-subtle);margin-bottom:1rem;">
+          <img src="{{ project.primary_image }}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid var(--border-subtle);" alt="{{ project.title }}">
+          <div>
+            <div style="font-weight:700;font-size:0.92rem;color:var(--dark-900);">{{ project.title }}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">by {{ project.owner.full_name }}</div>
+          </div>
+        </div>
+
+        <div class="split-row">
+          <span style="color:var(--text-muted);">Repair Cost</span>
+          <span id="s-amount">₹{{ default_amount | int }}</span>
+        </div>
+        <div class="split-row">
+          <span style="color:var(--text-muted);">Platform Fee (2%)</span>
+          <span id="s-commission" style="color:#EF4444;">−₹{{ commission | round(2) }}</span>
+        </div>
+        <div class="split-row">
+          <span style="color:var(--text-muted);">Owner Receives</span>
+          <span id="s-net" style="color:#10B981;">₹{{ net | round(2) }}</span>
+        </div>
+        <div class="split-row" style="margin-top:0.5rem;padding-top:0.5rem;border-top:2px solid var(--border-subtle);">
+          <span>You Pay</span>
+          <span id="s-total" style="color:var(--primary);font-size:1.15rem;">₹{{ default_amount | int }}</span>
+        </div>
+      </div>
+
+      <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:1rem;font-size:0.82rem;color:#92400E;">
+        <i class="fa-solid fa-circle-info" style="margin-right:0.4rem;"></i>
+        Payment is held securely. Owner receives funds only after you confirm the repair is complete.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const amtInput   = document.getElementById('amount-input');
+const commDisp   = document.getElementById('commission-display');
+const netDisp    = document.getElementById('net-display');
+const totalDisp  = document.getElementById('total-display');
+const sAmt       = document.getElementById('s-amount');
+const sComm      = document.getElementById('s-commission');
+const sNet       = document.getElementById('s-net');
+const sTotal     = document.getElementById('s-total');
+const MIN        = {{ min_amount }};
+
+function fmt(n) { return n.toLocaleString('en-IN', {minimumFractionDigits:0, maximumFractionDigits:2}); }
+
+function recalc() {
+  let amt = parseFloat(amtInput.value) || 0;
+  if (amt < MIN) amt = MIN;
+  const comm = Math.round(amt * 0.02 * 100) / 100;
+  const net  = Math.round((amt - comm) * 100) / 100;
+  commDisp.textContent = fmt(comm);
+  netDisp.textContent  = fmt(net);
+  totalDisp.textContent = fmt(amt);
+  sAmt.textContent     = '₹' + fmt(amt);
+  sComm.textContent    = '−₹' + fmt(comm);
+  sNet.textContent     = '₹' + fmt(net);
+  sTotal.textContent   = '₹' + fmt(amt);
+}
+
+amtInput.addEventListener('input', recalc);
+recalc();
+
+function selectGateway(n) {
+  const g1l = document.getElementById('g1-label');
+  const g2l = document.getElementById('g2-label');
+  const g1c = document.getElementById('g1-check');
+  const g2c = document.getElementById('g2-check');
+  if (n === 1) {
+    g1l.classList.add('selected'); g2l.classList.remove('selected');
+    g1c.className = 'fa-solid fa-circle-check'; g1c.style.color = 'var(--primary)';
+    g2c.className = 'fa-regular fa-circle'; g2c.style.color = 'var(--text-light)';
+  } else {
+    g2l.classList.add('selected'); g1l.classList.remove('selected');
+    g2c.className = 'fa-solid fa-circle-check'; g2c.style.color = 'var(--primary)';
+    g1c.className = 'fa-regular fa-circle'; g1c.style.color = 'var(--text-light)';
+  }
+}
+</script>
+{% endblock %}

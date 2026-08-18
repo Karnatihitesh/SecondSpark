@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ project.title }} — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 5rem;">
+
+  <!-- Breadcrumbs -->
+  <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+    <a href="{{ url_for('main.index') }}">Home</a>
+    <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i>
+    <a href="{{ url_for('projects.browse') }}">Projects</a>
+    <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i>
+    <span style="color: var(--dark-900); font-weight: 600;">{{ project.title }}</span>
+  </div>
+
+  <!-- Main Details Grid -->
+  <div style="display: grid; grid-template-columns: 1.6fr 0.9fr; gap: 2.5rem; align-items: start;">
+    
+    <!-- Left Column: Media & Project Narrative -->
+    <div>
+      <!-- Header Meta -->
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+          <span class="badge badge-open"><i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> {{ project.status }}</span>
+          <span class="badge" style="background: #F3F4F6; color: var(--dark-700);">Condition: {{ project.current_condition }}</span>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Posted {{ project.created_at | timeago }}</span>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">• <i class="fa-regular fa-eye"></i> {{ project.views_count }} views</span>
+        </div>
+        <h1 style="font-size: 2.2rem; line-height: 1.25; margin-bottom: 0.75rem;">{{ project.title }}</h1>
+        <p style="font-size: 1.05rem; color: var(--text-muted); line-height: 1.6;">{{ project.short_summary }}</p>
+      </div>
+
+      <!-- Image Gallery -->
+      <div class="glass-card" style="margin-bottom: 2rem; overflow: hidden;">
+        <div style="height: 380px; background: #000; position: relative;">
+          <img id="main-gallery-img" src="{{ project.primary_image }}" alt="{{ project.title }}" style="width: 100%; height: 100%; object-fit: contain;" />
+        </div>
+        {% if project.images.count() > 1 %}
+          <div style="display: flex; gap: 0.75rem; padding: 1rem; overflow-x: auto; background: var(--bg-subtle);">
+            {% for img in project.images %}
+              <img 
+                src="{{ img.image_url }}" 
+                alt="Thumbnail" 
+                class="gallery-thumb"
+                onclick="document.getElementById('main-gallery-img').src='{{ img.image_url }}'"
+                style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;"
+                onmouseover="this.style.borderColor='var(--primary)'"
+                onmouseout="this.style.borderColor='transparent'"
+              />
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Current Problems & Faults (Highlighted Callout) -->
+      <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-left: 5px solid #F59E0B; border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+        <h3 style="color: #92400E; font-size: 1.15rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-solid fa-triangle-exclamation"></i> Stalled Issue & Faults to Solve
+        </h3>
+        <p style="color: #78350F; font-size: 0.95rem; line-height: 1.6; white-space: pre-line;">{{ project.problems_faults }}</p>
+      </div>
+
+      <!-- Detailed Description -->
+      <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1rem;">Project Background & Overview</h3>
+        <div style="color: var(--dark-800); line-height: 1.7; font-size: 0.98rem; white-space: pre-line;">
+          {{ project.description }}
+        </div>
+      </div>
+
+      <!-- Specific Help Required -->
+      <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: var(--primary-dark);">
+          <i class="fa-solid fa-handshake-angle"></i> Collaboration Needs & Objectives
+        </h3>
+        <div style="color: var(--dark-800); line-height: 1.7; font-size: 0.98rem; white-space: pre-line;">
+          {{ project.help_required }}
+        </div>
+      </div>
+
+      <!-- Required Skills -->
+      <div class="glass-card" style="padding: 1.75rem; margin-bottom: 2rem;">
+        <h3 style="font-size: 1.15rem; margin-bottom: 0.85rem;">Skills Needed for this Revival</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          {% for skill in project.skills_list %}
+            <span class="skill-tag" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">{{ skill }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Attached Documents & Schematics -->
+      {% if project.documents.count() > 0 %}
+        <div class="glass-card" style="padding: 1.75rem; margin-bottom: 2rem;">
+          <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Attached Files & Documentation</h3>
+          <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+            {% for doc in project.documents %}
+              <a href="{{ doc.file_url }}" target="_blank" class="btn btn-outline" style="justify-content: flex-start;">
+                <i class="fa-solid fa-file-lines" style="color: var(--primary);"></i> {{ doc.filename }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Reviews Section (for completed projects) -->
+      {% if project.status == 'Completed' or project.reviews.count() > 0 %}
+        <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
+          <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Collaboration Reviews</h3>
+          
+          {% if project.reviews.count() > 0 %}
+            <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2rem;">
+              {% for rev in project.reviews %}
+                <div style="padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span style="font-weight: 700; color: var(--dark-900);">{{ rev.reviewer.full_name }}</span>
+                    <div style="color: #F59E0B; font-size: 0.85rem;">
+                      {% for i in range(rev.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
+                    </div>
+                  </div>
+                  <p style="font-size: 0.92rem; color: var(--text-muted);">{{ rev.comment }}</p>
+                  <span style="font-size: 0.75rem; color: var(--text-light);">{{ rev.created_at | timeago }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if current_user and (current_user.id == project.user_id or current_user in project.conversations.all()) %}
+            <div style="background: var(--bg-subtle); padding: 1.5rem; border-radius: var(--radius-md);">
+              <h4 style="margin-bottom: 0.75rem;">Leave a Review for this Revival</h4>
+              <form action="{{ url_for('reviews.create', project_id=project.id) }}" method="POST">
+                <div class="form-group">
+                  <label class="form-label">Rating (1 to 5 Stars)</label>
+                  <select name="rating" class="form-control" required>
+                    <option value="5">⭐⭐⭐⭐⭐ 5 - Outstanding Collaboration</option>
+                    <option value="4">⭐⭐⭐⭐ 4 - Great Result</option>
+                    <option value="3">⭐⭐⭐ 3 - Satisfactory</option>
+                    <option value="2">⭐⭐ 2 - Subpar</option>
+                    <option value="1">⭐ 1 - Problematic</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Feedback</label>
+                  <textarea name="comment" class="form-control" rows="3" placeholder="Describe the collaboration quality and outcome..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Sidebar & Actions -->
+    <div>
+      <!-- Key Parameters Card -->
+      <div class="glass-card" style="padding: 1.75rem; margin-bottom: 1.75rem;">
+        
+        <div style="margin-bottom: 1.25rem;">
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Budget / Compensation</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--dark-900); margin-top: 0.2rem;">
+            {{ project.budget | currency }}
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">{{ project.budget_type }}</div>
+        </div>
+
+        <div style="height: 1px; background: var(--border-subtle); margin: 1.25rem 0;"></div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.9rem;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);"><i class="fa-solid fa-location-dot"></i> Location:</span>
+            <span style="font-weight: 600;">{{ project.location }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);"><i class="fa-solid fa-clock"></i> Target Timeline:</span>
+            <span style="font-weight: 600;">{{ project.deadline or 'Flexible' }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);"><i class="fa-solid fa-tag"></i> Category:</span>
+            <span style="font-weight: 600; color: var(--primary-dark);">{{ project.category.name if project.category else 'General' }}</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="margin-top: 1.75rem; display: flex; flex-direction: column; gap: 0.75rem;">
+          {% if current_user and current_user.id == project.user_id %}
+            <a href="{{ url_for('projects.edit', id=project.id) }}" class="btn btn-secondary btn-block">
+              <i class="fa-solid fa-pen-to-square"></i> Edit Project Details
+            </a>
+
+            <!-- Status Changer Dropdown -->
+            <form action="{{ url_for('projects.update_status', id=project.id) }}" method="POST" style="margin-top: 0.25rem;">
+              <div class="form-group" style="margin-bottom: 0.5rem;">
+                <label class="form-label" style="font-size: 0.8rem;">Change Status</label>
+                <select name="status" class="form-control" onchange="this.form.submit()" style="padding: 0.5rem;">
+                  <option value="Open" {% if project.status == 'Open' %}selected{% endif %}>Open</option>
+                  <option value="Help Needed" {% if project.status == 'Help Needed' %}selected{% endif %}>Help Needed</option>
+                  <option value="In Discussion" {% if project.status == 'In Discussion' %}selected{% endif %}>In Discussion</option>
+                  <option value="In Progress" {% if project.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                  <option value="Completed" {% if project.status == 'Completed' %}selected{% endif %}>Completed</option>
+                  <option value="Closed" {% if project.status == 'Closed' %}selected{% endif %}>Closed</option>
+                </select>
+              </div>
+            </form>
+
+            <form action="{{ url_for('projects.delete', id=project.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this project?');">
+              <button type="submit" class="btn btn-danger btn-block btn-sm">
+                <i class="fa-solid fa-trash-can"></i> Delete Project
+              </button>
+            </form>
+
+          {% else %}
+            <!-- Offer Help / Contact Owner Modal trigger -->
+            <button class="btn btn-primary btn-block btn-lg" onclick="document.getElementById('offer-help-modal').style.display='flex'">
+              <i class="fa-solid fa-bolt"></i> Offer Help / Collaborate
+            </button>
+
+            <!-- Agree & Pay UPI Button -->
+            {% if current_user %}
+            <a href="{{ url_for('payments.checkout', project_id=project.id) }}" class="btn btn-block btn-lg" style="background:linear-gradient(135deg,#10B981,#065F46);color:#fff;border:none;font-weight:700;display:flex;align-items:center;justify-content:center;gap:0.5rem;height:50px;border-radius:var(--radius-full);box-shadow:0 4px 16px rgba(16,185,129,0.3);transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(16,185,129,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(16,185,129,0.3)'">
+              <i class="fa-solid fa-lock"></i> Agree & Pay via UPI
+            </a>
+            <div style="text-align:center;font-size:0.78rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+              <i class="fa-solid fa-shield-halved" style="color:var(--primary);"></i>
+              Min ₹500 · GPay · PhonePe · BHIM · 2% platform fee
+            </div>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-block" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+              <i class="fa-solid fa-lock"></i> Log in to Pay
+            </a>
+            {% endif %}
+
+            <!-- Save Bookmark Button -->
+            <button class="btn btn-outline btn-block save-project-btn {% if is_saved %}saved{% endif %}" data-project-id="{{ project.id }}">
+              <i class="{% if is_saved %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %}" style="color: #EF4444;"></i>
+              <span class="save-btn-text">{% if is_saved %}Bookmarked{% else %}Save Project{% endif %}</span>
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Project Creator Profile Card -->
+      <div class="glass-card" style="padding: 1.75rem; margin-bottom: 1.75rem; text-align: center;">
+        <img src="{{ project.owner.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 76px; height: 76px; border-radius: 50%; object-fit: cover; margin: 0 auto 0.75rem;" alt="{{ project.owner.full_name }}" />
+        <h4 style="font-size: 1.15rem; margin-bottom: 0.2rem;">
+          <a href="{{ url_for('auth.public_profile', username=project.owner.username) }}">{{ project.owner.full_name }}</a>
+        </h4>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;">@{{ project.owner.username }}</div>
+        
+        {% if project.owner.rating_summary.count > 0 %}
+          <div style="color: #F59E0B; font-size: 0.88rem; margin-bottom: 0.85rem;">
+            <i class="fa-solid fa-star"></i> {{ project.owner.rating_summary.average }} ({{ project.owner.rating_summary.count }} reviews)
+          </div>
+        {% endif %}
+
+        {% if project.owner.bio %}
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">{{ project.owner.bio }}</p>
+        {% endif %}
+
+        <a href="{{ url_for('auth.public_profile', username=project.owner.username) }}" class="btn btn-outline btn-sm btn-block">
+          View Creator Profile
+        </a>
+      </div>
+
+      <!-- Report Content Modal Trigger -->
+      <div style="text-align: center;">
+        <button onclick="document.getElementById('report-modal').style.display='flex'" style="background: none; border: none; color: var(--text-light); font-size: 0.82rem; cursor: pointer;">
+          <i class="fa-solid fa-flag"></i> Report Inappropriate Content
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Offer Help Modal -->
+<div id="offer-help-modal" class="mobile-nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 3000;">
+  <div class="glass-card" style="background: #fff; max-width: 500px; width: 90%; padding: 2rem; position: relative;">
+    <button onclick="document.getElementById('offer-help-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.25rem; cursor: pointer;">&times;</button>
+    <h3 style="margin-bottom: 0.5rem;">Offer Collaboration on this Build</h3>
+    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+      Send a direct proposal or message to {{ project.owner.full_name }} explaining how your skills can help resolve their technical blocks.
+    </p>
+
+    <form action="{{ url_for('messages.start_conversation', project_id=project.id) }}" method="POST">
+      <div class="form-group">
+        <label class="form-label">Your Message / Proposal</label>
+        <textarea name="initial_message" class="form-control" rows="4" placeholder="Hi {{ project.owner.full_name.split(' ')[0] }}, I saw your issue with {{ project.title }} and I have experience with..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Send Message & Start Conversation</button>
+    </form>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div id="report-modal" class="mobile-nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 3000;">
+  <div class="glass-card" style="background: #fff; max-width: 480px; width: 90%; padding: 2rem; position: relative;">
+    <button onclick="document.getElementById('report-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.25rem; cursor: pointer;">&times;</button>
+    <h3 style="margin-bottom: 0.5rem;">Report this Project</h3>
+    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+      Our moderation team reviews all reports to keep SecondSpark safe and constructive.
+    </p>
+
+    <form action="{{ url_for('reports.create') }}" method="POST">
+      <input type="hidden" name="project_id" value="{{ project.id }}">
+      <input type="hidden" name="reported_user_id" value="{{ project.user_id }}">
+      
+      <div class="form-group">
+        <label class="form-label">Reason</label>
+        <select name="reason" class="form-control" required>
+          <option value="Spam">Spam or Irrelevant Listing</option>
+          <option value="Inappropriate Content">Inappropriate / Offensive Content</option>
+          <option value="Copyright Violation">Copyright or IP Infringement</option>
+          <option value="Scam/Fraud">Scam or Fraudulent Offer</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Detailed Explanation</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Please describe the issue..." required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-danger btn-block">Submit Report</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/projects.js') }}"></script>
+{% endblock %}

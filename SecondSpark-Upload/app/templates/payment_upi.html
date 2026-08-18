@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Pay via UPI — SecondSpark{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes pulse-ring { 0%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.08);opacity:0.2} 100%{transform:scale(1);opacity:0.6} }
+.qr-wrap { position:relative; display:inline-block; }
+.qr-pulse { position:absolute; inset:-10px; border-radius:20px; background:var(--primary); animation:pulse-ring 2s ease infinite; z-index:0; }
+.qr-box { position:relative; z-index:1; background:#fff; border-radius:16px; padding:1.25rem; box-shadow:0 8px 30px rgba(0,0,0,0.1); }
+.upi-app-btn { display:flex; align-items:center; gap:0.65rem; padding:0.75rem 1rem; border:1.5px solid var(--border-subtle); border-radius:12px; font-size:0.88rem; font-weight:600; cursor:pointer; transition:all 0.18s; text-decoration:none; color:var(--dark-800); background:#fff; }
+.upi-app-btn:hover { border-color:var(--primary); background:var(--primary-light); transform:translateY(-1px); box-shadow:0 4px 12px var(--primary-glow); }
+.upi-app-btn img { width:32px; height:32px; border-radius:8px; object-fit:contain; }
+.step-dot { width:28px; height:28px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; flex-shrink:0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:3rem 1.5rem 5rem; max-width:900px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="text-align:center; margin-bottom:2.5rem;">
+    <div style="display:inline-flex; align-items:center; gap:0.5rem; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:9999px; padding:0.4rem 1rem; margin-bottom:1rem;">
+      <i class="fa-solid fa-shield-halved" style="color:#16A34A;"></i>
+      <span style="font-size:0.82rem; font-weight:700; color:#166534;">256-bit Encrypted · RBI Compliant UPI</span>
+    </div>
+    <h1 style="font-size:1.9rem; margin-bottom:0.4rem;">Complete Your Payment</h1>
+    <p style="color:var(--text-muted);">Order: <code style="background:var(--bg-subtle); padding:0.2rem 0.5rem; border-radius:6px; font-size:0.85rem;">{{ order_id }}</code></p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;">
+
+    <!-- Left: QR + UPI apps -->
+    <div style="text-align:center;">
+      <div class="qr-wrap" style="margin-bottom:1.5rem;">
+        <div class="qr-pulse"></div>
+        <div class="qr-box">
+          <!-- Simulated QR — in production render actual UPI QR image from payment gateway -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+            <rect width="200" height="200" fill="white"/>
+            <rect x="10" y="10" width="60" height="60" rx="4" fill="#111"/>
+            <rect x="18" y="18" width="44" height="44" rx="2" fill="white"/>
+            <rect x="24" y="24" width="32" height="32" rx="1" fill="#111"/>
+            <rect x="130" y="10" width="60" height="60" rx="4" fill="#111"/>
+            <rect x="138" y="18" width="44" height="44" rx="2" fill="white"/>
+            <rect x="144" y="24" width="32" height="32" rx="1" fill="#111"/>
+            <rect x="10" y="130" width="60" height="60" rx="4" fill="#111"/>
+            <rect x="18" y="138" width="44" height="44" rx="2" fill="white"/>
+            <rect x="24" y="144" width="32" height="32" rx="1" fill="#111"/>
+            <rect x="80" y="10" width="8" height="8" fill="#111"/><rect x="96" y="10" width="8" height="8" fill="#111"/><rect x="112" y="10" width="8" height="8" fill="#111"/>
+            <rect x="80" y="26" width="8" height="8" fill="#111"/><rect x="104" y="26" width="8" height="8" fill="#111"/>
+            <rect x="80" y="42" width="16" height="8" fill="#111"/><rect x="104" y="42" width="8" height="8" fill="#111"/>
+            <rect x="80" y="58" width="8" height="8" fill="#111"/><rect x="96" y="58" width="16" height="8" fill="#111"/>
+            <rect x="10" y="80" width="8" height="8" fill="#111"/><rect x="26" y="80" width="8" height="8" fill="#111"/><rect x="42" y="80" width="24" height="8" fill="#111"/>
+            <rect x="80" y="80" width="8" height="8" fill="#111"/><rect x="96" y="80" width="8" height="8" fill="#111"/><rect x="112" y="80" width="8" height="8" fill="#111"/>
+            <rect x="130" y="80" width="8" height="8" fill="#111"/><rect x="146" y="80" width="24" height="8" fill="#111"/>
+            <rect x="80" y="96" width="24" height="8" fill="#111"/><rect x="112" y="96" width="8" height="8" fill="#111"/><rect x="130" y="96" width="8" height="8" fill="#111"/>
+            <rect x="80" y="112" width="8" height="8" fill="#111"/><rect x="96" y="112" width="16" height="8" fill="#111"/><rect x="120" y="112" width="24" height="8"/><rect x="120" y="112" width="24" height="8" fill="#111"/>
+            <rect x="80" y="130" width="8" height="8" fill="#111"/><rect x="96" y="130" width="8" height="8" fill="#111"/><rect x="112" y="130" width="8" height="8" fill="#111"/>
+            <rect x="80" y="146" width="16" height="8" fill="#111"/><rect x="104" y="146" width="8" height="8" fill="#111"/><rect x="120" y="146" width="8" height="8" fill="#111"/>
+            <rect x="80" y="162" width="8" height="8" fill="#111"/><rect x="96" y="162" width="8" height="8" fill="#111"/><rect x="112" y="162" width="8" height="8" fill="#111"/>
+            <rect x="130" y="130" width="60" height="60" rx="2" fill="none" stroke="#111" stroke-width="6"/>
+            <rect x="144" y="144" width="32" height="32" fill="#111"/>
+            <!-- SS logo center -->
+            <rect x="88" y="88" width="24" height="24" rx="4" fill="#35C98A"/>
+            <text x="100" y="105" text-anchor="middle" fill="white" font-size="11" font-weight="bold">SS</text>
+          </svg>
+          <div style="margin-top:0.75rem; font-size:0.78rem; color:var(--text-muted);">Scan with any UPI app</div>
+        </div>
+      </div>
+
+      <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;">Pay to UPI ID</div>
+      <div style="font-family:var(--font-mono); font-size:0.95rem; font-weight:700; color:var(--dark-900); background:var(--bg-subtle); padding:0.5rem 1rem; border-radius:8px; border:1px solid var(--border-subtle); display:inline-block; margin-bottom:1.5rem; word-break:break-all;">
+        {{ admin_upi }}
+        <button onclick="navigator.clipboard.writeText('{{ admin_upi }}'); this.textContent='✓'" style="background:none;border:none;color:var(--primary);cursor:pointer;margin-left:0.5rem;font-size:0.85rem;">Copy</button>
+      </div>
+
+      <!-- UPI App Direct Launch Buttons -->
+      <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Or open directly in your UPI app</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+        <a href="{{ upi_url }}" class="upi-app-btn">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#4285F4,#34A853);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.75rem;">G</div>
+          Google Pay
+        </a>
+        <a href="{{ upi_url }}" class="upi-app-btn">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#5F259F,#6B2FAF);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.75rem;">Pe</div>
+          PhonePe
+        </a>
+        <a href="{{ upi_url }}" class="upi-app-btn">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#00BAF2,#0066CC);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.75rem;">B</div>
+          BHIM
+        </a>
+        <a href="{{ upi_url }}" class="upi-app-btn">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#00BAF2,#002970);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.75rem;">Pt</div>
+          Paytm
+        </a>
+      </div>
+    </div>
+
+    <!-- Right: Amount & Confirm UTR -->
+    <div>
+      <!-- Amount Box -->
+      <div style="background:linear-gradient(135deg,var(--dark-900),#172554);border-radius:18px;padding:1.75rem;color:#fff;margin-bottom:1.5rem;text-align:center;">
+        <div style="font-size:0.82rem;color:#9CA3AF;margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.06em;">Total Amount</div>
+        <div style="font-size:2.75rem;font-weight:800;letter-spacing:-0.02em;color:#fff;">₹{{ txn.amount_inr | int }}</div>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:1rem 0;"></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:#9CA3AF;">
+          <span>Platform fee (2%)</span><span style="color:#FCA5A5;">−₹{{ txn.commission_inr }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:#9CA3AF;margin-top:0.4rem;">
+          <span>Owner receives</span><span style="color:#6EE7B7;">₹{{ txn.net_amount_inr }}</span>
+        </div>
+      </div>
+
+      <!-- How to Pay Steps -->
+      <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem;">
+        <div style="font-weight:700;margin-bottom:1rem;font-size:0.95rem;">How to complete payment</div>
+        {% for step in [
+          ('Scan the QR code or tap an app button above', 'qrcode'),
+          ('Enter amount ₹' ~ (txn.amount_inr | int) ~ ' and pay to ' ~ admin_upi, 'indian-rupee-sign'),
+          ('Note down the 12-digit UTR / Transaction ID shown after payment', 'clipboard'),
+          ('Enter UTR below to confirm your payment', 'circle-check')
+        ] %}
+        <div style="display:flex;gap:0.85rem;align-items:flex-start;{% if not loop.last %}margin-bottom:0.85rem;{% endif %}">
+          <div class="step-dot">{{ loop.index }}</div>
+          <div style="font-size:0.88rem;color:var(--dark-700);padding-top:4px;">{{ step[0] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- UTR Confirmation Form -->
+      <form action="{{ url_for('payments.confirm') }}" method="POST">
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label class="form-label" style="font-weight:700;">UPI Transaction ID / UTR</label>
+          <input
+            type="text"
+            name="utr"
+            class="form-control"
+            placeholder="e.g. 426813579012"
+            style="font-family:var(--font-mono);letter-spacing:0.05em;font-size:1.05rem;"
+            required
+            minlength="8"
+            maxlength="50"
+            pattern="[A-Za-z0-9]+"
+          >
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.35rem;">Found in your UPI app under transaction history / payment receipt.</p>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="font-size:1.05rem;height:54px;">
+          <i class="fa-solid fa-circle-check"></i> I've Paid — Confirm Payment
+        </button>
+      </form>
+
+      <div style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--text-muted);">
+        <i class="fa-solid fa-clock"></i> Complete payment within 30 minutes · Order <code>{{ order_id }}</code>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

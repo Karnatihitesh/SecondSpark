@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Saved Bookmarks — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
+  
+  <div style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2.2rem; margin-bottom: 0.25rem;">Saved Projects</h1>
+      <p style="color: var(--text-muted);">Incomplete builds and collaboration opportunities you've bookmarked.</p>
+    </div>
+    <a href="{{ url_for('projects.browse') }}" class="btn btn-primary">
+      <i class="fa-solid fa-compass"></i> Discover More Projects
+    </a>
+  </div>
+
+  {% if projects %}
+    <div class="projects-grid">
+      {% for project in projects %}
+        <div class="project-card">
+          <div class="project-card-media">
+            <img src="{{ project.primary_image }}" alt="{{ project.title }}" class="project-card-img" />
+            <button class="project-card-save-btn save-project-btn saved" data-project-id="{{ project.id }}" title="Remove Bookmark">
+              <i class="fa-solid fa-heart" style="color: #EF4444;"></i>
+            </button>
+            <div class="project-card-badge">
+              <span class="badge badge-open"><i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> {{ project.status }}</span>
+            </div>
+          </div>
+
+          <div class="project-card-body">
+            <div class="project-card-cat">{{ project.category.name if project.category else 'General' }}</div>
+            <h3 class="project-card-title">
+              <a href="{{ url_for('projects.details', id=project.id) }}">{{ project.title }}</a>
+            </h3>
+            <p class="project-card-summary">{{ project.short_summary }}</p>
+
+            <div class="project-card-skills">
+              {% for skill in project.skills_list[:3] %}
+                <span class="skill-tag">{{ skill }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="project-card-footer">
+              <div class="project-card-owner">
+                <img src="{{ project.owner.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" class="owner-thumb" alt="{{ project.owner.full_name }}">
+                <span>{{ project.owner.full_name.split(' ')[0] }}</span>
+              </div>
+              <div class="project-card-budget">
+                {{ project.budget | currency }}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="fa-regular fa-bookmark empty-state-icon"></i>
+      <h3>No Saved Projects Yet</h3>
+      <p>Browse through incomplete hardware and software builds and click the heart icon to save them here for later.</p>
+      <a href="{{ url_for('projects.browse') }}" class="btn btn-primary">Browse Projects</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/projects.js') }}"></script>
+{% endblock %}

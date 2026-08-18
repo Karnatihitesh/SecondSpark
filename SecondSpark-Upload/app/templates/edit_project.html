@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ project.title }} — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3rem; padding-bottom: 5rem; max-width: 860px;">
+  
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Edit Project Listing</h1>
+    <p style="color: var(--text-muted);">Update details, resolve problems, or add new images to your project.</p>
+  </div>
+
+  <div class="glass-card" style="padding: 2.5rem; background: #fff;">
+    <form action="{{ url_for('projects.edit', id=project.id) }}" method="POST" enctype="multipart/form-data">
+      
+      <div class="form-group">
+        <label class="form-label">Project Title *</label>
+        <input type="text" name="title" class="form-control" value="{{ project.title }}" required />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select name="category_id" class="form-control" required>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if project.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-control">
+            <option value="Open" {% if project.status == 'Open' %}selected{% endif %}>Open</option>
+            <option value="Help Needed" {% if project.status == 'Help Needed' %}selected{% endif %}>Help Needed</option>
+            <option value="In Discussion" {% if project.status == 'In Discussion' %}selected{% endif %}>In Discussion</option>
+            <option value="In Progress" {% if project.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+            <option value="Completed" {% if project.status == 'Completed' %}selected{% endif %}>Completed</option>
+            <option value="Closed" {% if project.status == 'Closed' %}selected{% endif %}>Closed</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Current Condition</label>
+          <select name="current_condition" class="form-control">
+            <option value="Incomplete" {% if project.current_condition == 'Incomplete' %}selected{% endif %}>Incomplete</option>
+            <option value="Abandoned" {% if project.current_condition == 'Abandoned' %}selected{% endif %}>Abandoned</option>
+            <option value="Faulty" {% if project.current_condition == 'Faulty' %}selected{% endif %}>Faulty</option>
+            <option value="Hardware Issues" {% if project.current_condition == 'Hardware Issues' %}selected{% endif %}>Hardware Issues</option>
+            <option value="Untested" {% if project.current_condition == 'Untested' %}selected{% endif %}>Untested</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Short Summary *</label>
+        <input type="text" name="short_summary" class="form-control" value="{{ project.short_summary }}" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Detailed Description *</label>
+        <textarea name="description" class="form-control" rows="5" required>{{ project.description }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" style="color: #B45309;">Current Problems / Faults *</label>
+        <textarea name="problems_faults" class="form-control" rows="4" required>{{ project.problems_faults }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" style="color: var(--primary-dark);">Help Required *</label>
+        <textarea name="help_required" class="form-control" rows="4" required>{{ project.help_required }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Required Skills *</label>
+        <input type="text" name="required_skills" class="form-control" value="{{ project.required_skills }}" required />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Budget ($)</label>
+          <input type="number" name="budget" class="form-control" value="{{ project.budget }}" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Budget Type</label>
+          <select name="budget_type" class="form-control">
+            <option value="Fixed" {% if project.budget_type == 'Fixed' %}selected{% endif %}>Fixed Amount</option>
+            <option value="Hourly" {% if project.budget_type == 'Hourly' %}selected{% endif %}>Hourly</option>
+            <option value="Collaboration/Open" {% if project.budget_type == 'Collaboration/Open' %}selected{% endif %}>Collaboration/Open</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-control" value="{{ project.location }}" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Add More Images</label>
+        <input type="file" name="images" class="form-control" multiple accept="image/*" />
+      </div>
+
+      <div style="margin-top: 2.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <a href="{{ url_for('projects.details', id=project.id) }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Payment Successful — SecondSpark{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes pop-in { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes confetti-fall {
+  0% { transform:translateY(-10px) rotate(0deg); opacity:1; }
+  100% { transform:translateY(90vh) rotate(720deg); opacity:0; }
+}
+.success-icon { animation: pop-in 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+.confetti-piece {
+  position:fixed; top:-10px; width:10px; height:10px; border-radius:2px;
+  animation: confetti-fall linear forwards;
+  pointer-events:none; z-index:9999;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:5rem 1.5rem;display:flex;justify-content:center;min-height:70vh;">
+  <div style="max-width:560px;width:100%;text-align:center;">
+
+    <!-- Success Icon -->
+    <div class="success-icon" style="width:100px;height:100px;background:linear-gradient(135deg,#10B981,#065F46);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 2rem;box-shadow:0 12px 40px rgba(16,185,129,0.3);">
+      <i class="fa-solid fa-check" style="font-size:2.5rem;color:#fff;"></i>
+    </div>
+
+    <h1 style="font-size:2.2rem;margin-bottom:0.5rem;">Payment Confirmed!</h1>
+    <p style="color:var(--text-muted);font-size:1rem;line-height:1.6;margin-bottom:2.5rem;">
+      Your payment of <strong style="color:var(--dark-900);">₹{{ txn.amount_inr | int }}</strong> has been recorded successfully.
+      The project owner will be notified and work will begin shortly.
+    </p>
+
+    <!-- Transaction Summary Card -->
+    <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:20px;padding:2rem;margin-bottom:2rem;text-align:left;box-shadow:0 8px 30px rgba(0,0,0,0.05);">
+      <div style="font-weight:700;margin-bottom:1.25rem;font-size:1rem;display:flex;align-items:center;gap:0.5rem;">
+        <i class="fa-solid fa-receipt" style="color:var(--primary);"></i> Payment Receipt
+      </div>
+
+      {% set rows = [
+        ('Order ID',       txn.order_id),
+        ('Project',        txn.project.title if txn.project else 'N/A'),
+        ('UPI Ref / UTR',  txn.upi_transaction_id or 'Processing'),
+        ('Gateway',        'Primary Gateway' if txn.gateway == 'gateway1' else 'Alternate Gateway'),
+        ('Status',         txn.status),
+        ('Date',           txn.created_at.strftime('%d %b %Y, %I:%M %p') if txn.created_at else '')
+      ] %}
+      {% for label, val in rows %}
+      <div style="display:flex;justify-content:space-between;padding:0.55rem 0;border-bottom:1px solid var(--border-subtle);font-size:0.88rem;">
+        <span style="color:var(--text-muted);">{{ label }}</span>
+        <span style="font-weight:600;color:var(--dark-900);font-family:{% if label in ['Order ID','UPI Ref / UTR'] %}var(--font-mono){% else %}inherit{% endif %};font-size:{% if label in ['Order ID','UPI Ref / UTR'] %}0.8rem{% else %}0.88rem{% endif %};">{{ val }}</span>
+      </div>
+      {% endfor %}
+
+      <div style="display:flex;justify-content:space-between;padding:0.75rem 0;font-size:1.05rem;font-weight:800;color:var(--dark-900);margin-top:0.25rem;">
+        <span>Total Paid</span><span style="color:var(--primary);">₹{{ txn.amount_inr | int }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.4rem 0;font-size:0.82rem;color:var(--text-muted);">
+        <span>Platform fee (2%)</span><span>₹{{ txn.commission_inr }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.4rem 0;font-size:0.82rem;color:#10B981;font-weight:600;">
+        <span>Owner receives</span><span>₹{{ txn.net_amount_inr }}</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.85rem;justify-content:center;flex-wrap:wrap;">
+      {% if txn.project %}
+      <a href="{{ url_for('projects.details', id=txn.project.id) }}" class="btn btn-primary">
+        <i class="fa-solid fa-arrow-right"></i> View Project
+      </a>
+      {% endif %}
+      <a href="{{ url_for('payments.history') }}" class="btn btn-outline">
+        <i class="fa-solid fa-clock-rotate-left"></i> Payment History
+      </a>
+      <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline">
+        <i class="fa-solid fa-chart-pie"></i> Dashboard
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Confetti burst
+const colors = ['#35C98A','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899'];
+for (let i = 0; i < 80; i++) {
+  const el = document.createElement('div');
+  el.className = 'confetti-piece';
+  el.style.left = Math.random() * 100 + 'vw';
+  el.style.background = colors[Math.floor(Math.random() * colors.length)];
+  el.style.width = (Math.random() * 10 + 6) + 'px';
+  el.style.height = (Math.random() * 10 + 6) + 'px';
+  el.style.animationDuration = (Math.random() * 3 + 2) + 's';
+  el.style.animationDelay = (Math.random() * 1.5) + 's';
+  el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+</script>
+{% endblock %}

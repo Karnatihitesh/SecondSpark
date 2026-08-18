@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user.full_name }} — SecondSpark Profile{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
+
+  <div style="display: grid; grid-template-columns: {% if is_public %}1fr 2fr{% else %}1.2fr 2fr{% endif %}; gap: 2.5rem; align-items: start;">
+    
+    <!-- User Bio / Avatar Card -->
+    <div class="glass-card" style="padding: 2rem; text-align: center; background: #fff;">
+      <img src="{{ user.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem; border: 3px solid var(--primary-light);" alt="{{ user.full_name }}" />
+      <h2 style="font-size: 1.4rem; margin-bottom: 0.2rem;">{{ user.full_name }}</h2>
+      <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.85rem;">@{{ user.username }}</div>
+
+      <!-- Rating Pill -->
+      {% if user.rating_summary.count > 0 %}
+        <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: #FEF3C7; color: #B45309; padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; margin-bottom: 1rem;">
+          <i class="fa-solid fa-star" style="color: #F59E0B;"></i> {{ user.rating_summary.average }} ({{ user.rating_summary.count }} review{{ 's' if user.rating_summary.count != 1 else '' }})
+        </div>
+      {% endif %}
+
+      {% if user.location %}
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ user.location }}
+        </div>
+      {% endif %}
+
+      {% if user.bio %}
+        <p style="font-size: 0.92rem; color: var(--dark-700); line-height: 1.6; margin-bottom: 1.5rem; text-align: left; background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md);">
+          {{ user.bio }}
+        </p>
+      {% endif %}
+
+      <!-- Skills Badges -->
+      {% if user.skills_list %}
+        <div style="text-align: left; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--dark-800); text-transform: uppercase; margin-bottom: 0.5rem;">Specialized Skills</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+            {% for s in user.skills_list %}
+              <span class="skill-tag">{{ s }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if is_public and current_user and current_user.id != user.id %}
+        <a href="{{ url_for('messages.start_conversation', user_id=user.id) }}" class="btn btn-primary btn-block">
+          <i class="fa-solid fa-envelope"></i> Message {{ user.full_name.split(' ')[0] }}
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Edit Form or Public Projects & Reviews -->
+    <div>
+      {% if not is_public %}
+        <!-- EDIT PROFILE FORM -->
+        <div class="glass-card" style="padding: 2.5rem; background: #fff;">
+          <h2 style="font-size: 1.4rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">Edit Profile Information</h2>
+          
+          <form action="{{ url_for('auth.profile') }}" method="POST" enctype="multipart/form-data">
+            
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Bio / Background</label>
+              <textarea name="bio" class="form-control" rows="4" placeholder="Tell other makers about your engineering background, favorite microcontrollers, or software proficiencies...">{{ user.bio or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Skills (Comma-separated)</label>
+              <input type="text" name="skills" class="form-control" placeholder="e.g. Python, ROS2, PCB Design, Computer Vision" value="{{ user.skills or '' }}" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Location</label>
+              <input type="text" name="location" class="form-control" placeholder="e.g. Hyderabad, India or Remote" value="{{ user.location or '' }}" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Profile Photo</label>
+              <input type="file" name="avatar" class="form-control" accept="image/*" />
+            </div>
+
+            <!-- Password Change Section -->
+            <h3 style="font-size: 1.15rem; margin: 2rem 0 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">Change Password (Optional)</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" name="current_password" class="form-control" placeholder="••••••••" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" name="new_password" class="form-control" placeholder="Min. 8 characters" />
+              </div>
+            </div>
+
+            <div style="text-align: right; margin-top: 2rem;">
+              <button type="submit" class="btn btn-primary btn-lg">Save Profile Changes</button>
+            </div>
+
+          </form>
+        </div>
+
+      {% else %}
+        <!-- PUBLIC PROFILE: USER'S PROJECTS & REVIEWS -->
+        <div style="margin-bottom: 3rem;">
+          <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem;">Projects by {{ user.full_name }}</h2>
+          {% if projects %}
+            <div class="projects-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+              {% for p in projects %}
+                <div class="project-card">
+                  <div class="project-card-media" style="height: 150px;">
+                    <img src="{{ p.primary_image }}" alt="{{ p.title }}" class="project-card-img" />
+                    <div class="project-card-badge">
+                      <span class="badge badge-open">{{ p.status }}</span>
+                    </div>
+                  </div>
+                  <div class="project-card-body" style="padding: 1rem;">
+                    <h4 style="font-size: 1rem; margin-bottom: 0.4rem;">
+                      <a href="{{ url_for('projects.details', id=p.id) }}">{{ p.title }}</a>
+                    </h4>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">{{ p.short_summary[:80] }}...</p>
+                    <div style="font-size: 0.85rem; font-weight: 700;">{{ p.budget | currency }}</div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state" style="padding: 2rem;">
+              <i class="fa-solid fa-folder-open empty-state-icon" style="font-size: 2rem;"></i>
+              <p>No projects uploaded by this user yet.</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- REVIEWS RECEIVED -->
+        <div>
+          <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem;">Reviews & Endorsements</h2>
+          {% if reviews %}
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              {% for rev in reviews %}
+                <div class="glass-card" style="padding: 1.5rem; background: #fff;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 700;">{{ rev.reviewer.full_name }}</span>
+                    <div style="color: #F59E0B; font-size: 0.85rem;">
+                      {% for i in range(rev.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
+                    </div>
+                  </div>
+                  <p style="font-size: 0.92rem; color: var(--dark-700); line-height: 1.5;">"{{ rev.comment }}"</p>
+                  <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.5rem;">on project {{ rev.project.title if rev.project else '' }} • {{ rev.created_at | timeago }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state" style="padding: 2rem;">
+              <i class="fa-regular fa-star empty-state-icon" style="font-size: 2rem;"></i>
+              <p>No collaboration reviews recorded yet.</p>
+            </div>
+          {% endif %}
+        </div>
+
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

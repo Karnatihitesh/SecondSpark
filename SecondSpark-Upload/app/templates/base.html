@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SecondSpark — Give Unfinished Ideas a Second Spark{% endblock %}</title>
+  <meta name="description" content="{% block meta_desc %}SecondSpark connects owners of unfinished, abandoned, or faulty projects with skilled engineers, developers, and makers to revive and complete them.{% endblock %}">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo.svg') }}">
+
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Flash Toast Notifications -->
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-toast {{ category }}">
+            <span>{{ message }}</span>
+            <button class="flash-close" aria-label="Close">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Floating Translucent Animated Dock Navbar -->
+  <header class="navbar-wrapper">
+    <nav class="navbar-dock">
+      <!-- Brand Logo -->
+      <a href="{{ url_for('main.index') }}" class="brand-logo">
+        <span class="brand-icon"><i class="fa-solid fa-bolt"></i></span>
+        <span class="brand-text">Second<span class="brand-spark">Spark</span></span>
+      </a>
+
+      <!-- Desktop Nav Dock Links with Animated Sliding Indicator -->
+      <div class="nav-dock-center">
+        <ul class="nav-links" id="nav-dock-links">
+          <div class="nav-dock-indicator" id="nav-dock-indicator"></div>
+          <li><a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">Home</a></li>
+          <li><a href="{{ url_for('projects.browse') }}" class="nav-link {% if request.endpoint == 'projects.browse' %}active{% endif %}">Browse Projects</a></li>
+          <li><a href="{{ url_for('reviews.index') }}" class="nav-link {% if request.endpoint == 'reviews.index' %}active{% endif %}">Reviews</a></li>
+          <li><a href="{{ url_for('main.index') }}#categories" class="nav-link">Categories</a></li>
+          <li><a href="{{ url_for('main.index') }}#how-it-works" class="nav-link">How It Works</a></li>
+          <li><a href="{{ url_for('main.about') }}" class="nav-link {% if request.endpoint == 'main.about' %}active{% endif %}">About</a></li>
+          <li><a href="{{ url_for('main.contact') }}" class="nav-link {% if request.endpoint == 'main.contact' %}active{% endif %}">Contact</a></li>
+        </ul>
+      </div>
+
+      <!-- Right Navigation Actions -->
+      <div class="nav-actions">
+        {% if current_user %}
+          <!-- Message Icon with Badge -->
+          <a href="{{ url_for('messages.index') }}" class="icon-badge-btn" title="Messages">
+            <i class="fa-regular fa-comments"></i>
+            <span class="badge-count badge-msg-count" style="display: {% if unread_msgs_count > 0 %}flex{% else %}none{% endif %};">
+              {{ unread_msgs_count }}
+            </span>
+          </a>
+
+          <!-- Notification Icon with Badge -->
+          <a href="{{ url_for('notifications.index') }}" class="icon-badge-btn" title="Notifications">
+            <i class="fa-regular fa-bell"></i>
+            <span class="badge-count badge-notif-count" style="display: {% if unread_notifs_count > 0 %}flex{% else %}none{% endif %};">
+              {{ unread_notifs_count }}
+            </span>
+          </a>
+
+          <!-- User Menu Dropdown -->
+          <div class="user-menu-wrap">
+            <button class="user-btn" aria-haspopup="true">
+              <img src="{{ current_user.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" class="user-avatar" alt="{{ current_user.full_name }}">
+              <span class="user-name">{{ current_user.full_name.split(' ')[0] }}</span>
+              <i class="fa-solid fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+            </button>
+            <div class="dropdown-menu">
+              <a href="{{ url_for('dashboard.index') }}" class="dropdown-item">
+                <i class="fa-solid fa-chart-pie"></i> Dashboard
+              </a>
+              <a href="{{ url_for('projects.upload') }}" class="dropdown-item">
+                <i class="fa-solid fa-plus-circle"></i> Upload Project
+              </a>
+              <a href="{{ url_for('dashboard.my_projects') }}" class="dropdown-item">
+                <i class="fa-solid fa-cubes"></i> My Projects
+              </a>
+              <a href="{{ url_for('dashboard.saved_projects') }}" class="dropdown-item">
+                <i class="fa-solid fa-bookmark"></i> Saved Projects
+              </a>
+              <a href="{{ url_for('auth.profile') }}" class="dropdown-item">
+                <i class="fa-solid fa-user-gear"></i> Profile & Settings
+              </a>
+              {% if current_user.is_admin %}
+                <div class="dropdown-divider"></div>
+                <a href="{{ url_for('admin.index') }}" class="dropdown-item" style="color: var(--primary-dark); font-weight: 600;">
+                  <i class="fa-solid fa-shield-halved"></i> Admin Control
+                </a>
+              {% endif %}
+              <div class="dropdown-divider"></div>
+              <a href="{{ url_for('auth.logout') }}" class="dropdown-item" style="color: var(--danger);">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+              </a>
+            </div>
+          </div>
+
+          <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-sm nav-auth-desktop">
+            <i class="fa-solid fa-plus"></i> Post Project
+          </a>
+
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm nav-auth-desktop">Log In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm nav-auth-desktop">Get Started</a>
+        {% endif %}
+
+        <!-- Mobile Menu Hamburger Button -->
+        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Mobile Drawer -->
+  <div class="mobile-nav-overlay"></div>
+  <div class="mobile-nav-drawer">
+    <div class="mobile-drawer-header">
+      <div class="brand-logo">
+        <span class="brand-icon"><i class="fa-solid fa-bolt"></i></span>
+        <span>Second<span class="brand-spark">Spark</span></span>
+      </div>
+      <button class="mobile-drawer-close">&times;</button>
+    </div>
+
+    <ul class="mobile-drawer-links">
+      <li><a href="{{ url_for('main.index') }}" class="mobile-drawer-link"><i class="fa-solid fa-house"></i> Home</a></li>
+      <li><a href="{{ url_for('projects.browse') }}" class="mobile-drawer-link"><i class="fa-solid fa-magnifying-glass"></i> Browse Projects</a></li>
+      <li><a href="{{ url_for('main.about') }}" class="mobile-drawer-link"><i class="fa-solid fa-circle-info"></i> About</a></li>
+      <li><a href="{{ url_for('main.contact') }}" class="mobile-drawer-link"><i class="fa-solid fa-envelope"></i> Contact</a></li>
+      {% if current_user %}
+        <li><a href="{{ url_for('dashboard.index') }}" class="mobile-drawer-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+        <li><a href="{{ url_for('projects.upload') }}" class="mobile-drawer-link"><i class="fa-solid fa-plus-circle"></i> Upload Project</a></li>
+        <li><a href="{{ url_for('messages.index') }}" class="mobile-drawer-link"><i class="fa-solid fa-comments"></i> Messages ({{ unread_msgs_count }})</a></li>
+        <li><a href="{{ url_for('notifications.index') }}" class="mobile-drawer-link"><i class="fa-solid fa-bell"></i> Notifications ({{ unread_notifs_count }})</a></li>
+        <li><a href="{{ url_for('auth.profile') }}" class="mobile-drawer-link"><i class="fa-solid fa-user"></i> Profile</a></li>
+        {% if current_user.is_admin %}
+          <li><a href="{{ url_for('admin.index') }}" class="mobile-drawer-link" style="color: var(--primary-dark);"><i class="fa-solid fa-shield-halved"></i> Admin Control</a></li>
+        {% endif %}
+        <li style="margin-top: 1rem;"><a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-block"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+      {% else %}
+        <li style="margin-top: 1.5rem;"><a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-block">Log In</a></li>
+        <li style="margin-top: 0.5rem;"><a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-block">Get Started</a></li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <!-- Main Content Body -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo" style="color: #fff;">
+            <span class="brand-icon"><i class="fa-solid fa-bolt"></i></span>
+            <span>Second<span class="brand-spark">Spark</span></span>
+          </div>
+          <p>Give Unfinished Ideas a Second Spark. Turning abandoned, incomplete, and faulty projects into collaborative triumphs.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Platform</h4>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li><a href="{{ url_for('projects.browse') }}">Browse Projects</a></li>
+            <li><a href="{{ url_for('projects.upload') }}">Upload a Project</a></li>
+            <li><a href="{{ url_for('main.index') }}#how-it-works">How It Works</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('main.about') }}">About Us</a></li>
+            <li><a href="{{ url_for('main.about') }}#team">Meet Our Team</a></li>
+            <li><a href="{{ url_for('main.contact') }}">Contact Us</a></li>
+            <li><a href="{{ url_for('main.index') }}#faq">FAQs</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Direct Contact</h4>
+          <div class="footer-contact-item">
+            <i class="fa-solid fa-envelope" style="color: var(--primary);"></i>
+            <a href="mailto:karnatihitesh@gmail.com">karnatihitesh@gmail.com</a>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fa-solid fa-phone" style="color: var(--primary);"></i>
+            <a href="tel:+919490682602">+91 9490682602</a>
+          </div>
+          <p style="font-size: 0.82rem; color: #6B7280; margin-top: 0.85rem;">
+            Ready to collaborate on innovative hardware, AI, web, and IoT builds.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 SecondSpark. All rights reserved.</div>
+        <div>Built for innovators, engineers, and creators worldwide.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
