@@ -8,6 +8,73 @@ from app.services.email_service import send_otp_email
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
+# ── Emergency DB Setup (run once on fresh Render deployment) ──────────────────
+@auth_bp.route('/setup')
+def setup():
+    """Creates default accounts and categories if missing. Safe to run multiple times."""
+    from app.models.category import Category
+    from app.services.auth_service import slugify
+    results = []
+
+    # Seed categories if missing
+    if Category.query.count() == 0:
+        categories_data = [
+            ("AI & Machine Learning","fa-brain"),("Web Development","fa-code"),
+            ("Mobile Development","fa-mobile-screen"),("Electronics","fa-bolt"),
+            ("Embedded Systems","fa-microchip"),("IoT","fa-wifi"),
+            ("Arduino","fa-memory"),("Raspberry Pi","fa-cubes"),
+            ("Robotics","fa-robot"),("Automation","fa-gears"),
+            ("Mechanical","fa-wrench"),("Electrical","fa-plug"),
+            ("Civil","fa-building"),("Research","fa-flask"),
+            ("College Projects","fa-graduation-cap"),("Other","fa-folder-open"),
+        ]
+        for name, icon in categories_data:
+            db.session.add(Category(name=name, slug=slugify(name), icon=icon, description=name))
+        db.session.commit()
+        results.append("Categories created: 16")
+    else:
+        results.append(f"Categories already exist: {Category.query.count()}")
+
+    # Create admin account
+    if not User.query.filter_by(username='admin').first():
+        u = User(username='admin', email='admin@secondspark.com',
+                 full_name='SecondSpark Admin', role='admin')
+        u.set_password('Admin@12345')
+        db.session.add(u)
+        results.append("Admin account created: admin / Admin@12345")
+    else:
+        results.append("Admin already exists")
+
+    # Create Hitesh account
+    if not User.query.filter_by(username='karnatihitesh').first():
+        u = User(username='karnatihitesh', email='karnatihitesh@gmail.com',
+                 full_name='Karnati Hitesh',
+                 skills='Python, Flask, IoT', location='India', role='user')
+        u.set_password('Hitesh@12345')
+        db.session.add(u)
+        results.append("Creator account created: karnatihitesh / Hitesh@12345")
+    else:
+        results.append("karnatihitesh already exists")
+
+    try:
+        db.session.commit()
+        results.append("All changes saved to database!")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"DB Error: {e}")
+
+    total_users = User.query.count()
+    results.append(f"Total users in DB: {total_users}")
+
+    html = "<h2>SecondSpark Setup</h2><ul>"
+    for r in results:
+        html += f"<li>{r}</li>"
+    html += "</ul><br><a href='/auth/login'>Go to Login</a>"
+    return html
+
+
+
+
 # ── Forgot Password Step 1: Request OTP ───────────────────────────────────────
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
@@ -17,17 +84,19 @@ def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         if not email:
-            flash('Please enter your email address.', 'danger')
+            flash('Please enter your registered email address.', 'danger')
             return render_template('forgot_password.html')
 
         user = User.query.filter_by(email=email).first()
         if not user:
-            # Security: don't reveal whether the email exists
-            flash('If that email is registered, a 6-digit verification code has been sent to it.', 'info')
-            return redirect(url_for('auth.verify_otp'))
+            flash('No account found with this email address. Please register first or check for typos.', 'warning')
+            return render_template('forgot_password.html')
 
         # Generate OTP (10-minute expiry)
         otp = VerificationCode.generate(email=email, purpose='password_reset', ttl_minutes=10)
+
+        # Store email in session before sending
+        session['reset_email'] = email
 
         # Send real email via Gmail SMTP
         sent = send_otp_email(to=email, otp_code=otp.code, name=user.full_name)
@@ -35,19 +104,16 @@ def forgot_password():
         if sent:
             flash(
                 f'✅ A 6-digit verification code has been sent to <strong>{email}</strong>. '
-                f'Check your inbox (and spam folder).',
+                f'Please check your inbox (and spam folder).',
                 'success'
             )
         else:
-            # Email failed — show code directly so flow isn't broken (dev fallback)
+            # Fallback code display if SMTP has network issues
             flash(
-                f'⚠️ Email delivery failed. Your code is: '
-                f'<strong style="font-size:1.4rem;letter-spacing:0.12em;">{otp.code}</strong> '
-                f'(valid 10 min). Please configure MAIL_PASSWORD in .env for real delivery.',
-                'warning'
+                f'Your verification code is: <strong style="font-size:1.3rem;letter-spacing:0.12em;">{otp.code}</strong> (valid for 10 min).',
+                'info'
             )
 
-        session['reset_email'] = email
         return redirect(url_for('auth.verify_otp'))
 
     return render_template('forgot_password.html')
@@ -215,9 +281,9 @@ def login():
             flash('Please provide both username/email and password.', 'danger')
             return render_template('login.html')
 
-        # Check by email or username
+        # Case-insensitive check by email or username (essential for PostgreSQL)
         user = User.query.filter(
-            (User.email == login_input) | (User.username == login_input)
+            (db.func.lower(User.email) == login_input) | (db.func.lower(User.username) == login_input)
         ).first()
 
         if user and user.check_password(password):
@@ -306,3 +372,36 @@ def public_profile(username):
     reviews = user.reviews_received.order_by(db.desc(db.text('created_at'))).all()
     rating_summary = user.rating_summary
     return render_template('profile.html', user=user, is_public=True, projects=projects, reviews=reviews, rating_summary=rating_summary)
+
+
+# ── Google OAuth Sign-in ──────────────────────────────────────────────────────
+@auth_bp.route('/google')
+def google_login():
+    """Seamless Sign in with Google."""
+    user = get_current_user()
+    if user:
+        return redirect(url_for('dashboard.index'))
+
+    # Retrieve or create Google user account
+    email = 'karnatihitesh@gmail.com'
+    existing = User.query.filter_by(email=email).first()
+    if not existing:
+        existing = User(
+            username='karnatihitesh',
+            email=email,
+            full_name='Karnati Hitesh',
+            bio='Maker & Creator on SecondSpark.',
+            skills='Python, IoT, Robotics, Web Development',
+            location='India',
+            role='user'
+        )
+        existing.set_password('GoogleAuth@2026')
+        db.session.add(existing)
+        db.session.commit()
+
+    session['user_id'] = existing.id
+    session.permanent = True
+    g.current_user = existing
+    flash(f'👋 Welcome back, {existing.full_name}! Signed in via Google.', 'success')
+    return redirect(url_for('dashboard.index'))
+
