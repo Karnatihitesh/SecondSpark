@@ -76,12 +76,12 @@ class User(db.Model):
 
 
 class VerificationCode(db.Model):
-    """Short-lived OTP for password reset / email verification."""
+    """Short-lived, securely hashed OTP for password reset / email verification."""
     __tablename__ = 'verification_codes'
 
     id          = db.Column(db.Integer, primary_key=True)
     email       = db.Column(db.String(120), nullable=False, index=True)
-    code        = db.Column(db.String(6), nullable=False)
+    code        = db.Column(db.String(255), nullable=False)  # Securely hashed OTP
     purpose     = db.Column(db.String(30), default='password_reset')
     is_used     = db.Column(db.Boolean, default=False)
     expires_at  = db.Column(db.DateTime, nullable=False)
@@ -89,29 +89,36 @@ class VerificationCode(db.Model):
 
     @classmethod
     def generate(cls, email: str, purpose: str = 'password_reset', ttl_minutes: int = 10):
-        """Create and return a new OTP for the given email."""
-        code = ''.join(secrets.choice(string.digits) for _ in range(6))
+        """Create and return a new OTP instance and the raw 6-digit plain code for email dispatch."""
+        raw_code = ''.join(secrets.choice(string.digits) for _ in range(6))
+        hashed_code = generate_password_hash(raw_code)
         otp = cls(
             email=email.lower().strip(),
-            code=code,
+            code=hashed_code,
             purpose=purpose,
             expires_at=datetime.utcnow() + timedelta(minutes=ttl_minutes)
         )
         db.session.add(otp)
         db.session.commit()
-        return otp
+        return otp, raw_code
 
     @classmethod
     def verify(cls, email: str, code: str, purpose: str = 'password_reset'):
-        """Return the OTP record if valid, else None."""
-        otp = cls.query.filter_by(
+        """Verify the submitted OTP against the stored hash and return record if valid."""
+        records = cls.query.filter_by(
             email=email.lower().strip(),
-            code=code,
             purpose=purpose,
             is_used=False
-        ).order_by(cls.created_at.desc()).first()
-        if otp and otp.expires_at > datetime.utcnow():
-            return otp
+        ).order_by(cls.created_at.desc()).all()
+
+        now = datetime.utcnow()
+        for rec in records:
+            if rec.expires_at > now:
+                if rec.code.startswith('scrypt:') or rec.code.startswith('pbkdf2:'):
+                    if check_password_hash(rec.code, code):
+                        return rec
+                elif rec.code == code:
+                    return rec
         return None
 
     def mark_used(self):
@@ -120,3 +127,4 @@ class VerificationCode(db.Model):
 
     def __repr__(self):
         return f'<OTP {self.email} [{self.purpose}]>'
+
