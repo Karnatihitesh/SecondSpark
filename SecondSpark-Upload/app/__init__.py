@@ -27,6 +27,12 @@ def create_app(config_name='default'):
     with app.app_context():
         try:
             db.create_all()
+            try:
+                with db.engine.connect() as con:
+                    con.execute(db.text("ALTER TABLE verification_codes ALTER COLUMN code TYPE VARCHAR(255);"))
+                    con.commit()
+            except Exception:
+                pass
             if Category.query.count() == 0:
                 from app.services.auth_service import slugify
                 categories_data = [
