@@ -88,36 +88,32 @@ def build_otp_html(name: str, otp_code: str, to_email: str) -> str:
 """
 
 
-def send_via_brevo_api(api_key: str, to: str, subject: str, html_text: str, from_email: str = 'karnatihitesh@gmail.com', from_name: str = 'Team SecondSpark') -> bool:
+def send_via_brevo_api(api_key: str, to: str, subject: str, html_text: str, from_email: str = 'karnatihitesh@gmail.com', from_name: str = 'SecondSpark') -> bool:
     """Send email via Brevo (Sendinblue) REST API over port 443 HTTPS directly from karnatihitesh@gmail.com."""
-    import urllib.request
-    import json
-
-    url = 'https://api.brevo.com/v3/smtp/email'
-    payload = {
-        'sender': {'name': from_name, 'email': from_email},
-        'to': [{'email': to}],
-        'subject': subject,
-        'htmlContent': html_text
-    }
     try:
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode('utf-8'),
-            headers={
-                'api-key': api_key,
-                'Content-Type': 'application/json',
-                'User-Agent': 'SecondSpark-Transporter'
-            },
-            method='POST'
-        )
-        with urllib.request.urlopen(req, timeout=10) as r:
-            if r.status in (200, 201):
-                logger.info(f'[EmailService] Successfully sent OTP to {to} via Brevo HTTPS API (from {from_email})')
-                return True
+        import requests
+        url = 'https://api.brevo.com/v3/smtp/email'
+        payload = {
+            'sender': {'name': from_name, 'email': from_email},
+            'to': [{'email': to}],
+            'subject': subject,
+            'htmlContent': html_text
+        }
+        headers = {
+            'api-key': api_key,
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+        }
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        if response.status_code in (200, 201):
+            logger.info(f'[EmailService] Successfully sent OTP to {to} via Brevo REST API (status {response.status_code})')
+            return True
+        else:
+            logger.error(f'[EmailService] Brevo API error ({response.status_code}): {response.text}')
+            return False
     except Exception as e:
-        logger.warning(f'[EmailService] Brevo HTTPS API delivery failed: {e}')
-    return False
+        logger.error(f'[EmailService] Brevo API request exception: {e}', exc_info=True)
+        return False
 
 
 def send_via_https_api(api_key: str, to: str, subject: str, html_text: str, from_email: str = None) -> bool:
@@ -125,7 +121,7 @@ def send_via_https_api(api_key: str, to: str, subject: str, html_text: str, from
     import urllib.request
     import json
 
-    sender = from_email or os.environ.get('EMAIL_FROM') or 'Team SecondSpark <onboarding@resend.dev>'
+    sender = from_email or os.environ.get('EMAIL_FROM') or 'SecondSpark <onboarding@resend.dev>'
     url = 'https://api.resend.com/emails'
     payload = {
         'from': sender,
@@ -156,26 +152,32 @@ def send_via_https_api(api_key: str, to: str, subject: str, html_text: str, from
 def send_otp_email(to: str, otp_code: str, name: str = 'Maker') -> bool:
     """
     Production Email Dispatcher:
-    1. Checks for Brevo API (BREVO_API_KEY) — sends as Team SecondSpark <karnatihitesh@gmail.com>.
-    2. Checks for Resend API (RESEND_API_KEY / EMAIL_API_KEY) over port 443.
-    3. Falls back to SMTP (Gmail / Custom SMTP) via SSL (465) / STARTTLS (587).
+    1. Primary: Brevo REST API (BREVO_API_KEY) — sends via HTTPS from karnatihitesh@gmail.com.
+    2. Secondary: Resend REST API (RESEND_API_KEY / EMAIL_API_KEY) over port 443.
+    3. Fallback: Direct SMTP (Gmail / Custom SMTP) via SSL (465) / STARTTLS (587).
     Returns True on success, False on failure.
     """
-    subject = f'🔐 {otp_code} is your SecondSpark verification code'
+    subject = "Your SecondSpark Verification Code"
     plain_text = (
         f"Hello {name},\n\n"
         f"Your SecondSpark verification code is: {otp_code}\n\n"
         f"This code will expire in 10 minutes. Do not share it with anyone.\n\n"
         f"If you did not request this code, you can safely ignore this email.\n\n"
-        f"— Team SecondSpark (karnatihitesh@gmail.com)"
+        f"— SecondSpark Team (karnatihitesh@gmail.com)"
     )
     html_text = build_otp_html(name=name, otp_code=otp_code, to_email=to)
 
     # Provider 1: Brevo HTTPS REST API (Port 443 - sends directly from karnatihitesh@gmail.com)
     brevo_api_key = os.environ.get('BREVO_API_KEY')
     if brevo_api_key:
-        if send_via_brevo_api(api_key=brevo_api_key, to=to, subject=subject, html_text=html_text):
-            return True
+        return send_via_brevo_api(
+            api_key=brevo_api_key,
+            to=to,
+            subject=subject,
+            html_text=html_text,
+            from_email='karnatihitesh@gmail.com',
+            from_name='SecondSpark'
+        )
 
     # Provider 2: Resend / HTTPS API (Port 443 - Unblocked on all cloud platforms)
     resend_api_key = os.environ.get('RESEND_API_KEY') or os.environ.get('EMAIL_API_KEY')
