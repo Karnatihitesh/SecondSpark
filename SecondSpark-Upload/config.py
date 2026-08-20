@@ -22,6 +22,11 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = 86400 * 7  # 7 days
 
+    # ── Google OAuth 2.0 & Identity Services ──────────────────────────────────
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+    GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', '')
+
     # ── Flask-Mail (Gmail SMTP) ───────────────────────────────────────────────
     MAIL_SERVER   = os.environ.get('MAIL_SERVER',  'smtp.gmail.com')
     MAIL_PORT     = int(os.environ.get('MAIL_PORT', 587))
