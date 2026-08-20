@@ -89,22 +89,31 @@ def forgot_password():
         email = request.form.get('email', '').strip().lower()
         if not email:
             flash('Please enter your registered email address.', 'danger')
-            return render_template('forgot_password.html')
+            return render_template('forgot_password.html'), 400
 
         user = User.query.filter(db.func.lower(User.email) == email).first()
         if not user:
-            # Generic message for security or explicit friendly warning
-            flash('If an account exists with this email, a verification code has been sent.', 'info')
-            return redirect(url_for('auth.verify_otp'))
+            flash('No account found with this email address. Please register first or check for typos.', 'warning')
+            return render_template('forgot_password.html'), 404
 
         # Generate cryptographically secure hashed OTP (10-minute expiry)
         otp, raw_code = VerificationCode.generate(email=email, purpose='password_reset', ttl_minutes=10)
 
-        # Store email in session
-        session['reset_email'] = email
+        # Dispatch OTP via real SMTP email transporter (STARTTLS 587 + SSL 465 fallback)
+        sent = send_otp_email(to=email, otp_code=raw_code, name=user.full_name)
 
-        # Dispatch OTP via email transporter (Gmail / SMTP)
-        send_otp_email(to=email, otp_code=raw_code, name=user.full_name)
+        if not sent:
+            # Clean up generated OTP if email delivery failed
+            try:
+                db.session.delete(otp)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            flash('Failed to send verification email. Please check server mail configuration or try again in a moment.', 'danger')
+            return render_template('forgot_password.html'), 500
+
+        # Store email in session only upon successful delivery
+        session['reset_email'] = email
 
         # Secure confirmation message ONLY (code is NEVER exposed on UI or responses)
         flash(
@@ -121,7 +130,7 @@ def forgot_password():
 # ── API Endpoint: Request Password Reset (JSON) ──────────────────────────────
 @auth_bp.route('/api/request-reset', methods=['POST'])
 def api_request_reset():
-    """Secure API endpoint to request password reset code."""
+    """Secure API endpoint to request password reset code with strict error handling."""
     data = request.get_json() or request.form
     email = data.get('email', '').strip().lower()
 
@@ -129,12 +138,21 @@ def api_request_reset():
         return {'success': False, 'message': 'Email is required.'}, 400
 
     user = User.query.filter(db.func.lower(User.email) == email).first()
-    if user:
-        otp, raw_code = VerificationCode.generate(email=email, purpose='password_reset', ttl_minutes=10)
-        session['reset_email'] = email
-        send_otp_email(to=email, otp_code=raw_code, name=user.full_name)
+    if not user:
+        return {'success': False, 'message': 'No account found with this email address.'}, 404
 
-    # Always return a secure generic response — never return the OTP in JSON!
+    otp, raw_code = VerificationCode.generate(email=email, purpose='password_reset', ttl_minutes=10)
+    sent = send_otp_email(to=email, otp_code=raw_code, name=user.full_name)
+
+    if not sent:
+        try:
+            db.session.delete(otp)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return {'success': False, 'message': 'Failed to send verification email. Please check server mail configuration.'}, 500
+
+    session['reset_email'] = email
     return {
         'success': True,
         'message': 'A 6-digit verification code has been sent to your email address.'
