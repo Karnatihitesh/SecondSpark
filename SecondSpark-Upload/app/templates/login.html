@@ -2,112 +2,243 @@
 
 {% block title %}Log In — SecondSpark{% endblock %}
 
-{% block content %}
-<div class="container" style="padding: 4rem 1.5rem; display: flex; justify-content: center; align-items: center; min-height: 75vh;">
-  <div class="glass-card" style="max-width: 440px; width: 100%; padding: 2.75rem; background: #fff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08);">
+{% block extra_css %}
+<style>
+  .auth-wrapper {
+    padding: 4rem 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 78vh;
+  }
+  .auth-card {
+    max-width: 440px;
+    width: 100%;
+    padding: 2.75rem;
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--border-subtle, #E5E7EB);
+  }
+  .auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .auth-header .brand-icon {
+    margin: 0 auto 1rem;
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
+  }
+  .btn-google-auth {
+    background: #FFFFFF;
+    border: 1.5px solid var(--border-subtle, #E5E7EB);
+    color: var(--dark-800, #1F2937);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    height: 48px;
+    border-radius: var(--radius-md, 10px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-bottom: 1.25rem;
+    width: 100%;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  .btn-google-auth:hover {
+    border-color: #9CA3AF;
+    background: #F9FAFB;
+    color: #111827;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted, #6B7280);
+    font-size: 0.8rem;
+  }
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle, #E5E7EB);
+  }
+  .auth-divider span {
+    padding: 0 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+</style>
+{% endblock %}
 
-    <div style="text-align: center; margin-bottom: 2rem;">
-      <span class="brand-icon" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.4rem;"><i class="fa-solid fa-bolt"></i></span>
-      <h1 style="font-size: 1.8rem; margin-bottom: 0.35rem;">Welcome Back</h1>
-      <p style="color: var(--text-muted); font-size: 0.92rem;">Log in to manage your builds and collaborations</p>
+{% block content %}
+<div class="container auth-wrapper">
+  <div class="auth-card">
+
+    <div class="auth-header">
+      <span class="brand-icon"><i class="fa-solid fa-bolt"></i></span>
+      <h1 style="font-size: 1.8rem; margin-bottom: 0.35rem; font-weight: 700; color: var(--dark-900, #111827);">Welcome Back</h1>
+      <p style="color: var(--text-muted, #6B7280); font-size: 0.92rem;">Log in to manage your builds, requests, and collaborations</p>
     </div>
 
-    <!-- Google Sign In Button (Opens Account Chooser) -->
-    <button type="button" onclick="document.getElementById('google-account-modal').style.display='flex'" class="btn btn-block" style="background: #FFFFFF; border: 1.5px solid var(--border-subtle); color: var(--dark-800); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.75rem; height: 48px; border-radius: var(--radius-md); box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: all 0.2s; margin-bottom: 1.25rem; width: 100%; cursor: pointer;" onmouseover="this.style.borderColor='var(--dark-400)';this.style.background='#F9FAFB'" onmouseout="this.style.borderColor='var(--border-subtle)';this.style.background='#FFFFFF'">
-      <svg width="18" height="18" viewBox="0 0 18 18">
+    <!-- Official Google OAuth 2.0 Sign In Button -->
+    <a href="{{ url_for('auth.google_login', next=request.args.get('next', '')) }}" class="btn-google-auth" id="google-signin-btn">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
         <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
         <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z"/>
         <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
       </svg>
-      Sign in with Google
-    </button>
+      <span>Continue with Google</span>
+    </a>
 
     <!-- Divider -->
-    <div style="display: flex; align-items: center; margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.82rem;">
-      <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-      <span style="padding: 0 0.85rem; font-weight: 600; letter-spacing: 0.05em;">OR WITH EMAIL</span>
-      <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+    <div class="auth-divider">
+      <span>OR WITH EMAIL</span>
     </div>
 
-    <form action="{{ url_for('auth.login', next=request.args.get('next', '')) }}" method="POST">
+    <!-- Standard Email / Username & Password Form -->
+    <form action="{{ url_for('auth.login', next=request.args.get('next', '')) }}" method="POST" id="login-form" novalidate>
 
       <div class="form-group">
-        <label class="form-label">Email or Username</label>
-        <input type="text" name="login_input" class="form-control" placeholder="username or email@domain.com" required autofocus />
+        <label class="form-label" for="login_input">Email or Username</label>
+        <input 
+          type="text" 
+          id="login_input"
+          name="login_input" 
+          class="form-control" 
+          placeholder="name@domain.com or username" 
+          value="{{ request.form.get('login_input', '') }}"
+          required 
+          autocomplete="username"
+          autofocus 
+        />
+        <div class="invalid-feedback" id="login-input-error" style="display: none; color: var(--danger, #EF4444); font-size: 0.8rem; margin-top: 0.35rem;">
+          Please enter your registered email address or username.
+        </div>
       </div>
 
       <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-          <label class="form-label" style="margin-bottom: 0;">Password</label>
-          <a href="{{ url_for('auth.forgot_password') }}" style="font-size: 0.82rem; color: var(--primary); font-weight: 600;">Forgot password?</a>
+          <label class="form-label" for="password" style="margin-bottom: 0;">Password</label>
+          <a href="{{ url_for('auth.forgot_password') }}" style="font-size: 0.82rem; color: var(--primary, #059669); font-weight: 600;">Forgot password?</a>
         </div>
-        <input type="password" name="password" class="form-control" placeholder="••••••••" required />
+        <input 
+          type="password" 
+          id="password"
+          name="password" 
+          class="form-control" 
+          placeholder="••••••••" 
+          required 
+          autocomplete="current-password"
+        />
+        <div class="invalid-feedback" id="password-error" style="display: none; color: var(--danger, #EF4444); font-size: 0.8rem; margin-top: 0.35rem;">
+          Please enter your password.
+        </div>
       </div>
 
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; font-size: 0.85rem;">
-        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--dark-700);">
-          <input type="checkbox" name="remember" style="accent-color: var(--primary);" /> Keep me signed in
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--dark-700, #374151); user-select: none;">
+          <input type="checkbox" name="remember" value="1" style="accent-color: var(--primary, #059669); width: 16px; height: 16px;" /> Keep me signed in
         </label>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block btn-lg">Log In</button>
+      <button type="submit" class="btn btn-primary btn-block btn-lg" id="submit-btn">
+        <span>Log In</span>
+      </button>
 
-      <div style="text-align: center; margin-top: 1.75rem; font-size: 0.9rem; color: var(--text-muted);">
-        Don't have an account? <a href="{{ url_for('auth.register') }}" style="color: var(--primary); font-weight: 600;">Sign up free</a>
+      <div style="text-align: center; margin-top: 1.75rem; font-size: 0.9rem; color: var(--text-muted, #6B7280);">
+        Don't have an account? <a href="{{ url_for('auth.register') }}" style="color: var(--primary, #059669); font-weight: 600;">Sign up free</a>
       </div>
 
     </form>
   </div>
 </div>
 
-<!-- Google Account Chooser Modal -->
-<div id="google-account-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; padding: 1.5rem;">
-  <div style="background: #FFFFFF; width: 100%; max-width: 420px; border-radius: 16px; box-shadow: 0 25px 70px rgba(0,0,0,0.25); overflow: hidden; border: 1px solid var(--border-subtle);">
-    
-    <!-- Modal Header -->
-    <div style="padding: 1.75rem 1.75rem 1.25rem; text-align: center; border-bottom: 1px solid #F3F4F6;">
-      <svg width="34" height="34" viewBox="0 0 18 18" style="margin-bottom: 0.75rem;">
-        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
-        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-        <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z"/>
-        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
-      </svg>
-      <h3 style="font-size: 1.2rem; font-weight: 700; color: #111827; margin-bottom: 0.25rem;">Choose an account</h3>
-      <p style="font-size: 0.88rem; color: #6B7280;">to continue to <strong style="color: #111827;">SecondSpark</strong></p>
-    </div>
-
-    <!-- Account List -->
-    <div style="padding: 0.75rem 1rem;">
-      
-      <!-- Primary Account: Karnati Hitesh (Admin) -->
-      <a href="{{ url_for('auth.google_login', email='karnatihitesh@gmail.com', name='Karnati Hitesh') }}" style="display: flex; align-items: center; gap: 0.85rem; padding: 0.85rem 1rem; border-radius: 12px; text-decoration: none; color: inherit; transition: background 0.15s; border: 1px solid transparent;" onmouseover="this.style.background='#F3F4F6';this.style.borderColor='#E5E7EB'" onmouseout="this.style.background='transparent';this.style.borderColor='transparent'">
-        <div style="width: 42px; height: 42px; border-radius: 50%; background: #059669; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 1.05rem;">KH</div>
-        <div style="flex: 1; text-align: left;">
-          <div style="font-weight: 600; font-size: 0.95rem; color: #111827;">Karnati Hitesh</div>
-          <div style="font-size: 0.82rem; color: #6B7280;">karnatihitesh@gmail.com</div>
-        </div>
-        <span style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 20px; background: #DEF7EC; color: #03543F; font-weight: 700;">Admin</span>
-      </a>
-
-      <div style="height: 1px; background: #F3F4F6; margin: 0.6rem 0;"></div>
-
-      <!-- Custom Account Form -->
-      <form action="{{ url_for('auth.google_login') }}" method="GET" style="padding: 0.5rem 0.25rem 0.75rem;">
-        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 0.45rem; text-align: left;">
-          <i class="fa-solid fa-user-plus" style="margin-right: 0.35rem; color: var(--primary);"></i> Use another Google account:
-        </label>
-        <div style="display: flex; gap: 0.5rem;">
-          <input type="email" name="email" placeholder="name@gmail.com" required style="flex: 1; height: 42px; padding: 0 0.85rem; border: 1.5px solid #D1D5DB; border-radius: 8px; font-size: 0.88rem; outline: none;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#D1D5DB'" />
-          <button type="submit" class="btn btn-primary" style="height: 42px; padding: 0 1.2rem; font-size: 0.88rem;">Select</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Modal Footer -->
-    <div style="padding: 0.85rem 1.25rem; background: #F9FAFB; border-top: 1px solid #E5E7EB; display: flex; justify-content: flex-end;">
-      <button type="button" onclick="document.getElementById('google-account-modal').style.display='none'" style="background: none; border: none; font-size: 0.88rem; color: #6B7280; cursor: pointer; font-weight: 600;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#6B7280'">Cancel</button>
-    </div>
+<!-- Optional Google Identity Services (GSI) Client SDK Support -->
+{% if config.GOOGLE_CLIENT_ID %}
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <div id="g_id_onload"
+       data-client_id="{{ config.GOOGLE_CLIENT_ID }}"
+       data-context="signin"
+       data-ux_mode="popup"
+       data-callback="handleGoogleCredentialResponse"
+       data-auto_prompt="false">
   </div>
-</div>
+  <script>
+    function handleGoogleCredentialResponse(response) {
+      if (response && response.credential) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('auth.google_callback') }}";
+        var hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'credential';
+        hiddenField.value = response.credential;
+        form.appendChild(hiddenField);
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+  </script>
+{% endif %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('login-form');
+    var loginInput = document.getElementById('login_input');
+    var passwordInput = document.getElementById('password');
+    var loginError = document.getElementById('login-input-error');
+    var passwordError = document.getElementById('password-error');
+
+    form.addEventListener('submit', function(e) {
+      var isValid = true;
+
+      if (!loginInput.value.trim()) {
+        loginInput.style.borderColor = 'var(--danger, #EF4444)';
+        loginError.style.display = 'block';
+        isValid = false;
+      } else {
+        loginInput.style.borderColor = '';
+        loginError.style.display = 'none';
+      }
+
+      if (!passwordInput.value) {
+        passwordInput.style.borderColor = 'var(--danger, #EF4444)';
+        passwordError.style.display = 'block';
+        isValid = false;
+      } else {
+        passwordInput.style.borderColor = '';
+        passwordError.style.display = 'none';
+      }
+
+      if (!isValid) {
+        e.preventDefault();
+      }
+    });
+
+    loginInput.addEventListener('input', function() {
+      if (this.value.trim()) {
+        this.style.borderColor = '';
+        loginError.style.display = 'none';
+      }
+    });
+
+    passwordInput.addEventListener('input', function() {
+      if (this.value) {
+        this.style.borderColor = '';
+        passwordError.style.display = 'none';
+      }
+    });
+  });
+</script>
+{% endblock %}
 {% endblock %}
