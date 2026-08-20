@@ -91,37 +91,54 @@ def forgot_password():
             flash('Please enter your registered email address.', 'danger')
             return render_template('forgot_password.html')
 
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter(db.func.lower(User.email) == email).first()
         if not user:
-            flash('No account found with this email address. Please register first or check for typos.', 'warning')
-            return render_template('forgot_password.html')
+            # Generic message for security or explicit friendly warning
+            flash('If an account exists with this email, a verification code has been sent.', 'info')
+            return redirect(url_for('auth.verify_otp'))
 
-        # Generate OTP (10-minute expiry)
-        otp = VerificationCode.generate(email=email, purpose='password_reset', ttl_minutes=10)
+        # Generate cryptographically secure hashed OTP (10-minute expiry)
+        otp, raw_code = VerificationCode.generate(email=email, purpose='password_reset', ttl_minutes=10)
 
-        # Store email in session before sending
+        # Store email in session
         session['reset_email'] = email
 
-        # Send real email via Gmail SMTP
-        sent = send_otp_email(to=email, otp_code=otp.code, name=user.full_name)
+        # Dispatch OTP via email transporter (Gmail / SMTP)
+        send_otp_email(to=email, otp_code=raw_code, name=user.full_name)
 
-        if sent:
-            flash(
-                f'✅ A 6-digit verification code has been sent to <strong>{email}</strong>. '
-                f'Please check your inbox (and spam folder).',
-                'success'
-            )
-        else:
-            # Fallback code display if SMTP has network issues
-            flash(
-                f'Your verification code is: <strong style="font-size:1.3rem;letter-spacing:0.12em;">{otp.code}</strong> (valid for 10 min).',
-                'info'
-            )
+        # Secure confirmation message ONLY (code is NEVER exposed on UI or responses)
+        flash(
+            f'A 6-digit verification code has been sent to your email address (<strong>{email}</strong>). '
+            f'Please check your inbox (and spam folder).',
+            'success'
+        )
 
         return redirect(url_for('auth.verify_otp'))
 
     return render_template('forgot_password.html')
 
+
+# ── API Endpoint: Request Password Reset (JSON) ──────────────────────────────
+@auth_bp.route('/api/request-reset', methods=['POST'])
+def api_request_reset():
+    """Secure API endpoint to request password reset code."""
+    data = request.get_json() or request.form
+    email = data.get('email', '').strip().lower()
+
+    if not email:
+        return {'success': False, 'message': 'Email is required.'}, 400
+
+    user = User.query.filter(db.func.lower(User.email) == email).first()
+    if user:
+        otp, raw_code = VerificationCode.generate(email=email, purpose='password_reset', ttl_minutes=10)
+        session['reset_email'] = email
+        send_otp_email(to=email, otp_code=raw_code, name=user.full_name)
+
+    # Always return a secure generic response — never return the OTP in JSON!
+    return {
+        'success': True,
+        'message': 'A 6-digit verification code has been sent to your email address.'
+    }, 200
 
 
 # ── Forgot Password Step 2: Verify OTP ────────────────────────────────────────
@@ -132,28 +149,52 @@ def verify_otp():
 
     email = session.get('reset_email') or request.form.get('email', '').strip().lower()
     if not email:
-        flash('Session expired. Please restart the password reset.', 'danger')
+        flash('Session expired. Please enter your email to restart the password reset.', 'warning')
         return redirect(url_for('auth.forgot_password'))
 
     if request.method == 'POST':
         code = request.form.get('otp_code', '').strip()
         if not code or len(code) != 6 or not code.isdigit():
-            flash('Please enter the complete 6-digit code.', 'danger')
+            flash('Please enter the complete 6-digit numeric verification code.', 'danger')
             return render_template('verify_otp.html', email=email)
 
+        # Secure hash comparison
         otp = VerificationCode.verify(email=email, code=code, purpose='password_reset')
         if not otp:
-            flash('Invalid or expired code. Please request a new one.', 'danger')
+            flash('Invalid or expired verification code. Please check your email or request a new code.', 'danger')
             return render_template('verify_otp.html', email=email)
 
         otp.mark_used()
-        import secrets as _sec
-        reset_token = _sec.token_urlsafe(32)
+        reset_token = secrets.token_urlsafe(32)
         session['reset_token'] = reset_token
         session['reset_email'] = email
+        flash('Code verified successfully! Please set your new password.', 'success')
         return redirect(url_for('auth.reset_password'))
 
     return render_template('verify_otp.html', email=email)
+
+
+# ── API Endpoint: Verify Code (JSON) ─────────────────────────────────────────
+@auth_bp.route('/api/verify-code', methods=['POST'])
+def api_verify_code():
+    """Secure API endpoint to verify code."""
+    data = request.get_json() or request.form
+    email = data.get('email', '').strip().lower() or session.get('reset_email', '')
+    code = data.get('code', '').strip()
+
+    if not email or not code:
+        return {'success': False, 'message': 'Email and 6-digit code are required.'}, 400
+
+    otp = VerificationCode.verify(email=email, code=code, purpose='password_reset')
+    if not otp:
+        return {'success': False, 'message': 'Invalid or expired verification code.'}, 400
+
+    otp.mark_used()
+    reset_token = secrets.token_urlsafe(32)
+    session['reset_token'] = reset_token
+    session['reset_email'] = email
+    return {'success': True, 'message': 'Verification code validated successfully.'}, 200
+
 
 
 # ── Forgot Password Step 3: Set New Password ──────────────────────────────────
