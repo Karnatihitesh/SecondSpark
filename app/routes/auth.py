@@ -1,5 +1,9 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, g
+import json
+import secrets
+import urllib.parse
+import urllib.request
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, g, current_app
 from app.models.user import db, User, VerificationCode
 from app.services.auth_service import get_current_user, login_required, validate_password_strength
 from app.services.project_service import save_uploaded_file
