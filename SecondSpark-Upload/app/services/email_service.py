@@ -88,29 +88,47 @@ def build_otp_html(name: str, otp_code: str, to_email: str) -> str:
 """
 
 
+def send_via_https_api(api_key: str, to: str, subject: str, html_text: str, from_email: str = None) -> bool:
+    """Send transactional email via HTTPS REST API (Resend / SendGrid API over port 443)."""
+    import urllib.request
+    import json
+
+    sender = from_email or os.environ.get('EMAIL_FROM') or 'SecondSpark <onboarding@resend.dev>'
+    url = 'https://api.resend.com/emails'
+    payload = {
+        'from': sender,
+        'to': [to],
+        'subject': subject,
+        'html': html_text
+    }
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json',
+                'User-Agent': 'SecondSpark-Transporter'
+            },
+            method='POST'
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            if r.status in (200, 201):
+                logger.info(f'[EmailService] Successfully delivered email to {to} via Resend HTTPS API')
+                return True
+    except Exception as e:
+        logger.warning(f'[EmailService] HTTPS API delivery failed: {e}')
+    return False
+
+
 def send_otp_email(to: str, otp_code: str, name: str = 'Maker') -> bool:
     """
-    Send OTP verification email via SMTP (Gmail / Custom SMTP provider).
-    Attempts STARTTLS (port 587) with fallback to SSL (port 465).
+    Production Email Dispatcher:
+    1. Checks for HTTPS Email API (RESEND_API_KEY / EMAIL_API_KEY) over port 443.
+    2. Falls back to SMTP (Gmail / Custom SMTP) via SSL (465) / STARTTLS (587).
     Returns True on success, False on failure.
     """
-    # Load credentials directly from environment / config (support both SMTP_* and MAIL_*)
-    mail_username = os.environ.get('SMTP_USER') or os.environ.get('MAIL_USERNAME', 'karnatihitesh@gmail.com')
-    mail_password = os.environ.get('SMTP_PASS') or os.environ.get('MAIL_PASSWORD', '')
-    mail_server   = os.environ.get('SMTP_HOST') or os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-    mail_port     = int(os.environ.get('SMTP_PORT') or os.environ.get('MAIL_PORT', 587))
-    sender_name   = 'SecondSpark'
-
-    if not mail_password:
-        logger.error('[EmailService] SMTP credentials missing. Please set SMTP_PASS or MAIL_PASSWORD.')
-        return False
-
-    # Construct multi-part message (plain text + rich HTML)
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = f'🔐 {otp_code} is your SecondSpark verification code'
-    msg['From']    = f'{sender_name} <{mail_username}>'
-    msg['To']      = to
-
+    subject = f'🔐 {otp_code} is your SecondSpark verification code'
     plain_text = (
         f"Hello {name},\n\n"
         f"Your SecondSpark verification code is: {otp_code}\n\n"
@@ -120,20 +138,41 @@ def send_otp_email(to: str, otp_code: str, name: str = 'Maker') -> bool:
     )
     html_text = build_otp_html(name=name, otp_code=otp_code, to_email=to)
 
+    # Provider 1: Resend / HTTPS API (Port 443 - Unblocked on all cloud platforms)
+    resend_api_key = os.environ.get('RESEND_API_KEY') or os.environ.get('EMAIL_API_KEY')
+    if resend_api_key:
+        if send_via_https_api(api_key=resend_api_key, to=to, subject=subject, html_text=html_text):
+            return True
+
+    # Provider 2: SMTP Dispatch (Gmail / Custom SMTP)
+    mail_username = os.environ.get('SMTP_USER') or os.environ.get('GMAIL_USER') or os.environ.get('MAIL_USERNAME', 'karnatihitesh@gmail.com')
+    mail_password = os.environ.get('SMTP_PASS') or os.environ.get('GMAIL_APP_PASSWORD') or os.environ.get('MAIL_PASSWORD', '')
+    mail_server   = os.environ.get('SMTP_HOST') or os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    mail_port     = int(os.environ.get('SMTP_PORT') or os.environ.get('MAIL_PORT', 587))
+    sender_name   = 'SecondSpark'
+
+    if not mail_password:
+        logger.error('[EmailService] Neither RESEND_API_KEY nor SMTP_PASS/MAIL_PASSWORD is configured.')
+        return False
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From']    = f'{sender_name} <{mail_username}>'
+    msg['To']      = to
     msg.attach(MIMEText(plain_text, 'plain', 'utf-8'))
     msg.attach(MIMEText(html_text, 'html', 'utf-8'))
 
-    # Strategy 1: Direct SSL Delivery (Port 465 - fastest and unblocked on cloud hosts)
+    # Try Port 465 SSL
     try:
         with smtplib.SMTP_SSL(mail_server, 465, timeout=8) as ssl_server:
             ssl_server.login(mail_username, mail_password)
             ssl_server.send_message(msg)
-        logger.info(f'[EmailService] Successfully sent OTP email to {to} via SSL ({mail_server}:465)')
+        logger.info(f'[EmailService] Successfully dispatched OTP email to {to} via SSL ({mail_server}:465)')
         return True
     except Exception as ssl_err:
-        logger.warning(f'[EmailService] SSL dispatch failed on port 465: {ssl_err}. Trying STARTTLS on port {mail_port}...')
+        logger.warning(f'[EmailService] Port 465 SSL failed: {ssl_err}. Trying STARTTLS on port {mail_port}...')
 
-    # Strategy 2: Standard STARTTLS Fallback (Port 587)
+    # Try Port 587 STARTTLS
     try:
         with smtplib.SMTP(mail_server, mail_port, timeout=8) as server:
             server.ehlo()
@@ -142,11 +181,12 @@ def send_otp_email(to: str, otp_code: str, name: str = 'Maker') -> bool:
                 server.ehlo()
             server.login(mail_username, mail_password)
             server.send_message(msg)
-        logger.info(f'[EmailService] Successfully sent OTP email to {to} via TLS ({mail_server}:{mail_port})')
+        logger.info(f'[EmailService] Successfully dispatched OTP email to {to} via TLS ({mail_server}:{mail_port})')
         return True
     except Exception as tls_err:
-        logger.error(f'[EmailService] All email delivery attempts failed for {to}: {tls_err}', exc_info=True)
+        logger.error(f'[EmailService] All dispatch attempts failed for {to}: {tls_err}', exc_info=True)
         return False
+
 
 
 
