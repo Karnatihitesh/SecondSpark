@@ -277,11 +277,12 @@ def login():
         password = request.form.get('password', '')
         remember = bool(request.form.get('remember'))
 
+        # Form validation
         if not login_input or not password:
-            flash('Please provide both username/email and password.', 'danger')
+            flash('Please enter both your email/username and password.', 'danger')
             return render_template('login.html')
 
-        # Case-insensitive check by email or username (essential for PostgreSQL)
+        # Case-insensitive lookup by email or username
         user = User.query.filter(
             (db.func.lower(User.email) == login_input) | (db.func.lower(User.username) == login_input)
         ).first()
@@ -291,17 +292,23 @@ def login():
                 flash('Your account has been suspended. Please contact support.', 'danger')
                 return render_template('login.html')
 
+            # Establish secure session
             session['user_id'] = user.id
             if remember:
                 session.permanent = True
-            
+            g.current_user = user
+
             flash(f'Welcome back, {user.full_name}!', 'success')
             next_url = request.args.get('next')
-            if next_url and next_url.startswith('/'):
+            if next_url and next_url.startswith('/') and not next_url.startswith('//'):
                 return redirect(next_url)
+            
+            # Dynamic role-based redirection from database
+            if user.is_admin:
+                return redirect(url_for('admin.index'))
             return redirect(url_for('dashboard.index'))
         else:
-            flash('Invalid username/email or password.', 'danger')
+            flash('Invalid email/username or password. Please check your credentials and try again.', 'danger')
             return render_template('login.html')
 
     return render_template('login.html')
@@ -310,6 +317,7 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     session.pop('user_id', None)
+    session.pop('oauth_state', None)
     g.current_user = None
     flash('You have been logged out safely.', 'info')
     return redirect(url_for('main.index'))
@@ -374,71 +382,196 @@ def public_profile(username):
     return render_template('profile.html', user=user, is_public=True, projects=projects, reviews=reviews, rating_summary=rating_summary)
 
 
-# ── Google OAuth Sign-in ──────────────────────────────────────────────────────
+# ── Real Google OAuth 2.0 & Identity Services Integration ─────────────────────
 @auth_bp.route('/google')
 def google_login():
-    """Sign in with selected Google account."""
-    user = get_current_user()
-    if user:
+    """Initiate standard Google OAuth 2.0 authorization redirect."""
+    if get_current_user():
         return redirect(url_for('dashboard.index'))
 
-    email = request.values.get('email', '').strip().lower() or 'karnatihitesh@gmail.com'
-    name = request.values.get('name', '').strip()
-    
-    if not name:
-        name = email.split('@')[0].replace('.', ' ').title()
+    import urllib.parse
+    from flask import current_app
 
-    username = email.split('@')[0].replace('.', '_').lower()
+    client_id = current_app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID')
     
-    existing = User.query.filter((db.func.lower(User.email) == email) | (db.func.lower(User.username) == username)).first()
-    
-    # Check if admin email
-    is_admin_user = (email in ['karnatihitesh@gmail.com', 'admin@secondspark.com'] or username in ['karnatihitesh', 'admin'])
-    role = 'admin' if is_admin_user else 'user'
-    
-    if not existing:
-        existing = User(
-            username=username,
-            email=email,
-            full_name=name,
-            bio='Maker & Creator on SecondSpark via Google.',
-            skills='Hardware Prototyping, Web Development, Maker',
-            location='India',
-            role=role
+    # Store return URL
+    next_url = request.args.get('next', '')
+    if next_url:
+        session['next_url'] = next_url
+
+    # Check if Google OAuth Client ID is configured
+    if not client_id:
+        flash(
+            'Google OAuth is not configured yet. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET '
+            'in your environment settings to enable live Google authentication.',
+            'warning'
         )
-        existing.set_password('GoogleAuth@2026')
-        db.session.add(existing)
+        return redirect(url_for('auth.login'))
+
+    # Generate secure state token for CSRF protection
+    state = secrets.token_urlsafe(32)
+    session['oauth_state'] = state
+
+    # Build standard Google OAuth 2.0 authorization URL
+    redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI') or url_for('auth.google_callback', _external=True)
+    params = {
+        'client_id': client_id,
+        'redirect_uri': redirect_uri,
+        'response_type': 'code',
+        'scope': 'openid email profile',
+        'state': state,
+        'prompt': 'select_account',
+        'access_type': 'offline'
+    }
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return redirect(auth_url)
+
+
+@auth_bp.route('/google/callback', methods=['GET', 'POST'])
+def google_callback():
+    """Handle Google OAuth 2.0 authorization code exchange and token verification."""
+    if get_current_user():
+        return redirect(url_for('dashboard.index'))
+
+    import json, urllib.request, urllib.parse
+    from flask import current_app
+
+    client_id = current_app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID')
+    client_secret = current_app.config.get('GOOGLE_CLIENT_SECRET') or os.environ.get('GOOGLE_CLIENT_SECRET')
+
+    verified_email = None
+    verified_name = None
+    verified_picture = None
+
+    # Handle POST from Google Identity Services (GSI) One-Tap / Button (ID Token)
+    if request.method == 'POST':
+        credential = request.form.get('credential')
+        if credential:
+            try:
+                # Verify token with Google's public tokeninfo endpoint
+                verify_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={credential}"
+                req = urllib.request.Request(verify_url, headers={'User-Agent': 'SecondSpark-Auth'})
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    token_info = json.loads(resp.read().decode('utf-8'))
+                    verified_email = token_info.get('email')
+                    verified_name = token_info.get('name')
+                    verified_picture = token_info.get('picture')
+            except Exception as e:
+                flash('Google authentication verification failed. Please try again.', 'danger')
+                return redirect(url_for('auth.login'))
+
+    # Handle GET from Google OAuth 2.0 Authorization Code flow
+    elif request.method == 'GET':
+        error = request.args.get('error')
+        if error:
+            flash(f'Google authentication was cancelled or encountered an error ({error}).', 'warning')
+            return redirect(url_for('auth.login'))
+
+        code = request.args.get('code')
+        state = request.args.get('state')
+
+        # Verify CSRF state
+        saved_state = session.pop('oauth_state', None)
+        if not state or state != saved_state:
+            flash('Security validation failed (state mismatch). Please try again.', 'danger')
+            return redirect(url_for('auth.login'))
+
+        if code:
+            redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI') or url_for('auth.google_callback', _external=True)
+            token_url = "https://oauth2.googleapis.com/token"
+            token_data = urllib.parse.urlencode({
+                'code': code,
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'redirect_uri': redirect_uri,
+                'grant_type': 'authorization_code'
+            }).encode('utf-8')
+
+            try:
+                # Exchange code for access token and ID token
+                token_req = urllib.request.Request(
+                    token_url,
+                    data=token_data,
+                    headers={'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'SecondSpark-Auth'}
+                )
+                with urllib.request.urlopen(token_req, timeout=12) as token_resp:
+                    token_res_data = json.loads(token_resp.read().decode('utf-8'))
+                    access_token = token_res_data.get('access_token')
+
+                # Fetch verified user profile from Google UserInfo endpoint
+                userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+                userinfo_req = urllib.request.Request(
+                    userinfo_url,
+                    headers={'Authorization': f'Bearer {access_token}', 'User-Agent': 'SecondSpark-Auth'}
+                )
+                with urllib.request.urlopen(userinfo_req, timeout=10) as userinfo_resp:
+                    user_info = json.loads(userinfo_resp.read().decode('utf-8'))
+                    verified_email = user_info.get('email')
+                    verified_name = user_info.get('name')
+                    verified_picture = user_info.get('picture')
+
+            except Exception as e:
+                flash('Failed to complete Google authentication. Please try logging in with email and password.', 'danger')
+                return redirect(url_for('auth.login'))
+
+    if not verified_email:
+        flash('Could not retrieve email from Google authentication. Please try again.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    verified_email = verified_email.strip().lower()
+
+    # Retrieve or create user record in database
+    user = User.query.filter(db.func.lower(User.email) == verified_email).first()
+
+    if not user:
+        # Generate base username from email prefix
+        base_username = verified_email.split('@')[0].replace('.', '_')
+        username = base_username
+        suffix = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}_{suffix}"
+            suffix += 1
+
+        full_name = verified_name or verified_email.split('@')[0].replace('.', ' ').title()
+        user = User(
+            username=username,
+            email=verified_email,
+            full_name=full_name,
+            avatar_url=verified_picture or '/static/images/default-avatar.svg',
+            role='user'  # Standard user role dynamically assigned from database
+        )
+        user.set_password(secrets.token_urlsafe(32))
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Error creating account via Google. Please try again.', 'danger')
+            return redirect(url_for('auth.login'))
     else:
-        if is_admin_user:
-            existing.role = 'admin'
-    
-    db.session.commit()
-    
-    session['user_id'] = existing.id
+        # Update avatar if user has default avatar and Google provided one
+        if verified_picture and (not user.avatar_url or 'default-avatar' in user.avatar_url):
+            user.avatar_url = verified_picture
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+    # Establish authenticated user session
+    session['user_id'] = user.id
     session.permanent = True
-    g.current_user = existing
-    flash(f'👋 Signed in as <strong>{existing.full_name}</strong> ({existing.email})', 'success')
-    
-    if existing.role == 'admin':
+    g.current_user = user
+
+    flash(f'👋 Welcome, {user.full_name}! Successfully authenticated with Google.', 'success')
+
+    next_url = session.pop('next_url', None)
+    if next_url and next_url.startswith('/') and not next_url.startswith('//'):
+        return redirect(next_url)
+
+    # Dynamic role-based redirect
+    if user.is_admin:
         return redirect(url_for('admin.index'))
     return redirect(url_for('dashboard.index'))
 
-
-@auth_bp.route('/make-admin')
-def make_admin():
-    """Promote current user or karnatihitesh to admin."""
-    users = User.query.filter(
-        (User.username == 'karnatihitesh') | 
-        (User.email == 'karnatihitesh@gmail.com') |
-        (User.username == 'admin')
-    ).all()
-    curr = get_current_user()
-    if curr:
-        curr.role = 'admin'
-    for u in users:
-        u.role = 'admin'
-    db.session.commit()
-    flash('👑 Admin privileges granted! You are now a platform Administrator.', 'success')
-    return redirect(url_for('admin.index'))
 
 
