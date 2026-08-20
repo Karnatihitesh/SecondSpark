@@ -123,9 +123,19 @@ def send_otp_email(to: str, otp_code: str, name: str = 'Maker') -> bool:
     msg.attach(MIMEText(plain_text, 'plain', 'utf-8'))
     msg.attach(MIMEText(html_text, 'html', 'utf-8'))
 
-    # Strategy 1: Standard TLS Delivery (Port 587)
+    # Strategy 1: Direct SSL Delivery (Port 465 - fastest and unblocked on cloud hosts)
     try:
-        with smtplib.SMTP(mail_server, mail_port, timeout=12) as server:
+        with smtplib.SMTP_SSL(mail_server, 465, timeout=8) as ssl_server:
+            ssl_server.login(mail_username, mail_password)
+            ssl_server.send_message(msg)
+        logger.info(f'[EmailService] Successfully sent OTP email to {to} via SSL ({mail_server}:465)')
+        return True
+    except Exception as ssl_err:
+        logger.warning(f'[EmailService] SSL dispatch failed on port 465: {ssl_err}. Trying STARTTLS on port {mail_port}...')
+
+    # Strategy 2: Standard STARTTLS Fallback (Port 587)
+    try:
+        with smtplib.SMTP(mail_server, mail_port, timeout=8) as server:
             server.ehlo()
             if server.has_extn('starttls'):
                 server.starttls()
@@ -135,17 +145,8 @@ def send_otp_email(to: str, otp_code: str, name: str = 'Maker') -> bool:
         logger.info(f'[EmailService] Successfully sent OTP email to {to} via TLS ({mail_server}:{mail_port})')
         return True
     except Exception as tls_err:
-        logger.warning(f'[EmailService] TLS dispatch failed on port {mail_port}: {tls_err}. Trying SSL on port 465...')
-
-    # Strategy 2: Direct SSL Fallback (Port 465)
-    try:
-        with smtplib.SMTP_SSL(mail_server, 465, timeout=12) as ssl_server:
-            ssl_server.login(mail_username, mail_password)
-            ssl_server.send_message(msg)
-        logger.info(f'[EmailService] Successfully sent OTP email to {to} via SSL ({mail_server}:465)')
-        return True
-    except Exception as ssl_err:
-        logger.error(f'[EmailService] All email delivery attempts failed for {to}: {ssl_err}', exc_info=True)
+        logger.error(f'[EmailService] All email delivery attempts failed for {to}: {tls_err}', exc_info=True)
         return False
+
 
 
