@@ -91,50 +91,61 @@ def build_otp_html(name: str, otp_code: str, to_email: str) -> str:
 def send_otp_email(to: str, otp_code: str, name: str = 'Maker') -> bool:
     """
     Send OTP verification email via SMTP (Gmail / Custom SMTP provider).
+    Attempts STARTTLS (port 587) with fallback to SSL (port 465).
     Returns True on success, False on failure.
     """
+    # Load credentials directly from environment / config (support both SMTP_* and MAIL_*)
+    mail_username = os.environ.get('SMTP_USER') or os.environ.get('MAIL_USERNAME', 'karnatihitesh@gmail.com')
+    mail_password = os.environ.get('SMTP_PASS') or os.environ.get('MAIL_PASSWORD', '')
+    mail_server   = os.environ.get('SMTP_HOST') or os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    mail_port     = int(os.environ.get('SMTP_PORT') or os.environ.get('MAIL_PORT', 587))
+    sender_name   = 'SecondSpark'
+
+    if not mail_password:
+        logger.error('[EmailService] SMTP credentials missing. Please set SMTP_PASS or MAIL_PASSWORD.')
+        return False
+
+    # Construct multi-part message (plain text + rich HTML)
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f'🔐 {otp_code} is your SecondSpark verification code'
+    msg['From']    = f'{sender_name} <{mail_username}>'
+    msg['To']      = to
+
+    plain_text = (
+        f"Hello {name},\n\n"
+        f"Your SecondSpark verification code is: {otp_code}\n\n"
+        f"This code will expire in 10 minutes. Do not share it with anyone.\n\n"
+        f"If you did not request this code, you can safely ignore this email.\n\n"
+        f"— SecondSpark Team"
+    )
+    html_text = build_otp_html(name=name, otp_code=otp_code, to_email=to)
+
+    msg.attach(MIMEText(plain_text, 'plain', 'utf-8'))
+    msg.attach(MIMEText(html_text, 'html', 'utf-8'))
+
+    # Strategy 1: Standard TLS Delivery (Port 587)
     try:
-        # Load credentials directly from environment / config (support both SMTP_* and MAIL_*)
-        mail_username = os.environ.get('SMTP_USER') or os.environ.get('MAIL_USERNAME', 'karnatihitesh@gmail.com')
-        mail_password = os.environ.get('SMTP_PASS') or os.environ.get('MAIL_PASSWORD', '')
-        mail_server   = os.environ.get('SMTP_HOST') or os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-        mail_port     = int(os.environ.get('SMTP_PORT') or os.environ.get('MAIL_PORT', 587))
-        sender_name   = 'SecondSpark'
-
-        if not mail_password:
-            logger.warning('[EmailService] SMTP password not configured in environment')
-            return False
-
-        # Construct multi-part message (plain text + rich HTML)
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = f'🔐 {otp_code} is your SecondSpark verification code'
-        msg['From']    = f'{sender_name} <{mail_username}>'
-        msg['To']      = to
-
-        plain_text = (
-            f"Hello {name},\n\n"
-            f"Your SecondSpark verification code is: {otp_code}\n\n"
-            f"This code will expire in 10 minutes. Do not share it with anyone.\n\n"
-            f"If you did not request this code, you can safely ignore this email.\n\n"
-            f"— SecondSpark Team"
-        )
-        html_text = build_otp_html(name=name, otp_code=otp_code, to_email=to)
-
-        msg.attach(MIMEText(plain_text, 'plain', 'utf-8'))
-        msg.attach(MIMEText(html_text, 'html', 'utf-8'))
-
-        # Direct TLS SMTP delivery
         with smtplib.SMTP(mail_server, mail_port, timeout=12) as server:
             server.ehlo()
-            server.starttls()
-            server.ehlo()
+            if server.has_extn('starttls'):
+                server.starttls()
+                server.ehlo()
             server.login(mail_username, mail_password)
             server.send_message(msg)
-
-        logger.info(f'[EmailService] Successfully dispatched OTP email to {to}')
+        logger.info(f'[EmailService] Successfully sent OTP email to {to} via TLS ({mail_server}:{mail_port})')
         return True
+    except Exception as tls_err:
+        logger.warning(f'[EmailService] TLS dispatch failed on port {mail_port}: {tls_err}. Trying SSL on port 465...')
 
-    except Exception as e:
-        logger.error(f'[EmailService] Failed to send OTP email to {to}: {e}', exc_info=True)
+    # Strategy 2: Direct SSL Fallback (Port 465)
+    try:
+        with smtplib.SMTP_SSL(mail_server, 465, timeout=12) as ssl_server:
+            ssl_server.login(mail_username, mail_password)
+            ssl_server.send_message(msg)
+        logger.info(f'[EmailService] Successfully sent OTP email to {to} via SSL ({mail_server}:465)')
+        return True
+    except Exception as ssl_err:
+        logger.error(f'[EmailService] All email delivery attempts failed for {to}: {ssl_err}', exc_info=True)
         return False
+
 
