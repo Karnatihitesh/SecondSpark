@@ -39,32 +39,10 @@
   <!-- Floating Translucent Animated Dock Navbar -->
   <header class="navbar-wrapper">
     <nav class="navbar-dock">
-      <!-- Brand Logo with Custom Animated Glass Spark -->
+      <!-- Brand Logo with Custom Animated Glass Logo -->
       <a href="{{ url_for('main.index') }}" class="brand-logo" aria-label="SecondSpark Home">
         <div class="brand-logo-badge">
-          <svg class="spark-svg" viewBox="0 0 44 44" width="38" height="38" aria-hidden="true">
-            <defs>
-              <linearGradient id="navEmeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#34D399"/>
-                <stop offset="45%" stop-color="#10B981"/>
-                <stop offset="100%" stop-color="#047857"/>
-              </linearGradient>
-              <linearGradient id="navSparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#FFFFFF"/>
-                <stop offset="70%" stop-color="#E6FFFA"/>
-                <stop offset="100%" stop-color="#A7F3D0"/>
-              </linearGradient>
-              <filter id="navGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="1.2" result="blur"/>
-                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-              </filter>
-            </defs>
-            <rect x="2" y="2" width="40" height="40" rx="12" fill="url(#navEmeraldGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
-            <path d="M5 14 Q 22 4 39 14" stroke="rgba(255,255,255,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
-            <path class="spark-primary" d="M22 8 L25.5 18.5 L36 22 L25.5 25.5 L22 36 L18.5 25.5 L8 22 L18.5 18.5 Z" fill="url(#navSparkGrad)" filter="url(#navGlow)"/>
-            <path class="spark-secondary" d="M30 11 L32 14.8 L36 16 L32 17.2 L30 21 L28 17.2 L24 16 L28 14.8 Z" fill="#FFFFFF" opacity="0.95"/>
-            <circle cx="22" cy="22" r="2.6" fill="#FFFFFF"/>
-          </svg>
+          <img src="{{ url_for('static', filename='images/brand-logo-animated.webp') }}" alt="SecondSpark Logo" class="brand-logo-img" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/brand-logo-circle.png') }}';">
           <div class="glass-sheen"></div>
         </div>
         <span class="brand-text">Second<span class="brand-spark">Spark</span></span>
@@ -201,25 +179,7 @@
         <div class="footer-brand">
           <div class="brand-logo" style="color: #fff;">
             <div class="brand-logo-badge">
-              <svg class="spark-svg" viewBox="0 0 44 44" width="38" height="38" aria-hidden="true">
-                <defs>
-                  <linearGradient id="footEmeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#34D399"/>
-                    <stop offset="45%" stop-color="#10B981"/>
-                    <stop offset="100%" stop-color="#047857"/>
-                  </linearGradient>
-                  <linearGradient id="footSparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#FFFFFF"/>
-                    <stop offset="70%" stop-color="#E6FFFA"/>
-                    <stop offset="100%" stop-color="#A7F3D0"/>
-                  </linearGradient>
-                </defs>
-                <rect x="2" y="2" width="40" height="40" rx="12" fill="url(#footEmeraldGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
-                <path d="M5 14 Q 22 4 39 14" stroke="rgba(255,255,255,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
-                <path class="spark-primary" d="M22 8 L25.5 18.5 L36 22 L25.5 25.5 L22 36 L18.5 25.5 L8 22 L18.5 18.5 Z" fill="url(#footSparkGrad)"/>
-                <path class="spark-secondary" d="M30 11 L32 14.8 L36 16 L32 17.2 L30 21 L28 17.2 L24 16 L28 14.8 Z" fill="#FFFFFF" opacity="0.95"/>
-                <circle cx="22" cy="22" r="2.6" fill="#FFFFFF"/>
-              </svg>
+              <img src="{{ url_for('static', filename='images/brand-logo-animated.webp') }}" alt="SecondSpark Logo" class="brand-logo-img" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/brand-logo-circle.png') }}';">
               <div class="glass-sheen"></div>
             </div>
             <span>Second<span class="brand-spark">Spark</span></span>
