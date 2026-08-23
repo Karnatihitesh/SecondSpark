@@ -236,7 +236,7 @@ p {
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
   font-weight: 800;
   font-size: 1.25rem;
   color: var(--dark-900);
@@ -246,17 +246,149 @@ p {
   margin-right: 1.25rem;
 }
 
-.brand-icon {
-  width: 34px;
-  height: 34px;
-  background: linear-gradient(135deg, var(--primary), #20a068);
-  border-radius: 10px;
-  display: flex;
+/* ══════════════════════════════════════════════════════
+   CUSTOM ANIMATED GLASS LOGO (Ported from 2.4s Python model)
+   Features: 2.4s breathing scale (1.0 - 1.025), soft emerald
+             glow pulse, and moving translucent glass highlight sheen.
+   ══════════════════════════════════════════════════════ */
+.brand-logo-badge {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10B981 0%, #059669 60%, #047857 100%);
+  box-shadow: 
+    0 4px 14px rgba(16, 185, 129, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.15) inset;
+  overflow: hidden;
+  flex-shrink: 0;
+  animation: logoBreathing 2.4s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.brand-logo-badge:hover {
+  transform: scale(1.06) translateY(-1px);
+  box-shadow: 
+    0 8px 24px rgba(16, 185, 129, 0.55),
+    0 0 16px rgba(52, 211, 153, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+/* SVG Spark Icon inside Badge */
+.brand-logo-badge .spark-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+}
+
+.brand-logo-badge .spark-primary {
+  animation: sparkInnerGlow 2.4s ease-in-out infinite;
+  transform-origin: 22px 22px;
+}
+
+.brand-logo-badge .spark-secondary {
+  animation: sparkSatellitePulse 2.4s ease-in-out infinite;
+  transform-origin: 30px 14px;
+}
+
+/* Translucent Moving Glass Specular Sheen (2.4s moving highlight) */
+.brand-logo-badge .glass-sheen {
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.48) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-24deg);
+  pointer-events: none;
+  z-index: 2;
+  animation: glassSheenMotion 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* 2.4s Looping Breathing Scale & Atmospheric Glow Pulse */
+@keyframes logoBreathing {
+  0%, 100% {
+    transform: scale(1.0);
+    box-shadow: 
+      0 4px 14px rgba(16, 185, 129, 0.32),
+      0 0 0 rgba(52, 211, 153, 0),
+      0 1px 0 rgba(255, 255, 255, 0.35) inset;
+  }
+  50% {
+    transform: scale(1.025);
+    box-shadow: 
+      0 6px 22px rgba(16, 185, 129, 0.52),
+      0 0 14px rgba(52, 211, 153, 0.65),
+      0 1px 0 rgba(255, 255, 255, 0.65) inset;
+  }
+}
+
+/* 2.4s Moving Glass Specular Shimmer Band */
+@keyframes glassSheenMotion {
+  0% {
+    left: -120%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  75% {
+    left: 200%;
+    opacity: 1;
+  }
+  100% {
+    left: 200%;
+    opacity: 0;
+  }
+}
+
+@keyframes sparkInnerGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.6));
+    opacity: 0.95;
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 10px rgba(167, 243, 208, 0.8));
+    opacity: 1;
+  }
+}
+
+@keyframes sparkSatellitePulse {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* Legacy .brand-icon backward compatibility alias */
+.brand-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10B981 0%, #059669 60%, #047857 100%);
   color: #fff;
-  font-size: 1.05rem;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  animation: logoBreathing 2.4s ease-in-out infinite;
+  overflow: hidden;
+  position: relative;
 }
 
 .brand-spark {
