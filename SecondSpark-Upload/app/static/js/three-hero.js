@@ -97,20 +97,31 @@
       wireframe: false
     });
 
-    // Emerald Crystal Core
+    // Emerald Crystal Glass Logo Material (Matches #10B981 Theme)
     const emeraldCoreMat = new THREE.MeshStandardMaterial({
-      color: 0x35C98A,
-      emissive: 0x187046,
-      emissiveIntensity: 0.45,
-      metalness: 0.65,
+      color: 0x10B981,
+      emissive: 0x059669,
+      emissiveIntensity: 0.55,
+      metalness: 0.45,
       roughness: 0.15,
       transparent: true,
-      opacity: 0.92
+      opacity: 0.95
     });
 
-    // Outer Wireframe Cage
-    const wireGlowMat = new THREE.MeshBasicMaterial({
+    // Second Spark (Cyan-Emerald Satellite) Material
+    const cyanSparkMat = new THREE.MeshStandardMaterial({
       color: 0x5EEAD4,
+      emissive: 0x10B981,
+      emissiveIntensity: 0.65,
+      metalness: 0.6,
+      roughness: 0.12,
+      transparent: true,
+      opacity: 0.96
+    });
+
+    // Outer Wireframe Diamond Lattice
+    const wireGlowMat = new THREE.MeshBasicMaterial({
+      color: 0xA7F3D0,
       wireframe: true,
       transparent: true,
       opacity: 0.45
@@ -118,9 +129,9 @@
 
     // Glowing Neon Rings
     const neonRingMat = new THREE.MeshStandardMaterial({
-      color: 0x35C98A,
-      emissive: 0x35C98A,
-      emissiveIntensity: 0.8,
+      color: 0x10B981,
+      emissive: 0x10B981,
+      emissiveIntensity: 0.85,
       metalness: 0.9,
       roughness: 0.1
     });
@@ -134,23 +145,70 @@
     });
 
     /* ══════════════════════════════════════════════
-       CENTRAL QUANTUM CORE
+       3D SECONDSPARK LOGO CRYSTAL GEOMETRY GENERATOR
+    ══════════════════════════════════════════════ */
+    function createSparkGeometry(outerR, innerR, depth, bevel) {
+      const shape = new THREE.Shape();
+      const points = 8;
+      for (let i = 0; i < points * 2; i++) {
+        const angle = (i * Math.PI) / points - Math.PI / 2;
+        const r = (i % 2 === 0) ? outerR : innerR;
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r;
+        if (i === 0) shape.moveTo(x, y);
+        else shape.lineTo(x, y);
+      }
+      shape.closePath();
+
+      const extrudeSettings = {
+        depth: depth,
+        bevelEnabled: true,
+        bevelSegments: 4,
+        bevelThickness: bevel,
+        bevelSize: bevel * 0.75,
+        curveSegments: 12
+      };
+
+      const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      geo.center();
+      return geo;
+    }
+
+    /* ══════════════════════════════════════════════
+       CENTRAL 3D LOGO CORE ASSEMBLY
     ══════════════════════════════════════════════ */
     const coreGroup = new THREE.Group();
     rootAssembly.add(coreGroup);
 
-    // Inner Glowing Core (Icosahedron high-poly)
-    const innerCoreGeo = new THREE.IcosahedronGeometry(2.2, 1);
-    const innerCore = new THREE.Mesh(innerCoreGeo, emeraldCoreMat);
-    coreGroup.add(innerCore);
+    // Primary 3D Emerald Star Spark (Dual Intersecting 3D Crystals)
+    const primarySparkGroup = new THREE.Group();
+    coreGroup.add(primarySparkGroup);
 
-    // Outer Faceted Cage (Dual geometry)
-    const outerCageGeo = new THREE.IcosahedronGeometry(2.65, 0);
+    const primaryGeo = createSparkGeometry(2.4, 0.75, 0.6, 0.35);
+    const primarySparkMesh = new THREE.Mesh(primaryGeo, emeraldCoreMat);
+    primarySparkGroup.add(primarySparkMesh);
+
+    // Cross-faceted 3D orthogonal spark star for full 3D depth
+    const primaryCrossMesh = new THREE.Mesh(primaryGeo, emeraldCoreMat);
+    primaryCrossMesh.rotation.y = Math.PI / 2;
+    primarySparkGroup.add(primaryCrossMesh);
+
+    // Outer Faceted Diamond Crystal Cage
+    const outerCageGeo = new THREE.OctahedronGeometry(3.0, 1);
     const outerCage = new THREE.Mesh(outerCageGeo, wireGlowMat);
     coreGroup.add(outerCage);
 
-    // Central Floating Spark Nucleus
-    const nucleusGeo = new THREE.SphereGeometry(0.8, 32, 32);
+    // Secondary "Second Spark" Satellite Crystal (Revival Symbol)
+    const secondarySparkGroup = new THREE.Group();
+    coreGroup.add(secondarySparkGroup);
+
+    const secondaryGeo = createSparkGeometry(1.05, 0.35, 0.3, 0.18);
+    const secondarySparkMesh = new THREE.Mesh(secondaryGeo, cyanSparkMat);
+    secondarySparkGroup.add(secondarySparkMesh);
+    secondarySparkGroup.position.set(1.8, 1.4, 0.8);
+
+    // Central Floating Luminescent Photon Nucleus
+    const nucleusGeo = new THREE.SphereGeometry(0.7, 32, 32);
     const nucleusMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
     const nucleus = new THREE.Mesh(nucleusGeo, nucleusMat);
     coreGroup.add(nucleus);
@@ -414,16 +472,42 @@
       shockwaveScale += (1.0 - shockwaveScale) * 0.1;
       coreGroup.scale.setScalar(shockwaveScale);
 
-      // Core pulsating rotation
-      const corePulse = 1.0 + 0.05 * Math.sin(time * 3);
-      innerCore.scale.setScalar(corePulse);
-      innerCore.rotation.y = time * 0.5;
-      innerCore.rotation.z = time * 0.3;
+      // ══════════════════════════════════════════════════════
+      // 2.4s Looping Breathing Glass & Atmospheric Glow Motion
+      // ══════════════════════════════════════════════════════
+      const loopPeriod = 2.4;
+      const loopT = (time % loopPeriod) / loopPeriod;
+      const breathingScale = 1.0 + 0.015 * Math.sin(2 * Math.PI * loopT);
+      const glowPulse = 0.5 + 0.5 * Math.sin(2 * Math.PI * loopT);
 
+      // Apply shockwave scale combined with 2.4s breathing scale
+      coreGroup.scale.setScalar(shockwaveScale * breathingScale);
+
+      // Primary 3D Spark Star: Smooth Precession & Shimmer
+      primarySparkGroup.rotation.y = time * 0.45;
+      primarySparkGroup.rotation.z = Math.sin(time * 0.5) * 0.15;
+      primarySparkGroup.rotation.x = Math.cos(time * 0.4) * 0.12;
+
+      // Outer Diamond Crystal Cage Counter-Rotation
       outerCage.rotation.y = -time * 0.35;
       outerCage.rotation.x = time * 0.25;
 
-      nucleus.scale.setScalar(0.7 + 0.25 * Math.sin(time * 6));
+      // Secondary "Second Spark" Satellite Orbiting Motion
+      const secAngle = time * 0.9;
+      secondarySparkGroup.position.x = Math.cos(secAngle) * 2.2;
+      secondarySparkGroup.position.y = Math.sin(secAngle) * 1.6;
+      secondarySparkGroup.position.z = Math.sin(time * 0.7) * 1.1;
+      secondarySparkGroup.rotation.y = -time * 0.8;
+      secondarySparkGroup.rotation.z = time * 0.6;
+      secondarySparkGroup.scale.setScalar(0.95 + 0.15 * Math.sin(time * 3));
+
+      // Quantum Luminescent Spark Nucleus
+      nucleus.scale.setScalar(0.75 + 0.2 * Math.sin(time * 5));
+
+      // Synchronized Atmospheric Glow Intensity
+      emeraldCoreMat.emissiveIntensity = 0.45 + 0.25 * glowPulse;
+      cyanSparkMat.emissiveIntensity = 0.55 + 0.25 * glowPulse;
+      coreLight.intensity = (3.5 + 1.5 * glowPulse) * (shockwaveScale > 1.05 ? 1.8 : 1.0);
 
       // Gyroscope ring independent kinematics
       gyroRing1.rotation.z = time * 0.45;
