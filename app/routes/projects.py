@@ -5,7 +5,7 @@ from app.models.user import db, User
 from app.models.project import Project, ProjectImage, ProjectDocument, SavedProject, RepairRequest, ProjectMilestone, ProgressUpdate
 from app.models.review import Review
 from app.models.category import Category
-from app.services.auth_service import get_current_user, login_required, slugify
+from app.services.auth_service import get_current_user, login_required, customer_required, technician_required, slugify
 from app.services.project_service import build_project_query, save_uploaded_file
 from app.services.notification_service import create_notification
 from app.services.recommendation_service import recommend_repairmen_for_project
@@ -69,7 +69,7 @@ def browse():
 
 
 @projects_bp.route('/upload', methods=['GET', 'POST'])
-@login_required
+@customer_required
 def upload():
     user = get_current_user()
     categories = Category.query.order_by(Category.name.asc()).all()
@@ -372,8 +372,9 @@ def init_default_milestones(project):
 
 
 @projects_bp.route('/<int:id>/request-repair', methods=['POST'])
+@projects_bp.route('/<int:id>/request-repair/<int:repairman_id>', methods=['POST'])
 @login_required
-def request_repair(id):
+def request_repair(id, repairman_id=None):
     """Customer submits a direct repair request to a recommended or selected repairman."""
     project = db.session.get(Project, id)
     if not project:
@@ -393,7 +394,8 @@ def request_repair(id):
         flash(msg, 'warning')
         return redirect(url_for('projects.details', id=project.id))
 
-    repairman_id = request.form.get('repairman_id', type=int)
+    if not repairman_id:
+        repairman_id = request.form.get('repairman_id', type=int)
     if not repairman_id and request.is_json:
         repairman_id = request.json.get('repairman_id')
 
@@ -672,15 +674,20 @@ def submit_progress_update(id):
 
 
 @projects_bp.route('/<int:id>/progress/<int:update_id>/approve', methods=['POST'])
+@projects_bp.route('/progress/<int:update_id>/approve', methods=['POST'])
 @login_required
-def approve_progress_update(id, update_id):
+def approve_progress_update(update_id, id=None):
     """
     Strict Customer Approval Gate:
     Only the project owner/customer can approve submitted progress.
     Once approved, the official project progress increases to the submitted level.
     """
-    project = db.session.get(Project, id)
-    if not project:
+    update_obj = db.session.get(ProgressUpdate, update_id)
+    if not update_obj:
+        abort(404)
+
+    project = update_obj.project
+    if not project or (id and project.id != id):
         abort(404)
 
     user = get_current_user()
@@ -689,10 +696,6 @@ def approve_progress_update(id, update_id):
             return jsonify({'success': False, 'error': 'Unauthorized. Only the project customer can approve progress.'}), 403
         flash('Unauthorized. Only the project customer can approve progress.', 'danger')
         return redirect(url_for('projects.details', id=project.id))
-
-    update_obj = db.session.get(ProgressUpdate, update_id)
-    if not update_obj or update_obj.project_id != project.id:
-        abort(404)
 
     if update_obj.status != 'Pending':
         err = f'This update has already been {update_obj.status.lower()}.'
@@ -771,14 +774,19 @@ def approve_progress_update(id, update_id):
 
 
 @projects_bp.route('/<int:id>/progress/<int:update_id>/reject', methods=['POST'])
+@projects_bp.route('/progress/<int:update_id>/reject', methods=['POST'])
 @login_required
-def reject_progress_update(id, update_id):
+def reject_progress_update(update_id, id=None):
     """
     Customer requests changes on submitted progress.
     Official progress remains unchanged at previous approved percentage.
     """
-    project = db.session.get(Project, id)
-    if not project:
+    update_obj = db.session.get(ProgressUpdate, update_id)
+    if not update_obj:
+        abort(404)
+
+    project = update_obj.project
+    if not project or (id and project.id != id):
         abort(404)
 
     user = get_current_user()
@@ -787,10 +795,6 @@ def reject_progress_update(id, update_id):
             return jsonify({'success': False, 'error': 'Unauthorized. Only the project customer can request changes.'}), 403
         flash('Unauthorized.', 'danger')
         return redirect(url_for('projects.details', id=project.id))
-
-    update_obj = db.session.get(ProgressUpdate, update_id)
-    if not update_obj or update_obj.project_id != project.id:
-        abort(404)
 
     if update_obj.status != 'Pending':
         err = f'This update has already been {update_obj.status.lower()}.'
