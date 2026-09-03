@@ -109,6 +109,33 @@
 
     <!-- Standard Email / Username & Password Form -->
     <form action="{{ url_for('auth.login', next=request.args.get('next', '')) }}" method="POST" id="login-form" novalidate>
+      <input type="hidden" id="login-role-input" name="role" value="{{ selected_role or 'customer' }}" />
+
+      <!-- Interactive Role Selection Cards -->
+      <div style="margin-bottom: 1.75rem;">
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted, #6B7280); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 0.65rem;">
+          SELECT YOUR ACCOUNT ROLE TO SIGN IN
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+          
+          <!-- Customer Card -->
+          <div id="role-card-customer" onclick="selectRole('customer')" 
+               style="border: 2px solid {% if selected_role == 'customer' %}var(--primary, #059669){% else %}var(--border-subtle, #E5E7EB){% endif %}; background: {% if selected_role == 'customer' %}#ECFDF5{% else %}#FFFFFF{% endif %}; border-radius: 12px; padding: 1rem 0.6rem; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: {% if selected_role == 'customer' %}0 4px 14px rgba(5, 150, 105, 0.15){% else %}none{% endif %};">
+            <div style="font-size: 1.6rem; margin-bottom: 0.25rem;">👤</div>
+            <div style="font-weight: 800; font-size: 0.92rem; color: var(--dark-900, #111827); margin-bottom: 0.2rem;">CUSTOMER</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted, #6B7280); line-height: 1.3;">Upload, discover & manage projects</div>
+          </div>
+
+          <!-- Technician Card -->
+          <div id="role-card-technician" onclick="selectRole('technician')" 
+               style="border: 2px solid {% if selected_role == 'technician' %}#2563EB{% else %}var(--border-subtle, #E5E7EB){% endif %}; background: {% if selected_role == 'technician' %}#EFF6FF{% else %}#FFFFFF{% endif %}; border-radius: 12px; padding: 1rem 0.6rem; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: {% if selected_role == 'technician' %}0 4px 14px rgba(37, 99, 235, 0.15){% else %}none{% endif %};">
+            <div style="font-size: 1.6rem; margin-bottom: 0.25rem;">🛠️</div>
+            <div style="font-weight: 800; font-size: 0.92rem; color: var(--dark-900, #111827); margin-bottom: 0.2rem;">TECHNICIAN</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted, #6B7280); line-height: 1.3;">Find projects, repair & build</div>
+          </div>
+
+        </div>
+      </div>
 
       <div class="form-group">
         <label class="form-label" for="login_input">Email or Username</label>
@@ -118,7 +145,7 @@
           name="login_input" 
           class="form-control" 
           placeholder="name@domain.com or username" 
-          value="{{ request.form.get('login_input', '') }}"
+          value="{{ login_input or request.form.get('login_input', '') }}"
           required 
           autocomplete="username"
           autofocus 
@@ -195,6 +222,32 @@
 
 {% block extra_js %}
 <script>
+  function selectRole(role) {
+    var roleInput = document.getElementById('login-role-input');
+    var custCard = document.getElementById('role-card-customer');
+    var techCard = document.getElementById('role-card-technician');
+    if (!roleInput || !custCard || !techCard) return;
+
+    roleInput.value = role;
+    if (role === 'customer') {
+      custCard.style.borderColor = 'var(--primary, #059669)';
+      custCard.style.background = '#ECFDF5';
+      custCard.style.boxShadow = '0 4px 14px rgba(5, 150, 105, 0.15)';
+
+      techCard.style.borderColor = 'var(--border-subtle, #E5E7EB)';
+      techCard.style.background = '#FFFFFF';
+      techCard.style.boxShadow = 'none';
+    } else {
+      techCard.style.borderColor = '#2563EB';
+      techCard.style.background = '#EFF6FF';
+      techCard.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.15)';
+
+      custCard.style.borderColor = 'var(--border-subtle, #E5E7EB)';
+      custCard.style.background = '#FFFFFF';
+      custCard.style.boxShadow = 'none';
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     var form = document.getElementById('login-form');
     var loginInput = document.getElementById('login_input');
