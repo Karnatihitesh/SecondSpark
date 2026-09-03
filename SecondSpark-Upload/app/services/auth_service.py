@@ -63,8 +63,8 @@ def customer_required(f):
         if not (user.is_customer or user.is_admin):
             if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/'):
                 return jsonify({'success': False, 'error': 'Customer role required for this action.'}), 403
-            flash('This page is reserved for Customers. Redirected to your Technician Workspace.', 'info')
-            return redirect(url_for('dashboard.technician_workspace'))
+            flash('This page is reserved for Customers. Redirected to your Technician Dashboard.', 'info')
+            return redirect(url_for('dashboard.technician_dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -88,7 +88,7 @@ def technician_required(f):
             if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/'):
                 return jsonify({'success': False, 'error': 'Technician role required for this action.'}), 403
             flash('This page is reserved for Technicians. Redirected to your Customer Dashboard.', 'info')
-            return redirect(url_for('dashboard.index'))
+            return redirect(url_for('dashboard.customer_dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -103,7 +103,9 @@ def admin_required(f):
             return redirect(url_for('auth.login', next=request.url))
         if not user.is_admin:
             flash('Access denied: Administrator privileges required.', 'danger')
-            abort(403)
+            if user.is_technician:
+                return redirect(url_for('dashboard.technician_dashboard'))
+            return redirect(url_for('dashboard.customer_dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
