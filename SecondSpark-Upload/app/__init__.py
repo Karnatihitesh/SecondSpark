@@ -197,6 +197,17 @@ def create_app(config_name='default'):
         db.session.rollback()
         return render_template('errors/500.html'), 500
 
+    # ── Security Headers ──────────────────────────────────────────────────────
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
+
     # Auto create tables within app context
     with app.app_context():
         db.create_all()
