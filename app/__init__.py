@@ -95,13 +95,16 @@ def create_app(config_name='default'):
 
         unread_notifs = 0
         unread_msgs = 0
+        saved_project_ids = set()
         if user:
             unread_notifs = Notification.query.filter_by(user_id=user.id, is_read=False).count()
             unread_msgs = Message.query.filter_by(receiver_id=user.id, is_read=False).count()
+            saved_project_ids = set(sp.project_id for sp in user.saved_projects.all())
 
         return {
             'current_user': user,
             'global_categories': categories,
+            'saved_project_ids': saved_project_ids,
             'unread_notifs_count': unread_notifs,
             'unread_msgs_count': unread_msgs,
             'app_name': 'SecondSpark',
