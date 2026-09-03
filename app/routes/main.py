@@ -145,4 +145,14 @@ def technician_profile_shortcut(username):
     return public_profile(username)
 
 
+@main_bp.route('/customer/dashboard')
+def customer_dashboard_shortcut():
+    return redirect(url_for('dashboard.customer_dashboard'))
+
+
+@main_bp.route('/technician/dashboard')
+def technician_dashboard_shortcut():
+    return redirect(url_for('dashboard.technician_dashboard'))
+
+
 
