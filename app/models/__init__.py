@@ -1,6 +1,6 @@
 from app.models.user import db, User, VerificationCode
 from app.models.category import Category
-from app.models.project import Project, ProjectImage, ProjectDocument, SavedProject
+from app.models.project import Project, ProjectImage, ProjectDocument, SavedProject, RepairRequest, ProjectMilestone, ProgressUpdate
 from app.models.message import Conversation, Message
 from app.models.notification import Notification
 from app.models.review import Review
@@ -17,6 +17,9 @@ __all__ = [
     'ProjectImage',
     'ProjectDocument',
     'SavedProject',
+    'RepairRequest',
+    'ProjectMilestone',
+    'ProgressUpdate',
     'Conversation',
     'Message',
     'Notification',
