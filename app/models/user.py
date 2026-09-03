@@ -24,7 +24,9 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    projects = db.relationship('Project', back_populates='owner', lazy='dynamic', cascade='all, delete-orphan')
+    projects = db.relationship('Project', foreign_keys='Project.user_id', back_populates='owner', lazy='dynamic', cascade='all, delete-orphan')
+    assigned_projects = db.relationship('Project', foreign_keys='Project.assigned_repairman_id', back_populates='assigned_repairman', lazy='dynamic')
+    repair_requests_received = db.relationship('RepairRequest', foreign_keys='RepairRequest.repairman_id', back_populates='repairman', lazy='dynamic')
     saved_projects = db.relationship('SavedProject', back_populates='user', lazy='dynamic', cascade='all, delete-orphan')
     sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', back_populates='sender', lazy='dynamic')
     received_messages = db.relationship('Message', foreign_keys='Message.receiver_id', back_populates='receiver', lazy='dynamic')
@@ -57,6 +59,38 @@ class User(db.Model):
         avg = sum(r.rating for r in reviews) / len(reviews)
         return {'average': round(avg, 1), 'count': len(reviews)}
 
+    @property
+    def average_rating(self):
+        return self.rating_summary['average']
+
+    @property
+    def reviews_count(self):
+        return self.reviews_received.count()
+
+    @property
+    def projects_uploaded_count(self):
+        return self.projects.count()
+
+    @property
+    def projects_repaired_count(self):
+        from app.models.project import Project
+        return self.assigned_projects.filter(Project.status == 'Completed').count()
+
+    @property
+    def active_repairs_count(self):
+        from app.models.project import Project
+        return self.assigned_projects.filter(Project.status.in_(['Assigned', 'In Progress', 'Awaiting Customer Approval', 'Revision Required'])).count()
+
+    @property
+    def success_rate(self):
+        from app.models.project import Project
+        completed = self.projects_repaired_count
+        closed = self.assigned_projects.filter(Project.status == 'Closed').count()
+        total = completed + closed
+        if total == 0:
+            return 100
+        return int(round((completed / total) * 100))
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -68,6 +102,11 @@ class User(db.Model):
             'location': self.location,
             'avatar_url': self.avatar_url,
             'role': self.role,
+            'rating': self.average_rating,
+            'reviews_count': self.reviews_count,
+            'projects_repaired_count': self.projects_repaired_count,
+            'projects_uploaded_count': self.projects_uploaded_count,
+            'success_rate': self.success_rate,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
