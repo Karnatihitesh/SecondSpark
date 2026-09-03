@@ -1,6 +1,6 @@
 import re
 from functools import wraps
-from flask import session, redirect, url_for, flash, request, abort, g
+from flask import session, redirect, url_for, flash, request, abort, g, jsonify
 from app.models.user import db, User
 
 
@@ -30,6 +30,13 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         user = get_current_user()
         if not user:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+                next_url = request.referrer or request.url
+                return jsonify({
+                    'success': False,
+                    'error': 'Authentication required',
+                    'redirect': url_for('auth.login', next=next_url)
+                }), 401
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('auth.login', next=request.url))
         return f(*args, **kwargs)
