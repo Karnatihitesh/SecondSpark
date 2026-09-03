@@ -20,6 +20,26 @@
         </div>
       {% endif %}
 
+      <!-- Maker & Repairman Statistics Grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1.25rem; text-align: center;">
+        <div style="background: var(--bg-subtle); padding: 0.65rem 0.4rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">{{ user.projects_repaired_count }}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Repairs Done</div>
+        </div>
+        <div style="background: var(--bg-subtle); padding: 0.65rem 0.4rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <div style="font-size: 1.25rem; font-weight: 800; color: var(--secondary);">{{ user.projects_uploaded_count }}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Uploaded</div>
+        </div>
+        <div style="background: var(--bg-subtle); padding: 0.65rem 0.4rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <div style="font-size: 1.25rem; font-weight: 800; color: #10B981;">{{ user.success_rate }}%</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Success Rate</div>
+        </div>
+        <div style="background: var(--bg-subtle); padding: 0.65rem 0.4rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <div style="font-size: 1.25rem; font-weight: 800; color: #F59E0B;">{{ user.rating_summary.average if user.rating_summary.count > 0 else '—' }} <span style="font-size: 0.8rem;">★</span></div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ user.rating_summary.count }} Reviews</div>
+        </div>
+      </div>
+
       {% if user.location %}
         <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
           <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ user.location }}
@@ -143,6 +163,41 @@
           {% endif %}
         </div>
 
+        <!-- COMPLETED REPAIRS (AS ASSIGNED REPAIRMAN) -->
+        {% if repaired_projects %}
+        <div style="margin-bottom: 3rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.4rem; margin-bottom: 0;">Completed Repairs & Revivals <span style="font-size: 0.9rem; font-weight: 600; color: var(--primary);">({{ repaired_projects|length }})</span></h2>
+          </div>
+          <div class="projects-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            {% for p in repaired_projects %}
+              <div class="project-card"
+                   data-href="{{ url_for('projects.details', id=p.id) }}"
+                   role="link"
+                   tabindex="0"
+                   aria-label="View project: {{ p.title }}">
+                <div class="project-card-media" style="height: 150px;">
+                  <img src="{{ p.primary_image }}" alt="{{ p.title }}" class="project-card-img" />
+                  <div class="project-card-badge">
+                    <span class="badge badge-completed">100% Repaired</span>
+                  </div>
+                </div>
+                <div class="project-card-body" style="padding: 1rem;">
+                  <h4 style="font-size: 1rem; margin-bottom: 0.4rem;">
+                    <a href="{{ url_for('projects.details', id=p.id) }}" class="project-card-title-link">{{ p.title }}</a>
+                  </h4>
+                  <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">{{ p.short_summary[:80] }}...</p>
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                    <span style="font-weight: 700; color: var(--primary);">Built for {{ p.owner.full_name }}</span>
+                    <span style="font-size: 0.78rem; color: var(--text-light);">{{ p.updated_at.strftime('%b %Y') if p.updated_at else '' }}</span>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
         <!-- REVIEWS RECEIVED -->
         <div>
           <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem;">Reviews & Endorsements</h2>
@@ -156,8 +211,33 @@
                       {% for i in range(rev.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
                     </div>
                   </div>
-                  <p style="font-size: 0.92rem; color: var(--dark-700); line-height: 1.5;">"{{ rev.comment }}"</p>
-                  <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.5rem;">on project {{ rev.project.title if rev.project else '' }} • {{ rev.created_at | timeago }}</div>
+                  <p style="font-size: 0.92rem; color: var(--dark-700); line-height: 1.5; margin-bottom: 0.75rem;">"{{ rev.comment }}"</p>
+                  
+                  <!-- Sub-Ratings Badges -->
+                  <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.75rem;">
+                    {% if rev.quality_rating %}
+                      <span style="background: var(--bg-subtle); padding: 0.2rem 0.6rem; border-radius: var(--radius-full); color: var(--text-muted);">
+                        Quality: <strong style="color: var(--dark-900);">{{ rev.quality_rating }}★</strong>
+                      </span>
+                    {% endif %}
+                    {% if rev.communication_rating %}
+                      <span style="background: var(--bg-subtle); padding: 0.2rem 0.6rem; border-radius: var(--radius-full); color: var(--text-muted);">
+                        Communication: <strong style="color: var(--dark-900);">{{ rev.communication_rating }}★</strong>
+                      </span>
+                    {% endif %}
+                    {% if rev.timeliness_rating %}
+                      <span style="background: var(--bg-subtle); padding: 0.2rem 0.6rem; border-radius: var(--radius-full); color: var(--text-muted);">
+                        Timeliness: <strong style="color: var(--dark-900);">{{ rev.timeliness_rating }}★</strong>
+                      </span>
+                    {% endif %}
+                    {% if rev.technical_skill_rating %}
+                      <span style="background: var(--bg-subtle); padding: 0.2rem 0.6rem; border-radius: var(--radius-full); color: var(--text-muted);">
+                        Skill: <strong style="color: var(--dark-900);">{{ rev.technical_skill_rating }}★</strong>
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <div style="font-size: 0.75rem; color: var(--text-light);">on project {{ rev.project.title if rev.project else '' }} • {{ rev.created_at | timeago }}</div>
                 </div>
               {% endfor %}
             </div>
