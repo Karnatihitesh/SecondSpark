@@ -29,7 +29,11 @@ def setup():
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS experience TEXT;",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS availability VARCHAR(30) DEFAULT 'Available';",
                 "ALTER TABLE projects ADD COLUMN IF NOT EXISTS assigned_repairman_id INTEGER REFERENCES users(id);",
-                "ALTER TABLE projects ADD COLUMN IF NOT EXISTS current_progress INTEGER DEFAULT 0;"
+                "ALTER TABLE projects ADD COLUMN IF NOT EXISTS current_progress INTEGER DEFAULT 0;",
+                "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS quality_rating INTEGER DEFAULT 5;",
+                "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS communication_rating INTEGER DEFAULT 5;",
+                "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS timeliness_rating INTEGER DEFAULT 5;",
+                "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS technical_skill_rating INTEGER DEFAULT 5;"
             ]:
                 try:
                     con.execute(db.text(sql))
