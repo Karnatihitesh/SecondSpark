@@ -46,12 +46,12 @@
   {% endif %}
 
   <!-- Customer KPI Widgets Grid -->
-  <div class="dashboard-grid" style="margin-bottom: 2.25rem;">
+  <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 2.25rem;">
     <div class="stat-widget">
       <div class="stat-icon-wrap" style="background: #ECFDF5; color: #047857;"><i class="fa-solid fa-cubes"></i></div>
       <div>
         <div class="stat-val">{{ stats.total_projects }}</div>
-        <div class="stat-lbl">My Projects</div>
+        <div class="stat-lbl">My Uploaded Projects</div>
       </div>
     </div>
 
@@ -59,15 +59,15 @@
       <div class="stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-spinner"></i></div>
       <div>
         <div class="stat-val">{{ stats.active_projects }}</div>
-        <div class="stat-lbl">Active Builds</div>
+        <div class="stat-lbl">Active Projects</div>
       </div>
     </div>
 
     <div class="stat-widget">
       <div class="stat-icon-wrap" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
       <div>
-        <div class="stat-val">{{ stats.active_repairs_count }}</div>
-        <div class="stat-lbl">Repairs in Progress</div>
+        <div class="stat-val">{{ stats.projects_in_repair }}</div>
+        <div class="stat-lbl">Projects in Repair</div>
       </div>
     </div>
 
@@ -75,7 +75,15 @@
       <div class="stat-icon-wrap" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-circle-check"></i></div>
       <div>
         <div class="stat-val">{{ stats.completed_projects }}</div>
-        <div class="stat-lbl">Completed Builds</div>
+        <div class="stat-lbl">Completed Projects</div>
+      </div>
+    </div>
+
+    <div class="stat-widget">
+      <div class="stat-icon-wrap" style="background: #F3E8FF; color: #7C3AED;"><i class="fa-solid fa-eye"></i></div>
+      <div>
+        <div class="stat-val">{{ stats.total_views }}</div>
+        <div class="stat-lbl">Total Views</div>
       </div>
     </div>
   </div>
@@ -151,14 +159,14 @@
         </div>
       {% endif %}
 
-      <!-- MY UPLOADED PROJECTS -->
-      <div style="margin-bottom: 2.5rem;">
+      <!-- MY UPLOADS -->
+      <div id="my-uploads" style="margin-bottom: 2.5rem; scroll-margin-top: 5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
           <h2 style="font-size: 1.35rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-cubes" style="color: var(--primary);"></i> My Uploaded Builds
+            <i class="fa-solid fa-cubes" style="color: var(--primary);"></i> MY UPLOADS
           </h2>
           <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-sm">
-            <i class="fa-solid fa-plus"></i> Post Another Build
+            <i class="fa-solid fa-plus"></i> Upload Project
           </a>
         </div>
 
@@ -166,40 +174,57 @@
           <div style="display: flex; flex-direction: column; gap: 1.25rem;">
             {% for p in my_projects %}
               <div class="glass-card" style="padding: 1.25rem 1.5rem; background: #fff;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
                   <div>
-                    <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">
-                      <a href="{{ url_for('projects.details', id=p.id) }}">{{ p.title }}</a>
+                    <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">
+                      <a href="{{ url_for('projects.details', id=p.id) }}" style="color: var(--dark-900); font-weight: 700;">{{ p.title }}</a>
                     </h3>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">
-                      {{ p.category.name if p.category else 'General' }} • Posted {{ p.created_at | timeago }}
+                    <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap;">
+                      <span><i class="fa-solid fa-layer-group"></i> {{ p.category.name if p.category else 'General' }}</span>
+                      <span><i class="fa-regular fa-calendar"></i> Uploaded: {{ p.created_at.strftime('%b %d, %Y') }}</span>
+                      <span style="font-weight: 700; color: #7C3AED;"><i class="fa-solid fa-eye"></i> Views: {{ p.views_count or 0 }}</span>
                     </div>
                   </div>
-                  {% if p.status == 'Completed' %}
-                    <span class="badge badge-completed"><i class="fa-solid fa-circle-check"></i> 100% Completed</span>
-                  {% elif p.status == 'Awaiting Customer Approval' %}
-                    <span class="badge" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-clock"></i> Sign-Off Needed</span>
-                  {% else %}
-                    <span class="badge badge-open">{{ p.status }}</span>
-                  {% endif %}
+                  <div>
+                    {% if p.status == 'Completed' %}
+                      <span class="badge badge-completed"><i class="fa-solid fa-circle-check"></i> Completed</span>
+                    {% elif p.status == 'Awaiting Customer Approval' %}
+                      <span class="badge" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-clock"></i> Sign-Off Needed</span>
+                    {% elif p.status in ['Assigned', 'In Progress', 'Revision Required'] %}
+                      <span class="badge badge-open" style="background: #EFF6FF; color: #2563EB;">In Progress</span>
+                    {% else %}
+                      <span class="badge badge-open">{{ p.status }}</span>
+                    {% endif %}
+                  </div>
                 </div>
 
                 <p style="font-size: 0.85rem; color: var(--dark-700); margin-bottom: 0.85rem; line-height: 1.4;">
-                  {{ p.short_summary[:110] }}...
+                  {{ p.short_summary[:120] }}...
                 </p>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.65rem;">
-                  <div style="font-size: 0.8rem; color: var(--text-muted);">
-                    Progress: <strong style="color: var(--primary);">{{ p.current_progress }}%</strong>
-                    {% if p.assigned_repairman %}
-                      • Technician: <strong>{{ p.assigned_repairman.full_name }}</strong>
-                    {% else %}
-                      • <span style="color: #D97706;">No Technician Assigned</span>
-                    {% endif %}
+                <!-- Project Metadata Details: Technician and Progress -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 1.25rem; flex-wrap: wrap;">
+                    <span>
+                      Technician: 
+                      {% if p.assigned_repairman %}
+                        <strong style="color: var(--dark-900);">{{ p.assigned_repairman.full_name }}</strong>
+                      {% else %}
+                        <span style="color: var(--text-light);">—</span>
+                      {% endif %}
+                    </span>
+                    <span>
+                      Progress: 
+                      {% if p.assigned_repairman_id or p.current_progress > 0 %}
+                        <strong style="color: var(--primary);">{{ p.current_progress }}%</strong>
+                      {% else %}
+                        <span style="color: var(--text-light);">—</span>
+                      {% endif %}
+                    </span>
                   </div>
                   <div style="display: flex; gap: 0.5rem;">
                     <a href="{{ url_for('projects.edit', id=p.id) }}" class="btn btn-outline btn-sm">Edit</a>
-                    <a href="{{ url_for('projects.details', id=p.id) }}" class="btn btn-secondary btn-sm">View</a>
+                    <a href="{{ url_for('projects.details', id=p.id) }}" class="btn btn-secondary btn-sm">View Details</a>
                   </div>
                 </div>
               </div>
