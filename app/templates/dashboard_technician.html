@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Technician Workspace — SecondSpark{% endblock %}
+{% block title %}Technician Dashboard — SecondSpark{% endblock %}
 
 {% block content %}
 <div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
@@ -9,19 +9,19 @@
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.25rem; flex-wrap: wrap; gap: 1rem;">
     <div>
       <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
-        <h1 style="font-size: 2.1rem; margin-bottom: 0; font-weight: 800;">Technician Workspace</h1>
+        <h1 style="font-size: 2.1rem; margin-bottom: 0; font-weight: 800;">Technician Dashboard</h1>
         <span class="badge" style="background: #2563EB; color: #fff; font-size: 0.75rem; padding: 0.3rem 0.7rem; font-weight: 700; border-radius: var(--radius-full);">
-          <i class="fa-solid fa-certificate"></i> VERIFIED TECHNICIAN
+          <i class="fa-solid fa-screwdriver-wrench"></i> TECHNICIAN ACCOUNT
         </span>
       </div>
       <p style="color: var(--text-muted); margin-bottom: 0;">
-        Welcome back, <strong>{{ current_user.full_name }}</strong>! Track your assigned builds, respond to customer repair requests, and manage your technical reputation.
+        Welcome back, <strong>{{ current_user.full_name }}</strong>! Track your assigned repairs, respond to repair requests, manage skills, and build your technical reputation.
       </p>
     </div>
     
     <div style="display: flex; gap: 0.75rem;">
       <a href="{{ url_for('projects.browse') }}" class="btn btn-outline">
-        <i class="fa-solid fa-magnifying-glass"></i> Find Builds to Repair
+        <i class="fa-solid fa-magnifying-glass"></i> Find Projects
       </a>
       <a href="{{ url_for('auth.public_profile', username=current_user.username) }}" class="btn btn-secondary">
         <i class="fa-solid fa-user"></i> View Public Profile
@@ -37,7 +37,7 @@
         <div>
           <strong style="color: #92400E; font-size: 1rem;">Deliverables Submitted • Awaiting Customer Approval</strong>
           <div style="font-size: 0.85rem; color: #78350F; margin-top: 0.15rem;">
-            You have proposed milestone deliverables on {{ pending_approval_repairs|length }} build{{ 's' if pending_approval_repairs|length != 1 else '' }}. Once the project owner signs off, official progress will advance.
+            You have proposed milestone deliverables on {{ pending_approval_repairs|length }} project{{ 's' if pending_approval_repairs|length != 1 else '' }}. Once the project owner signs off, official progress will advance.
           </div>
         </div>
       </div>
@@ -46,36 +46,52 @@
   {% endif %}
 
   <!-- Technician KPI Widgets Grid -->
-  <div class="dashboard-grid" style="margin-bottom: 2.25rem;">
+  <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 2.25rem;">
     <div class="stat-widget">
-      <div class="stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+      <div class="stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-wrench"></i></div>
       <div>
-        <div class="stat-val">{{ stats.active_repairs_count }}</div>
-        <div class="stat-lbl">Active Repairs</div>
+        <div class="stat-val">{{ stats.projects_repaired }}</div>
+        <div class="stat-lbl">Projects Repaired</div>
       </div>
     </div>
 
     <div class="stat-widget">
-      <div class="stat-icon-wrap" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-handshake-angle"></i></div>
+      <div class="stat-icon-wrap" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-spinner"></i></div>
       <div>
-        <div class="stat-val">{{ stats.incoming_requests_count }}</div>
-        <div class="stat-lbl">Pending Requests</div>
+        <div class="stat-val">{{ stats.active_repairs }}</div>
+        <div class="stat-lbl">Active Repairs</div>
       </div>
     </div>
 
     <div class="stat-widget">
       <div class="stat-icon-wrap" style="background: #ECFDF5; color: #047857;"><i class="fa-solid fa-circle-check"></i></div>
       <div>
-        <div class="stat-val">{{ stats.completed_repairs_count }}</div>
-        <div class="stat-lbl">Completed Repairs</div>
+        <div class="stat-val">{{ stats.completed_projects }}</div>
+        <div class="stat-lbl">Completed Projects</div>
+      </div>
+    </div>
+
+    <div class="stat-widget">
+      <div class="stat-icon-wrap" style="background: #F3E8FF; color: #7C3AED;"><i class="fa-solid fa-inbox"></i></div>
+      <div>
+        <div class="stat-val">{{ stats.pending_requests }}</div>
+        <div class="stat-lbl">Pending Requests</div>
       </div>
     </div>
 
     <div class="stat-widget">
       <div class="stat-icon-wrap" style="background: #FEF2F2; color: #DC2626;"><i class="fa-solid fa-star"></i></div>
       <div>
-        <div class="stat-val">{{ stats.rating if stats.rating > 0 else '—' }} <span style="font-size: 0.8rem;">★</span></div>
-        <div class="stat-lbl">{{ stats.reviews_count }} Customer Reviews</div>
+        <div class="stat-val">{{ stats.average_rating if stats.average_rating > 0 else '—' }} <span style="font-size: 0.8rem;">★</span></div>
+        <div class="stat-lbl">{{ stats.review_count }} Reviews</div>
+      </div>
+    </div>
+
+    <div class="stat-widget">
+      <div class="stat-icon-wrap" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-chart-line"></i></div>
+      <div>
+        <div class="stat-val">{{ stats.success_rate }}%</div>
+        <div class="stat-lbl">Success Rate</div>
       </div>
     </div>
   </div>
@@ -86,16 +102,16 @@
     <!-- Left Column: Active Work & Incoming Requests -->
     <div>
 
-      <!-- INCOMING CUSTOMER REPAIR INVITATIONS -->
-      {% if incoming_requests %}
-        <div style="margin-bottom: 2.5rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2 style="font-size: 1.3rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.5rem; color: #1E40AF;">
-              <i class="fa-solid fa-bell"></i> Customer Repair Requests
-            </h2>
-            <span class="badge badge-open">{{ incoming_requests|length }} Pending</span>
-          </div>
+      <!-- REPAIR REQUESTS -->
+      <div id="repair-requests" style="margin-bottom: 2.5rem; scroll-margin-top: 5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 style="font-size: 1.3rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.5rem; color: #1E40AF;">
+            <i class="fa-solid fa-inbox"></i> REPAIR REQUESTS
+          </h2>
+          <span class="badge badge-open">{{ incoming_requests|length }} Pending</span>
+        </div>
 
+        {% if incoming_requests %}
           <div style="display: flex; flex-direction: column; gap: 1rem;">
             {% for req in incoming_requests %}
               <div class="glass-card" style="padding: 1.5rem; background: #EFF6FF; border: 1.5px solid #BFDBFE;">
@@ -105,10 +121,10 @@
                       <a href="{{ url_for('projects.details', id=req.project.id) }}" style="color: var(--dark-900);">{{ req.project.title }}</a>
                     </h3>
                     <div style="font-size: 0.85rem; color: var(--text-muted);">
-                      Owner: <strong>{{ req.customer.full_name }}</strong> • {{ req.created_at | timeago }}
+                      Customer: <strong>{{ req.customer.full_name }}</strong> • Date: {{ req.created_at.strftime('%b %d, %Y') }}
                     </div>
                   </div>
-                  <span class="badge badge-open" style="background: #2563EB; color: #fff;">Invited</span>
+                  <span class="badge badge-open" style="background: #2563EB; color: #fff;">{{ req.status }}</span>
                 </div>
 
                 {% if req.message %}
@@ -122,7 +138,7 @@
                   <div style="display: flex; gap: 0.5rem;">
                     <form action="{{ url_for('projects.respond_repair_request', request_id=req.id) }}" method="POST" style="display: inline;">
                       <input type="hidden" name="action" value="reject" />
-                      <button type="submit" class="btn btn-outline btn-sm">Decline</button>
+                      <button type="submit" class="btn btn-outline btn-sm">Reject</button>
                     </form>
                     <form action="{{ url_for('projects.respond_repair_request', request_id=req.id) }}" method="POST" style="display: inline;">
                       <input type="hidden" name="action" value="accept" />
@@ -135,16 +151,21 @@
               </div>
             {% endfor %}
           </div>
-        </div>
-      {% endif %}
+        {% else %}
+          <div class="empty-state" style="padding: 1.75rem; background: #fff; border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); text-align: center;">
+            <i class="fa-solid fa-inbox" style="font-size: 1.8rem; color: var(--text-light); margin-bottom: 0.5rem; display: block;"></i>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">No incoming repair requests right now. Customers can invite you directly from your public profile or projects.</p>
+          </div>
+        {% endif %}
+      </div>
 
-      <!-- ACTIVE REPAIRS IN PROGRESS -->
-      <div style="margin-bottom: 2.5rem;">
+      <!-- MY REPAIRS -->
+      <div id="my-repairs" style="margin-bottom: 2.5rem; scroll-margin-top: 5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
           <h2 style="font-size: 1.35rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-gears" style="color: var(--primary);"></i> Assigned Repairs in Progress
+            <i class="fa-solid fa-wrench" style="color: var(--primary);"></i> MY REPAIRS
           </h2>
-          <span style="font-size: 0.85rem; color: var(--text-muted);">{{ active_repairs|length }} active</span>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">{{ active_repairs|length }} active assigned</span>
         </div>
 
         {% if active_repairs %}
@@ -265,7 +286,10 @@
     <div>
       
       <!-- Technician Skill & Profile Summary -->
-      <div class="glass-card" style="padding: 1.75rem; background: #fff; margin-bottom: 1.75rem; border-top: 4px solid #2563EB;">
+      <div id="my-skills" class="glass-card" style="padding: 1.75rem; background: #fff; margin-bottom: 1.75rem; border-top: 4px solid #2563EB; scroll-margin-top: 5rem;">
+        <div style="font-size: 0.75rem; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+          <i class="fa-solid fa-screwdriver-wrench"></i> MY SKILLS & PROFILE
+        </div>
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
           <img src="{{ current_user.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-subtle);" alt="{{ current_user.full_name }}" />
           <div>
@@ -313,18 +337,18 @@
         {% endif %}
 
         <a href="{{ url_for('auth.profile') }}" class="btn btn-outline btn-sm btn-block">
-          <i class="fa-solid fa-pen"></i> Edit Skills & Availability
+          <i class="fa-solid fa-pen"></i> Edit Skills & Profile
         </a>
       </div>
 
       <!-- Customer Reviews & Endorsements -->
-      <div class="glass-card" style="padding: 1.75rem; background: #fff;">
+      <div id="my-reviews" class="glass-card" style="padding: 1.75rem; background: #fff; scroll-margin-top: 5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h3 style="font-size: 1.15rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.4rem;">
-            <i class="fa-solid fa-award" style="color: #F59E0B;"></i> Client Endorsements
+            <i class="fa-solid fa-star" style="color: #F59E0B;"></i> MY REVIEWS
           </h3>
           <span style="font-size: 0.85rem; font-weight: 700; color: #F59E0B;">
-            <i class="fa-solid fa-star"></i> {{ stats.rating if stats.rating > 0 else '—' }}
+            <i class="fa-solid fa-star"></i> {{ stats.average_rating if stats.average_rating > 0 else '—' }} ({{ stats.review_count }})
           </span>
         </div>
 
