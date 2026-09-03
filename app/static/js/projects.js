@@ -118,4 +118,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Modal backdrop click and Escape key dismissal
+  document.querySelectorAll('.mobile-nav-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.mobile-nav-overlay').forEach(m => {
+        m.style.display = 'none';
+      });
+    }
+  });
 });
+
