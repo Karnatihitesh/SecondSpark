@@ -34,6 +34,33 @@
     </div>
 
     <form id="register-form" action="{{ url_for('auth.register') }}" method="POST">
+      <input type="hidden" id="register-role-input" name="role" value="{{ selected_role or 'customer' }}" />
+
+      <!-- Role Selection Cards -->
+      <div style="margin-bottom: 1.75rem;">
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 0.65rem;">
+          CHOOSE ACCOUNT TYPE
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+          
+          <!-- Customer Card -->
+          <div id="reg-role-card-customer" onclick="selectRegRole('customer')" 
+               style="border: 2px solid {% if selected_role == 'customer' %}var(--primary){% else %}var(--border-subtle){% endif %}; background: {% if selected_role == 'customer' %}#ECFDF5{% else %}#FFFFFF{% endif %}; border-radius: 12px; padding: 1rem 0.6rem; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: {% if selected_role == 'customer' %}0 4px 14px rgba(5, 150, 105, 0.15){% else %}none{% endif %};">
+            <div style="font-size: 1.6rem; margin-bottom: 0.25rem;">👤</div>
+            <div style="font-weight: 800; font-size: 0.92rem; color: var(--dark-900); margin-bottom: 0.2rem;">CUSTOMER</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.3;">Post projects & find experts</div>
+          </div>
+
+          <!-- Technician Card -->
+          <div id="reg-role-card-technician" onclick="selectRegRole('technician')" 
+               style="border: 2px solid {% if selected_role == 'technician' %}#2563EB{% else %}var(--border-subtle){% endif %}; background: {% if selected_role == 'technician' %}#EFF6FF{% else %}#FFFFFF{% endif %}; border-radius: 12px; padding: 1rem 0.6rem; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: {% if selected_role == 'technician' %}0 4px 14px rgba(37, 99, 235, 0.15){% else %}none{% endif %};">
+            <div style="font-size: 1.6rem; margin-bottom: 0.25rem;">🛠️</div>
+            <div style="font-weight: 800; font-size: 0.92rem; color: var(--dark-900); margin-bottom: 0.2rem;">TECHNICIAN</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.3;">Repair & complete builds</div>
+          </div>
+
+        </div>
+      </div>
       
       <div class="form-group">
         <label class="form-label">Full Name *</label>
@@ -73,16 +100,59 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Primary Skills (Optional, comma separated)</label>
-        <input type="text" name="skills" class="form-control" placeholder="e.g. Embedded C, ROS2, React, PyTorch, PCB Design" value="{{ form_data.get('skills', '') }}" />
-      </div>
-
-      <div class="form-group">
         <label class="form-label">Location (Optional)</label>
         <input type="text" name="location" class="form-control" placeholder="e.g. San Francisco CA, London UK, Remote" value="{{ form_data.get('location', '') }}" />
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 1rem;">Create My Account</button>
+      <!-- Dedicated Technician Onboarding Section -->
+      <div id="technician-fields" style="display: {% if selected_role == 'technician' %}block{% else %}none{% endif %}; background: #EFF6FF; border: 1.5px solid #BFDBFE; border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="font-weight: 800; color: #1E40AF; font-size: 1rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-solid fa-briefcase"></i> Technician Profile Setup
+        </div>
+        <p style="font-size: 0.8rem; color: #1E3A8A; margin-bottom: 1.25rem;">
+          Tell community project owners about your technical specializations, tools, and experience.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 700; color: #1E3A8A;">Primary Skills (Comma separated)</label>
+          <input type="text" name="skills" class="form-control" placeholder="e.g. ROS2, STM32, Oscilloscope, Soldering, Circuit Debugging" value="{{ form_data.get('skills', '') }}" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 700; color: #1E3A8A;">Hardware & Software Technologies</label>
+          <input type="text" name="technologies" class="form-control" placeholder="e.g. C++, Python, KiCAD, FreeRTOS, Jetson Nano, Docker" value="{{ form_data.get('technologies', '') }}" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 700; color: #1E3A8A;">Specialization / Domain</label>
+            <input type="text" name="specialization" class="form-control" placeholder="e.g. Embedded & Firmware" value="{{ form_data.get('specialization', '') }}" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 700; color: #1E3A8A;">Current Availability</label>
+            <select name="availability" class="form-control">
+              <option value="Available" {% if form_data.get('availability') == 'Available' %}selected{% endif %}>🟢 Available for Repairs</option>
+              <option value="Busy" {% if form_data.get('availability') == 'Busy' %}selected{% endif %}>🟡 Busy (Limited Bandwidth)</option>
+              <option value="Not Available" {% if form_data.get('availability') == 'Not Available' %}selected{% endif %}>🔴 Not Available</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 700; color: #1E3A8A;">Years of Experience & Technical Background</label>
+          <textarea name="experience" class="form-control" rows="2" placeholder="e.g. 5+ years debugging embedded robotics, PCB rework, and microcontrollers...">{{ form_data.get('experience', '') }}</textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 700; color: #1E3A8A;">About You / Bio</label>
+          <textarea name="bio" class="form-control" rows="2" placeholder="Describe your maker philosophy and kinds of projects you love to revive...">{{ form_data.get('bio', '') }}</textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block btn-lg" id="reg-submit-btn" style="margin-top: 1rem;">
+        <span>Create Account</span>
+      </button>
 
       <div style="text-align: center; margin-top: 1.75rem; font-size: 0.9rem; color: var(--text-muted);">
         Already registered? <a href="{{ url_for('auth.login') }}" style="color: var(--primary); font-weight: 600;">Log in</a>
@@ -95,4 +165,39 @@
 
 {% block extra_js %}
   <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+  <script>
+    function selectRegRole(role) {
+      var roleInput = document.getElementById('register-role-input');
+      var custCard = document.getElementById('reg-role-card-customer');
+      var techCard = document.getElementById('reg-role-card-technician');
+      var techFields = document.getElementById('technician-fields');
+      var submitBtn = document.getElementById('reg-submit-btn');
+      if (!roleInput || !custCard || !techCard) return;
+
+      roleInput.value = role;
+      if (role === 'customer') {
+        custCard.style.borderColor = 'var(--primary)';
+        custCard.style.background = '#ECFDF5';
+        custCard.style.boxShadow = '0 4px 14px rgba(5, 150, 105, 0.15)';
+
+        techCard.style.borderColor = 'var(--border-subtle)';
+        techCard.style.background = '#FFFFFF';
+        techCard.style.boxShadow = 'none';
+
+        if (techFields) techFields.style.display = 'none';
+        if (submitBtn) submitBtn.querySelector('span').textContent = 'Create Customer Account';
+      } else {
+        techCard.style.borderColor = '#2563EB';
+        techCard.style.background = '#EFF6FF';
+        techCard.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.15)';
+
+        custCard.style.borderColor = 'var(--border-subtle)';
+        custCard.style.background = '#FFFFFF';
+        custCard.style.boxShadow = 'none';
+
+        if (techFields) techFields.style.display = 'block';
+        if (submitBtn) submitBtn.querySelector('span').textContent = 'Create Technician Account';
+      }
+    }
+  </script>
 {% endblock %}
