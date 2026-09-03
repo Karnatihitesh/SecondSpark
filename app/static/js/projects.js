@@ -56,43 +56,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Toggle Save Project Button
-  document.querySelectorAll('.save-project-btn').forEach(btn => {
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      const projectId = this.getAttribute('data-project-id');
-      if (!projectId) return;
+  // Toggle Save Project Button (Handled globally by main.js with fallback)
+  if (!window.handleProjectSaveToggle) {
+    document.querySelectorAll('.save-project-btn').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const projectId = this.getAttribute('data-project-id');
+        if (!projectId) return;
 
-      fetch(`/api/projects/${projectId}/save`, {
-        method: 'POST',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'Content-Type': 'application/json'
-        }
-      })
-        .then(res => {
-          if (res.status === 401) {
-            window.location.href = '/auth/login?next=' + window.location.pathname;
-            return;
+        fetch(`/api/projects/${projectId}/save`, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
           }
-          return res.json();
         })
-        .then(data => {
-          if (!data) return;
-          if (data.saved) {
-            this.classList.add('saved');
-            this.innerHTML = '<i class="fa-solid fa-heart" style="color: #EF4444;"></i>';
-          } else {
-            this.classList.remove('saved');
-            this.innerHTML = '<i class="fa-regular fa-heart"></i>';
-          }
-          const countEl = document.querySelector(`.save-count-${projectId}`);
-          if (countEl) countEl.textContent = data.saves_count;
-        })
-        .catch(err => console.error('Save failed', err));
+          .then(res => {
+            if (res.status === 401) {
+              window.location.href = '/auth/login?next=' + window.location.pathname;
+              return;
+            }
+            return res.json();
+          })
+          .then(data => {
+            if (!data) return;
+            if (data.saved) {
+              this.classList.add('saved');
+              this.innerHTML = '<i class="fa-solid fa-heart" style="color: #EF4444;"></i>';
+            } else {
+              this.classList.remove('saved');
+              this.innerHTML = '<i class="fa-regular fa-heart"></i>';
+            }
+            const countEl = document.querySelector(`.save-count-${projectId}`);
+            if (countEl) countEl.textContent = data.saves_count;
+          })
+          .catch(err => console.error('Save failed', err));
+      });
     });
-  });
+  }
 
   // Multiple Image Upload Previewer
   const imageInput = document.getElementById('project-images-input');
