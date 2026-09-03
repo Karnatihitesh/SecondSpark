@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from app.models.user import db, User
 from app.models.project import Project
 from app.models.review import Review
@@ -40,37 +40,74 @@ def index():
     )
 
 
+@reviews_bp.route('/create', methods=['POST'])
 @reviews_bp.route('/create/<int:project_id>', methods=['POST'])
 @login_required
-def create(project_id):
+def create(project_id=None):
+    if not project_id:
+        project_id = request.form.get('project_id', type=int)
+    if not project_id and request.is_json:
+        project_id = (request.get_json() or {}).get('project_id')
+
     current_user = get_current_user()
     project = db.session.get(Project, project_id)
     if not project:
         abort(404)
 
-    # Determine reviewee: if current_user is owner, reviewee is collaborator; if current_user is collaborator, reviewee is owner
-    reviewee_id = request.form.get('reviewee_id', type=int)
-    if not reviewee_id:
-        if current_user.id != project.user_id:
-            reviewee_id = project.user_id
-        else:
-            # If owner is reviewing, default to first collaborator or passed reviewee
-            first_convo = project.conversations.first()
-            if first_convo:
-                reviewee_id = first_convo.get_other_user(current_user.id).id
-            else:
-                flash('No collaborator found on this project to review yet.', 'warning')
-                return redirect(url_for('projects.details', id=project.id))
-
-    if reviewee_id == current_user.id:
-        flash('You cannot review yourself.', 'warning')
+    # STRICT COMPLETION GATE: Project must be 100% and Completed
+    if project.status != 'Completed' or project.current_progress < 100:
+        msg = f'Reviews can only be submitted once the project reaches 100% completion and is marked Completed (current approved progress: {project.current_progress}%).'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': msg}), 400
+        flash(msg, 'warning')
         return redirect(url_for('projects.details', id=project.id))
 
+    # Reviewer must be project owner/customer
+    if current_user.id != project.user_id:
+        msg = 'Only the project owner can submit a review for the assigned repairman.'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': msg}), 403
+        flash(msg, 'danger')
+        return redirect(url_for('projects.details', id=project.id))
+
+    # Reviewee must be assigned repairman
+    reviewee_id = project.assigned_repairman_id
+    if not reviewee_id:
+        msg = 'No assigned repairman found for this project.'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': msg}), 400
+        flash(msg, 'warning')
+        return redirect(url_for('projects.details', id=project.id))
+
+    if reviewee_id == current_user.id:
+        msg = 'You cannot review yourself.'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': msg}), 400
+        flash(msg, 'warning')
+        return redirect(url_for('projects.details', id=project.id))
+
+    # Parse rating & sub-criteria
     rating = request.form.get('rating', type=int)
     comment = request.form.get('comment', '').strip()
+    quality = request.form.get('quality_rating', type=int, default=5)
+    comm = request.form.get('communication_rating', type=int, default=5)
+    timeliness = request.form.get('timeliness_rating', type=int, default=5)
+    tech = request.form.get('technical_skill_rating', type=int, default=5)
+
+    if request.is_json:
+        data = request.get_json() or {}
+        rating = data.get('rating', rating)
+        comment = data.get('comment', comment).strip() if data.get('comment') else comment
+        quality = data.get('quality_rating', quality)
+        comm = data.get('communication_rating', comm)
+        timeliness = data.get('timeliness_rating', timeliness)
+        tech = data.get('technical_skill_rating', tech)
 
     if not rating or rating < 1 or rating > 5 or not comment:
-        flash('Please provide a star rating (1-5) and written feedback.', 'danger')
+        msg = 'Please provide a star rating (1-5) and written feedback.'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': msg}), 400
+        flash(msg, 'danger')
         return redirect(url_for('projects.details', id=project.id))
 
     # Check for duplicate review
@@ -81,7 +118,10 @@ def create(project_id):
     ).first()
 
     if existing:
-        flash('You have already submitted a review for this project collaboration.', 'warning')
+        msg = 'You have already submitted a review for this completed project.'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': msg}), 400
+        flash(msg, 'warning')
         return redirect(url_for('projects.details', id=project.id))
 
     try:
@@ -90,6 +130,10 @@ def create(project_id):
             reviewer_id=current_user.id,
             reviewee_id=reviewee_id,
             rating=rating,
+            quality_rating=quality,
+            communication_rating=comm,
+            timeliness_rating=timeliness,
+            technical_skill_rating=tech,
             comment=comment
         )
         db.session.add(review)
@@ -100,14 +144,19 @@ def create(project_id):
         create_notification(
             user_id=reviewee_id,
             notif_type='review',
-            title=f'New {rating}-Star Review Received!',
-            message=f'{current_user.full_name} left you a {rating}★ review on project "{project.title}": "{comment[:80]}..."',
+            title=f'New {rating}-Star Review Received! ⭐',
+            message=f'{current_user.full_name} left you a {rating}★ review for completing "{project.title}": "{comment[:80]}..."',
             link=url_for('auth.public_profile', username=reviewee.username if reviewee else '')
         )
 
-        flash('Your review has been published! Thank you for supporting the SecondSpark community.', 'success')
+        msg = 'Your review has been published! Thank you for endorsing your repairman.'
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': msg, 'review': review.to_dict()})
+        flash(msg, 'success')
     except Exception as e:
         db.session.rollback()
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': 'Could not save review.'}), 500
         flash('Could not save review. Please try again.', 'danger')
 
     return redirect(url_for('projects.details', id=project.id))
