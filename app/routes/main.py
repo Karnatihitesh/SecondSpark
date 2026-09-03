@@ -118,3 +118,31 @@ def contact():
 @main_bp.route('/how-it-works')
 def how_it_works():
     return render_template('home.html', scroll_to='how-it-works')
+
+
+@main_bp.route('/login', methods=['GET', 'POST'])
+def login_shortcut():
+    from app.routes.auth import login
+    return login()
+
+
+@main_bp.route('/register', methods=['GET', 'POST'])
+def register_shortcut():
+    from app.routes.auth import register
+    return register()
+
+
+@main_bp.route('/logout')
+def logout_shortcut():
+    from app.routes.auth import logout
+    return logout()
+
+
+@main_bp.route('/technician/<username>')
+@main_bp.route('/technicians/<username>')
+def technician_profile_shortcut(username):
+    from app.routes.auth import public_profile
+    return public_profile(username)
+
+
+
