@@ -297,4 +297,82 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  /* ══════════════════════════════════════════════
+     REUSABLE PROJECT CARD NAVIGATION
+     Makes the entire project card clickable while
+     preserving child interactive controls (heart btn, etc.)
+  ══════════════════════════════════════════════ */
+  document.addEventListener('click', e => {
+    // 1. Verify if click occurred inside a .project-card
+    const card = e.target.closest('.project-card');
+    if (!card) return;
+
+    // 2. Ignore if user is selecting text inside the card
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) return;
+
+    // 3. Ignore if user clicked on or inside an interactive element
+    // (buttons, form inputs, heart/bookmark button, or elements marked to prevent card click)
+    const interactive = e.target.closest('button, input, select, textarea, .save-project-btn, [data-prevent-card-click]');
+    if (interactive) {
+      return;
+    }
+
+    // 4. Check if user clicked on an <a> link
+    const clickedLink = e.target.closest('a');
+    if (clickedLink) {
+      // If it's a specific link other than the card title link (e.g. author profile link), let default browser link action handle it
+      const titleLink = card.querySelector('.project-card-title a, .project-card-title-link, h3 a, h4 a');
+      if (clickedLink !== titleLink) {
+        return;
+      }
+      // If user clicked the title link directly, allow native navigation
+      return;
+    }
+
+    // 5. Retrieve dynamic project URL from data-href or title link fallback
+    const targetUrl = card.dataset.href || card.querySelector('.project-card-title a, .project-card-title-link, h3 a, h4 a')?.getAttribute('href');
+    if (targetUrl) {
+      // Support middle-click, Ctrl+click, or Cmd+click to open in new tab
+      if (e.metaKey || e.ctrlKey || e.button === 1 || e.which === 2) {
+        window.open(targetUrl, '_blank');
+      } else {
+        window.location.href = targetUrl;
+      }
+    }
+  });
+
+  // Support middle-click (auxclick) on project card
+  document.addEventListener('auxclick', e => {
+    if (e.button !== 1) return; // Only middle click
+    const card = e.target.closest('.project-card');
+    if (!card) return;
+    const interactive = e.target.closest('button, input, select, textarea, .save-project-btn, [data-prevent-card-click], a');
+    if (interactive) return;
+
+    const targetUrl = card.dataset.href || card.querySelector('.project-card-title a, .project-card-title-link, h3 a, h4 a')?.getAttribute('href');
+    if (targetUrl) {
+      window.open(targetUrl, '_blank');
+    }
+  });
+
+  // Keyboard accessibility: Enter or Space on a focused project card triggers navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const activeEl = document.activeElement;
+      if (activeEl && activeEl.classList.contains('project-card')) {
+        // If focus is currently inside a child button or link, let it handle itself
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.classList.contains('save-project-btn')) {
+          return;
+        }
+        e.preventDefault();
+        const targetUrl = activeEl.dataset.href || activeEl.querySelector('.project-card-title a, .project-card-title-link, h3 a, h4 a')?.getAttribute('href');
+        if (targetUrl) {
+          window.location.href = targetUrl;
+        }
+      }
+    }
+  });
+
 });
+
