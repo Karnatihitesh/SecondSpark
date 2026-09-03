@@ -276,6 +276,8 @@ def delete(id):
 def toggle_save(id):
     project = db.session.get(Project, id)
     if not project:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': 'Project not found'}), 404
         abort(404)
     user = get_current_user()
 
@@ -284,13 +286,13 @@ def toggle_save(id):
         db.session.delete(existing)
         db.session.commit()
         saved = False
-        msg = 'Project removed from saved list.'
+        msg = 'Project removed from bookmarks.'
     else:
         sp = SavedProject(user_id=user.id, project_id=project.id)
         db.session.add(sp)
         db.session.commit()
         saved = True
-        msg = 'Project saved to your bookmarks.'
+        msg = 'Project saved to bookmarks!'
 
     if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'success': True, 'saved': saved, 'message': msg, 'saves_count': project.saves_count})
