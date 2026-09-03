@@ -61,92 +61,366 @@
         <p style="color: #78350F; font-size: 0.95rem; line-height: 1.6; white-space: pre-line;">{{ project.problems_faults }}</p>
       </div>
 
-      <!-- Detailed Description -->
-      <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
-        <h3 style="font-size: 1.25rem; margin-bottom: 1rem;">Project Background & Overview</h3>
-        <div style="color: var(--dark-800); line-height: 1.7; font-size: 0.98rem; white-space: pre-line;">
-          {{ project.description }}
+      <!-- INCOMING REPAIR REQUEST ALERT (For Invited Repairman) -->
+      {% if user_incoming_request %}
+        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-left: 5px solid #2563EB; border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem;">
+            <div>
+              <h3 style="color: #1E40AF; font-size: 1.15rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-handshake-angle"></i> You Were Invited to Repair This Build!
+              </h3>
+              <p style="color: #1E3A8A; font-size: 0.9rem; margin-bottom: 0;">
+                The owner, <strong>{{ project.owner.full_name }}</strong>, specifically requested your technical expertise to complete this revival.
+              </p>
+            </div>
+            <span class="badge badge-open" style="background: #2563EB; color: #fff;">Invitation Pending</span>
+          </div>
+
+          {% if user_incoming_request.message %}
+            <p style="background: #fff; padding: 0.85rem; border-radius: var(--radius-sm); font-size: 0.88rem; color: var(--dark-800); border: 1px solid #DBEAFE; margin-bottom: 1rem;">
+              "{{ user_incoming_request.message }}"
+            </p>
+          {% endif %}
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <form action="{{ url_for('projects.respond_repair_request', request_id=user_incoming_request.id) }}" method="POST" style="display: inline;">
+              <input type="hidden" name="action" value="reject" />
+              <button type="submit" class="btn btn-outline btn-sm">Decline</button>
+            </form>
+            <form action="{{ url_for('projects.respond_repair_request', request_id=user_incoming_request.id) }}" method="POST" style="display: inline;">
+              <input type="hidden" name="action" value="accept" />
+              <button type="submit" class="btn btn-primary btn-sm" style="background: #2563EB; border-color: #2563EB;">
+                <i class="fa-solid fa-check"></i> Accept & Begin Repair
+              </button>
+            </form>
+          </div>
         </div>
+      {% endif %}
+
+      <!-- STRICT CUSTOMER APPROVAL GATE ALERT (For Project Owner) -->
+      {% if project.pending_progress_update and current_user and current_user.id == project.user_id %}
+        {% set pup = project.pending_progress_update %}
+        <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: var(--radius-md); padding: 1.75rem; margin-bottom: 2rem; box-shadow: var(--shadow-md);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <span class="badge" style="background: #D97706; color: #fff; text-transform: uppercase; font-size: 0.75rem; font-weight: 700; margin-bottom: 0.4rem; display: inline-block;">
+                Action Required • Customer Sign-Off Gate
+              </span>
+              <h3 style="color: #92400E; font-size: 1.3rem; margin-bottom: 0.25rem;">
+                Progress Update: {{ pup.submitted_progress }}% Submitted
+              </h3>
+              <div style="font-size: 0.88rem; color: #78350F;">
+                Submitted by repairman <strong>{{ project.assigned_repairman.full_name }}</strong> on {{ pup.created_at | timeago }}.
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.75rem; color: #92400E; text-transform: uppercase; font-weight: 700;">Proposed Progress</div>
+              <div style="font-size: 1.75rem; font-weight: 800; color: #B45309;">{{ pup.submitted_progress }}%</div>
+            </div>
+          </div>
+
+          <div style="background: #fff; padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid #FDE68A; margin-bottom: 1.25rem;">
+            <h4 style="font-size: 1.05rem; margin-bottom: 0.4rem; color: var(--dark-900);">{{ pup.title }}</h4>
+            <p style="font-size: 0.92rem; color: var(--dark-700); line-height: 1.6; margin-bottom: 0.75rem;">{{ pup.description }}</p>
+
+            {% if pup.technologies_used %}
+              <div style="font-size: 0.82rem; margin-bottom: 0.5rem;">
+                <strong style="color: var(--dark-800);">Tools/Components:</strong> <span style="color: var(--text-muted);">{{ pup.technologies_used }}</span>
+              </div>
+            {% endif %}
+
+            {% if pup.next_step %}
+              <div style="font-size: 0.82rem; margin-bottom: 0.5rem;">
+                <strong style="color: var(--dark-800);">Next Steps:</strong> <span style="color: var(--text-muted);">{{ pup.next_step }}</span>
+              </div>
+            {% endif %}
+
+            {% if pup.evidence_url %}
+              <div style="margin-top: 0.85rem;">
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">Deliverable / Test Evidence:</div>
+                <a href="{{ pup.evidence_url }}" target="_blank">
+                  <img src="{{ pup.evidence_url }}" alt="Update Evidence" style="max-height: 180px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); object-fit: cover;" />
+                </a>
+              </div>
+            {% endif %}
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="font-size: 0.82rem; color: #92400E;">
+              <i class="fa-solid fa-shield-halved"></i> Official progress will remain at <strong>{{ project.current_progress }}%</strong> until you approve.
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button onclick="document.getElementById('request-changes-modal').style.display='flex'" class="btn btn-outline btn-sm" style="border-color: #B45309; color: #92400E;">
+                <i class="fa-solid fa-arrow-rotate-left"></i> Request Changes
+              </button>
+              <form action="{{ url_for('projects.approve_progress_update', id=project.id, update_id=pup.id) }}" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-primary btn-sm" style="background: #10B981; border-color: #10B981; font-weight: 700;">
+                  <i class="fa-solid fa-check"></i> Approve Deliverables (Update to {{ pup.submitted_progress }}%)
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- PROJECT PROGRESS & VERIFIED MILESTONES -->
+      <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem; background: #fff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Project Progress & Milestones
+            </h3>
+            <div style="font-size: 0.82rem; color: var(--text-muted);">
+              Verified engineering milestones and approved stage sign-offs
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="text-align: right;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Official Progress</div>
+              <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1;">
+                {{ project.current_progress }}%
+              </div>
+            </div>
+            {% if project.status == 'Completed' %}
+              <span class="badge badge-completed"><i class="fa-solid fa-circle-check"></i> 100% Completed</span>
+            {% elif project.status == 'Awaiting Customer Approval' %}
+              <span class="badge" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-hourglass-half"></i> Pending Sign-Off</span>
+            {% else %}
+              <span class="badge badge-open">{{ project.status }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Official Progress Bar with Pending Indicator -->
+        <div style="margin-bottom: 1.75rem;">
+          <div style="height: 12px; background: var(--bg-subtle); border-radius: 6px; overflow: hidden; position: relative;">
+            <!-- Approved Progress -->
+            <div style="height: 100%; width: {{ project.current_progress }}%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 6px; transition: width 0.4s ease;"></div>
+            <!-- Pending Progress Preview Bar -->
+            {% if project.pending_progress and project.pending_progress > project.current_progress %}
+              <div style="position: absolute; top: 0; left: {{ project.current_progress }}%; width: {{ project.pending_progress - project.current_progress }}%; height: 100%; background: repeating-linear-gradient(45deg, #F59E0B, #F59E0B 8px, #FBBF24 8px, #FBBF24 16px); opacity: 0.7; border-radius: 0 6px 6px 0;" title="Pending Approval: {{ project.pending_progress }}%"></div>
+            {% endif %}
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-light); margin-top: 0.35rem;">
+            <span>0% Initial Diagnostic</span>
+            {% if project.pending_progress and project.pending_progress > project.current_progress %}
+              <span style="color: #D97706; font-weight: 700;">{{ project.pending_progress }}% proposed (awaiting approval)</span>
+            {% endif %}
+            <span>100% Handover & Verified</span>
+          </div>
+        </div>
+
+        <!-- Milestone Stepper Cards -->
+        {% if milestones %}
+          <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+            {% for m in milestones %}
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; border-radius: var(--radius-md); background: {% if m.status == 'Completed' %}#ECFDF5{% elif m.status == 'In Progress' %}#EFF6FF{% else %}var(--bg-subtle){% endif %}; border: 1px solid {% if m.status == 'Completed' %}#A7F3D0{% elif m.status == 'In Progress' %}#BFDBFE{% else %}var(--border-subtle){% endif %};">
+                <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0;">
+                  <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; background: {% if m.status == 'Completed' %}#10B981; color: #fff;{% elif m.status == 'In Progress' %}#2563EB; color: #fff;{% else %}#E5E7EB; color: var(--text-muted);{% endif %}">
+                    {% if m.status == 'Completed' %}
+                      <i class="fa-solid fa-check"></i>
+                    {% else %}
+                      {{ m.order }}
+                    {% endif %}
+                  </div>
+                  <div>
+                    <h4 style="font-size: 0.95rem; margin-bottom: 0.15rem; color: var(--dark-900);">{{ m.title }}</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0; line-height: 1.4;">{{ m.description }}</p>
+                  </div>
+                </div>
+                <div style="text-align: right; flex-shrink: 0; margin-left: 1rem;">
+                  <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary);">{{ m.target_percentage }}% Target</div>
+                  <span class="badge" style="font-size: 0.7rem; padding: 0.15rem 0.5rem; background: {% if m.status == 'Completed' %}#10B981; color: #fff;{% elif m.status == 'In Progress' %}#2563EB; color: #fff;{% else %}#E5E7EB; color: var(--text-muted);{% endif %}">
+                    {{ m.status }}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Repairman Progress Submission Action -->
+        {% if current_user and current_user.id == project.assigned_repairman_id and project.status != 'Completed' %}
+          <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              You are the assigned repairman. Submit completed deliverables and milestone progress for customer verification.
+            </div>
+            <button onclick="document.getElementById('submit-progress-modal').style.display='flex'" class="btn btn-primary btn-sm">
+              <i class="fa-solid fa-upload"></i> Submit Progress Update
+            </button>
+          </div>
+        {% endif %}
       </div>
 
-      <!-- Specific Help Required -->
-      <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
-        <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: var(--primary-dark);">
-          <i class="fa-solid fa-handshake-angle"></i> Collaboration Needs & Objectives
-        </h3>
-        <div style="color: var(--dark-800); line-height: 1.7; font-size: 0.98rem; white-space: pre-line;">
-          {{ project.help_required }}
-        </div>
-      </div>
+      <!-- ASSIGNED REPAIRMAN / SPECIALIST CARD -->
+      {% if project.assigned_repairman %}
+        <div class="glass-card" style="padding: 1.75rem; margin-bottom: 2rem; background: #fff; border-left: 5px solid var(--primary);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="font-size: 0.8rem; color: var(--primary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
+              <i class="fa-solid fa-certificate"></i> Assigned Technical Specialist
+            </div>
+            <span class="badge badge-completed" style="font-size: 0.75rem;">Assigned & Active</span>
+          </div>
 
-      <!-- Required Skills -->
-      <div class="glass-card" style="padding: 1.75rem; margin-bottom: 2rem;">
-        <h3 style="font-size: 1.15rem; margin-bottom: 0.85rem;">Skills Needed for this Revival</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-          {% for skill in project.skills_list %}
-            <span class="skill-tag" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">{{ skill }}</span>
-          {% endfor %}
-        </div>
-      </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <img src="{{ project.assigned_repairman.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 58px; height: 58px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-light);" alt="{{ project.assigned_repairman.full_name }}" />
+              <div>
+                <h4 style="font-size: 1.15rem; margin-bottom: 0.15rem;">
+                  <a href="{{ url_for('auth.public_profile', username=project.assigned_repairman.username) }}">{{ project.assigned_repairman.full_name }}</a>
+                </h4>
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+                  @{{ project.assigned_repairman.username }} • {{ project.assigned_repairman.location or 'Remote Maker' }}
+                </div>
+                <div style="display: flex; gap: 0.6rem; align-items: center; font-size: 0.8rem;">
+                  {% if project.assigned_repairman.rating_summary.count > 0 %}
+                    <span style="color: #F59E0B; font-weight: 700;"><i class="fa-solid fa-star"></i> {{ project.assigned_repairman.average_rating }}</span>
+                  {% endif %}
+                  <span style="color: var(--text-light);">• {{ project.assigned_repairman.projects_repaired_count }} repairs completed</span>
+                  <span style="color: #10B981; font-weight: 600;">• {{ project.assigned_repairman.success_rate }}% success</span>
+                </div>
+              </div>
+            </div>
 
-      <!-- Attached Documents & Schematics -->
-      {% if project.documents.count() > 0 %}
-        <div class="glass-card" style="padding: 1.75rem; margin-bottom: 2rem;">
-          <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Attached Files & Documentation</h3>
-          <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-            {% for doc in project.documents %}
-              <a href="{{ doc.file_url }}" target="_blank" class="btn btn-outline" style="justify-content: flex-start;">
-                <i class="fa-solid fa-file-lines" style="color: var(--primary);"></i> {{ doc.filename }}
+            <div style="display: flex; gap: 0.5rem;">
+              <a href="{{ url_for('messages.start_conversation', user_id=project.assigned_repairman.id, project_id=project.id) }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-envelope"></i> Message
               </a>
+              <a href="{{ url_for('auth.public_profile', username=project.assigned_repairman.username) }}" class="btn btn-secondary btn-sm">
+                View Profile
+              </a>
+            </div>
+          </div>
+        </div>
+      {% elif recommended_repairmen and project.status != 'Completed' %}
+        <!-- RECOMMENDED REPAIRMEN & SPECIALISTS (AI MATCHING) -->
+        <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem; background: #fff;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <h3 style="font-size: 1.25rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--secondary);"></i> Recommended Specialists for this Build
+              </h3>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">
+                Matched by verified skills, repair history, track record, and availability
+              </div>
+            </div>
+            {% if is_fallback_recommendations %}
+              <span class="badge" style="background: #F3F4F6; color: var(--text-muted); font-size: 0.72rem;">Related Category Match</span>
+            {% endif %}
+          </div>
+
+          {% if is_fallback_recommendations %}
+            <div style="font-size: 0.82rem; color: var(--text-muted); background: var(--bg-subtle); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+              <i class="fa-solid fa-circle-info"></i> No exact skill match found. Here are the closest experienced community repairmen with proven revival track records.
+            </div>
+          {% endif %}
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+            {% for rec in recommended_repairmen %}
+              {% set u = rec.repairman %}
+              <div style="border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-subtle); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-sm)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                      <img src="{{ u.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;" alt="{{ u.full_name }}" />
+                      <div>
+                        <h4 style="font-size: 0.95rem; margin-bottom: 0.1rem;">
+                          <a href="{{ url_for('auth.public_profile', username=u.username) }}">{{ u.full_name }}</a>
+                        </h4>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                          @{{ u.username }}
+                        </div>
+                      </div>
+                    </div>
+                    <span class="badge" style="background: #ECFDF5; color: #047857; font-weight: 700; font-size: 0.75rem; border: 1px solid #A7F3D0;">
+                      {{ rec.match_score }}% Match
+                    </span>
+                  </div>
+
+                  <!-- Badge -->
+                  <div style="margin-bottom: 0.6rem;">
+                    <span style="display: inline-block; font-size: 0.72rem; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 0.15rem 0.5rem; border-radius: var(--radius-full);">
+                      {{ rec.badge }}
+                    </span>
+                  </div>
+
+                  <!-- Reasons -->
+                  <div style="font-size: 0.78rem; color: var(--dark-700); margin-bottom: 0.85rem; line-height: 1.4;">
+                    {% for r in rec.match_reasons %}
+                      <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-check" style="color: #10B981; font-size: 0.7rem;"></i> {{ r }}
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  <!-- Stats -->
+                  <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 0.6rem; margin-bottom: 0.85rem;">
+                    <span><i class="fa-solid fa-star" style="color: #F59E0B;"></i> {{ u.average_rating if u.reviews_count > 0 else '4.0' }} ({{ u.reviews_count }})</span>
+                    <span>{{ rec.projects_repaired }} repairs</span>
+                  </div>
+                </div>
+
+                <div>
+                  {% if current_user and current_user.id == project.user_id %}
+                    {% if active_repair_request and active_repair_request.repairman_id == u.id %}
+                      <button class="btn btn-outline btn-sm btn-block" disabled style="opacity: 0.7;">
+                        <i class="fa-solid fa-clock"></i> Request Pending
+                      </button>
+                    {% else %}
+                      <button onclick="openRequestRepairModal({{ u.id }}, '{{ u.full_name }}')" class="btn btn-primary btn-sm btn-block">
+                        <i class="fa-solid fa-handshake"></i> Request Repair
+                      </button>
+                    {% endif %}
+                  {% else %}
+                    <a href="{{ url_for('auth.public_profile', username=u.username) }}" class="btn btn-outline btn-sm btn-block">
+                      View Specialist
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
             {% endfor %}
           </div>
         </div>
       {% endif %}
 
-      <!-- Reviews Section (for completed projects) -->
-      {% if project.status == 'Completed' or project.reviews.count() > 0 %}
-        <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
-          <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Collaboration Reviews</h3>
-          
-          {% if project.reviews.count() > 0 %}
-            <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2rem;">
-              {% for rev in project.reviews %}
-                <div style="padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle);">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                    <span style="font-weight: 700; color: var(--dark-900);">{{ rev.reviewer.full_name }}</span>
-                    <div style="color: #F59E0B; font-size: 0.85rem;">
-                      {% for i in range(rev.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
-                    </div>
-                  </div>
-                  <p style="font-size: 0.92rem; color: var(--text-muted);">{{ rev.comment }}</p>
-                  <span style="font-size: 0.75rem; color: var(--text-light);">{{ rev.created_at | timeago }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
+      <!-- PROGRESS AUDIT TRAIL / HISTORY -->
+      {% if progress_updates %}
+        <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem; background: #fff;">
+          <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-timeline" style="color: var(--primary);"></i> Progress History & Audit Trail
+          </h3>
 
-          {% if current_user and (current_user.id == project.user_id or current_user in project.conversations.all()) %}
-            <div style="background: var(--bg-subtle); padding: 1.5rem; border-radius: var(--radius-md);">
-              <h4 style="margin-bottom: 0.75rem;">Leave a Review for this Revival</h4>
-              <form action="{{ url_for('reviews.create', project_id=project.id) }}" method="POST">
-                <div class="form-group">
-                  <label class="form-label">Rating (1 to 5 Stars)</label>
-                  <select name="rating" class="form-control" required>
-                    <option value="5">⭐⭐⭐⭐⭐ 5 - Outstanding Collaboration</option>
-                    <option value="4">⭐⭐⭐⭐ 4 - Great Result</option>
-                    <option value="3">⭐⭐⭐ 3 - Satisfactory</option>
-                    <option value="2">⭐⭐ 2 - Subpar</option>
-                    <option value="1">⭐ 1 - Problematic</option>
-                  </select>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for u in progress_updates %}
+              <div style="border-left: 3px solid {% if u.status == 'Approved' %}#10B981{% elif u.status == 'Pending' %}#F59E0B{% else %}#EF4444{% endif %}; padding-left: 1rem; position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                  <span style="font-weight: 700; font-size: 0.95rem;">{{ u.title }} ({{ u.submitted_progress }}%)</span>
+                  <span class="badge" style="font-size: 0.72rem; background: {% if u.status == 'Approved' %}#ECFDF5; color: #047857;{% elif u.status == 'Pending' %}#FEF3C7; color: #B45309;{% else %}#FEE2E2; color: #B91C1C;{% endif %}">
+                    {{ u.status }}
+                  </span>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Feedback</label>
-                  <textarea name="comment" class="form-control" rows="3" placeholder="Describe the collaboration quality and outcome..." required></textarea>
+                <p style="font-size: 0.88rem; color: var(--dark-700); margin-bottom: 0.4rem; line-height: 1.5;">{{ u.description }}</p>
+                
+                {% if u.customer_comment %}
+                  <div style="background: #FEF2F2; border-left: 3px solid #EF4444; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.82rem; color: #991B1B; margin-bottom: 0.4rem;">
+                    <strong>Customer Feedback:</strong> "{{ u.customer_comment }}"
+                  </div>
+                {% endif %}
+
+                {% if u.evidence_url %}
+                  <div style="margin-top: 0.4rem;">
+                    <a href="{{ u.evidence_url }}" target="_blank" style="font-size: 0.8rem; color: var(--primary);"><i class="fa-solid fa-paperclip"></i> View Attached Evidence</a>
+                  </div>
+                {% endif %}
+
+                <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.25rem;">
+                  Submitted by {{ u.repairman.full_name }} • {{ u.created_at | timeago }}
+                  {% if u.reviewed_at %} • Reviewed {{ u.reviewed_at | timeago }}{% endif %}
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
-              </form>
-            </div>
-          {% endif %}
+              </div>
+            {% endfor %}
+          </div>
         </div>
       {% endif %}
     </div>
@@ -325,6 +599,134 @@
     </form>
   </div>
 </div>
+
+<!-- Submit Progress Update Modal (For Assigned Repairman) -->
+<div id="submit-progress-modal" class="mobile-nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 3000;">
+  <div class="glass-card" style="background: #fff; max-width: 550px; width: 90%; padding: 2rem; position: relative; max-height: 90vh; overflow-y: auto;">
+    <button onclick="document.getElementById('submit-progress-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.25rem; cursor: pointer;">&times;</button>
+    <h3 style="margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Submit Progress Update
+    </h3>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+      Propose completed milestone deliverables. <strong>Note:</strong> Progress will update after customer approval.
+    </p>
+
+    <form action="{{ url_for('projects.submit_progress_update', id=project.id) }}" method="POST" enctype="multipart/form-data">
+      
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label" style="font-weight: 700;">Proposed Progress Percentage (Current: {{ project.current_progress }}%)</label>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <input type="range" id="progress-slider" name="submitted_progress" min="{{ project.current_progress }}" max="100" value="{{ [project.current_progress + 25, 100]|min }}" style="flex: 1;" oninput="document.getElementById('progress-disp').textContent = this.value + '%'" />
+          <span id="progress-disp" style="font-size: 1.25rem; font-weight: 800; color: var(--primary); min-width: 55px;">{{ [project.current_progress + 25, 100]|min }}%</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label" style="font-weight: 700;">Associated Milestone</label>
+        <select name="milestone_id" class="form-control">
+          {% for m in milestones %}
+            <option value="{{ m.id }}" {% if m.id == project.active_milestone.id %}selected{% endif %}>
+              {{ m.title }} ({{ m.target_percentage }}% target)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label" style="font-weight: 700;">Update Headline</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Solder-repaired motor driver & flashed firmware v1.2" required />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label" style="font-weight: 700;">Work Completed & Technical Details</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Describe the diagnostics conducted, components replaced, code rewritten, or benchmarks verified..." required></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label">Components / Technologies Used</label>
+        <input type="text" name="technologies_used" class="form-control" placeholder="e.g. STM32 Nucleo, Oscilloscope, C++, ROS2" />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label">Next Planned Step</label>
+        <input type="text" name="next_step" class="form-control" placeholder="e.g. Execute load test under battery power tomorrow" />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label">Deliverable Photo / Verification Evidence (Optional)</label>
+        <input type="file" name="evidence" class="form-control" accept="image/*" />
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        <i class="fa-solid fa-paper-plane"></i> Submit for Customer Approval
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Request Repair Modal (For Customer) -->
+<div id="request-repair-modal" class="mobile-nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 3000;">
+  <div class="glass-card" style="background: #fff; max-width: 500px; width: 90%; padding: 2rem; position: relative;">
+    <button onclick="document.getElementById('request-repair-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.25rem; cursor: pointer;">&times;</button>
+    <h3 style="margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-handshake-angle" style="color: var(--primary);"></i> Send Repair Request
+    </h3>
+    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+      Invite <strong id="modal-repairman-name">Specialist</strong> to take on and repair <strong>"{{ project.title }}"</strong>.
+    </p>
+
+    <form action="{{ url_for('projects.request_repair', id=project.id) }}" method="POST">
+      <input type="hidden" id="modal-repairman-id" name="repairman_id" value="" />
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label" style="font-weight: 700;">Personal Invitation Message</label>
+        <textarea name="message" class="form-control" rows="4" placeholder="Hello! I saw your technical track record on SecondSpark and would love to collaborate on resolving the faults in this build. Let me know if you can take this on!" required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        <i class="fa-solid fa-paper-plane"></i> Send Repair Request
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Request Changes Modal (For Customer) -->
+{% if project.pending_progress_update %}
+<div id="request-changes-modal" class="mobile-nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 3000;">
+  <div class="glass-card" style="background: #fff; max-width: 500px; width: 90%; padding: 2rem; position: relative;">
+    <button onclick="document.getElementById('request-changes-modal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.25rem; cursor: pointer;">&times;</button>
+    <h3 style="margin-bottom: 0.25rem; color: #991B1B; display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-arrow-rotate-left"></i> Request Deliverable Revisions
+    </h3>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+      Official project progress will remain at <strong>{{ project.current_progress }}%</strong>. Provide specific guidance so your repairman can adjust.
+    </p>
+
+    <form action="{{ url_for('projects.reject_progress_update', id=project.id, update_id=project.pending_progress_update.id) }}" method="POST">
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label" style="font-weight: 700;">Revision Feedback / Missing Requirements</label>
+        <textarea name="customer_comment" class="form-control" rows="4" placeholder="e.g. Please provide a video demonstrating the circuit powered under 12V before we sign off on this milestone..." required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-danger btn-block">
+        <i class="fa-solid fa-paper-plane"></i> Send Revision Request
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function openRequestRepairModal(repairmanId, repairmanName) {
+  var idInput = document.getElementById('modal-repairman-id');
+  var nameSpan = document.getElementById('modal-repairman-name');
+  if (idInput && nameSpan) {
+    idInput.value = repairmanId;
+    nameSpan.textContent = repairmanName;
+    document.getElementById('request-repair-modal').style.display = 'flex';
+  }
+}
+</script>
 
 {% endblock %}
 
