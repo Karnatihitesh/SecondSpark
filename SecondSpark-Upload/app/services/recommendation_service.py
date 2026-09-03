@@ -159,3 +159,72 @@ def recommend_repairmen_for_project(project, limit=4):
         'recommendations': scored_candidates[:limit],
         'is_fallback': is_fallback
     }
+
+
+def recommend_projects_for_technician(technician, limit=8):
+    """
+    Ranks and recommends available, customer-uploaded projects to a technician.
+    
+    Ranking factors:
+    1. Technical Skill & Tool Overlap: Matching technician skills with project required skills.
+    2. Category Alignment: Matching project domain with technician specialization.
+    3. Availability: Only open, unassigned builds looking for collaborators.
+    4. Recency: Newer projects receive a slight discovery boost.
+    """
+    if not technician:
+        return {'projects': [], 'total_count': 0}
+
+    tech_skills = set(s.strip().lower() for s in technician.skills_list)
+    tech_techs = set(t.strip().lower() for t in technician.technologies_list)
+    all_tech_skills = tech_skills.union(tech_techs)
+    tech_text_tokens = _tokenize(f"{technician.skills} {technician.technologies} {technician.specialization} {technician.bio}")
+
+    # Query customer-uploaded, open/help-needed projects with no assigned repairman
+    available_projects = Project.query.filter(
+        Project.assigned_repairman_id == None,
+        Project.status.in_(['Open', 'Help Needed']),
+        Project.user_id != technician.id
+    ).order_by(Project.created_at.desc()).all()
+
+    if not available_projects:
+        return {'projects': [], 'total_count': 0}
+
+    scored_projects = []
+    for proj in available_projects:
+        proj_skills = set(s.strip().lower() for s in proj.skills_list)
+        proj_text_tokens = _tokenize(f"{proj.title} {proj.required_skills} {proj.short_summary} {proj.problems_faults} {proj.help_required}")
+
+        direct_matches = all_tech_skills.intersection(proj_skills) if all_tech_skills and proj_skills else set()
+        token_matches = tech_text_tokens.intersection(proj_text_tokens) if tech_text_tokens and proj_text_tokens else set()
+
+        if proj_skills and len(proj_skills) > 0:
+            skill_ratio = len(direct_matches) / len(proj_skills)
+            token_ratio = min(1.0, len(token_matches) / max(3, len(proj_skills)))
+            match_score = (0.75 * skill_ratio) + (0.25 * token_ratio)
+        elif proj_text_tokens and len(proj_text_tokens) > 0:
+            match_score = min(1.0, len(token_matches) / 4.0)
+        else:
+            match_score = 0.4
+
+        match_pct = int(min(98, max(45, match_score * 100)))
+
+        badge = "Available"
+        if match_pct >= 80:
+            badge = "Top Skill Match"
+        elif match_pct >= 65:
+            badge = "Recommended"
+
+        scored_projects.append({
+            'project': proj,
+            'match_pct': match_pct,
+            'matching_skills': sorted(list(direct_matches))[:4],
+            'badge': badge
+        })
+
+    # Sort primarily by match percentage, then recency
+    scored_projects.sort(key=lambda x: (x['match_pct'], x['project'].created_at), reverse=True)
+
+    return {
+        'projects': scored_projects[:limit],
+        'total_count': len(available_projects)
+    }
