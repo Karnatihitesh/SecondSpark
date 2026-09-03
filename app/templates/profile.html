@@ -114,7 +114,11 @@
           {% if projects %}
             <div class="projects-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
               {% for p in projects %}
-                <div class="project-card">
+                <div class="project-card"
+                     data-href="{{ url_for('projects.details', id=p.id) }}"
+                     role="link"
+                     tabindex="0"
+                     aria-label="View project: {{ p.title }}">
                   <div class="project-card-media" style="height: 150px;">
                     <img src="{{ p.primary_image }}" alt="{{ p.title }}" class="project-card-img" />
                     <div class="project-card-badge">
@@ -123,7 +127,7 @@
                   </div>
                   <div class="project-card-body" style="padding: 1rem;">
                     <h4 style="font-size: 1rem; margin-bottom: 0.4rem;">
-                      <a href="{{ url_for('projects.details', id=p.id) }}">{{ p.title }}</a>
+                      <a href="{{ url_for('projects.details', id=p.id) }}" class="project-card-title-link">{{ p.title }}</a>
                     </h4>
                     <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">{{ p.short_summary[:80] }}...</p>
                     <div style="font-size: 0.85rem; font-weight: 700;">{{ p.budget | currency }}</div>
