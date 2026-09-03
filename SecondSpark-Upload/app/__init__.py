@@ -58,6 +58,19 @@ def create_app(config_name='default'):
                             con.commit()
                         except Exception:
                             pass
+
+                    # Idempotently add reviews criteria columns if missing
+                    for col, ctype in [
+                        ("quality_rating", "INTEGER DEFAULT 5"),
+                        ("communication_rating", "INTEGER DEFAULT 5"),
+                        ("timeliness_rating", "INTEGER DEFAULT 5"),
+                        ("technical_skill_rating", "INTEGER DEFAULT 5")
+                    ]:
+                        try:
+                            con.execute(db.text(f"ALTER TABLE reviews ADD COLUMN {col} {ctype};"))
+                            con.commit()
+                        except Exception:
+                            pass
             except Exception:
                 pass
             if Category.query.count() == 0:
