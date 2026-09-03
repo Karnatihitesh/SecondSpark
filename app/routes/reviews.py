@@ -40,9 +40,15 @@ def index():
     )
 
 
+@reviews_bp.route('/create', methods=['POST'])
 @reviews_bp.route('/create/<int:project_id>', methods=['POST'])
 @login_required
-def create(project_id):
+def create(project_id=None):
+    if not project_id:
+        project_id = request.form.get('project_id', type=int)
+    if not project_id and request.is_json:
+        project_id = (request.get_json() or {}).get('project_id')
+
     current_user = get_current_user()
     project = db.session.get(Project, project_id)
     if not project:
