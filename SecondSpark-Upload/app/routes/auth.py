@@ -263,12 +263,21 @@ def reset_password():
 
 
 
+from app.models.user import db, User, VerificationCode, UserRole
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if get_current_user():
+        u = get_current_user()
+        if u.is_technician:
+            return redirect(url_for('dashboard.technician_workspace'))
         return redirect(url_for('dashboard.index'))
 
     if request.method == 'POST':
+        role = request.form.get('role', UserRole.CUSTOMER).strip().lower()
+        if role not in [UserRole.CUSTOMER, UserRole.TECHNICIAN]:
+            role = UserRole.CUSTOMER
+
         full_name = request.form.get('full_name', '').strip()
         username = request.form.get('username', '').strip().lower()
         email = request.form.get('email', '').strip().lower()
@@ -276,33 +285,40 @@ def register():
         confirm_password = request.form.get('confirm_password', '')
         skills = request.form.get('skills', '').strip()
         location = request.form.get('location', '').strip()
+        bio = request.form.get('bio', '').strip()
+
+        # Technician-specific fields
+        technologies = request.form.get('technologies', '').strip()
+        specialization = request.form.get('specialization', '').strip()
+        experience = request.form.get('experience', '').strip()
+        availability = request.form.get('availability', 'Available').strip()
 
         # Validations
         if not full_name or not username or not email or not password:
             flash('All required fields must be filled.', 'danger')
-            return render_template('register.html', form_data=request.form)
+            return render_template('register.html', form_data=request.form, selected_role=role)
 
         if len(username) < 3:
             flash('Username must be at least 3 characters long.', 'danger')
-            return render_template('register.html', form_data=request.form)
+            return render_template('register.html', form_data=request.form, selected_role=role)
 
         if password != confirm_password:
             flash('Passwords do not match.', 'danger')
-            return render_template('register.html', form_data=request.form)
+            return render_template('register.html', form_data=request.form, selected_role=role)
 
         is_valid, msg = validate_password_strength(password)
         if not is_valid:
             flash(msg, 'danger')
-            return render_template('register.html', form_data=request.form)
+            return render_template('register.html', form_data=request.form, selected_role=role)
 
         # Check existing user
         if User.query.filter_by(username=username).first():
             flash('Username is already taken. Please choose another.', 'danger')
-            return render_template('register.html', form_data=request.form)
+            return render_template('register.html', form_data=request.form, selected_role=role)
 
         if User.query.filter_by(email=email).first():
             flash('An account with this email already exists.', 'danger')
-            return render_template('register.html', form_data=request.form)
+            return render_template('register.html', form_data=request.form, selected_role=role)
 
         # Create user
         try:
@@ -311,8 +327,13 @@ def register():
                 username=username,
                 email=email,
                 skills=skills,
+                technologies=technologies,
+                specialization=specialization,
+                experience=experience,
+                availability=availability,
+                bio=bio,
                 location=location,
-                role='user'
+                role=role
             )
             user.set_password(password)
             db.session.add(user)
@@ -320,22 +341,41 @@ def register():
 
             # Automatically log in
             session['user_id'] = user.id
-            flash(f'Welcome to SecondSpark, {user.full_name}! Your account has been created.', 'success')
+            session['role'] = user.role
+            g.current_user = user
+
+            role_label = 'Technician' if user.is_technician else 'Customer'
+            flash(f'Welcome to SecondSpark, {user.full_name}! Your {role_label} account has been created.', 'success')
+
+            if user.is_technician:
+                return redirect(url_for('dashboard.technician_workspace'))
             return redirect(url_for('dashboard.index'))
         except Exception as e:
             db.session.rollback()
             flash('An error occurred during registration. Please try again.', 'danger')
-            return render_template('register.html', form_data=request.form)
+            return render_template('register.html', form_data=request.form, selected_role=role)
 
-    return render_template('register.html', form_data={})
+    selected_role = request.args.get('role', UserRole.CUSTOMER).strip().lower()
+    return render_template('register.html', form_data={}, selected_role=selected_role)
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if get_current_user():
+        u = get_current_user()
+        if u.is_technician:
+            return redirect(url_for('dashboard.technician_workspace'))
         return redirect(url_for('dashboard.index'))
 
+    selected_role = request.args.get('role', UserRole.CUSTOMER).strip().lower()
+    if selected_role not in [UserRole.CUSTOMER, UserRole.TECHNICIAN]:
+        selected_role = UserRole.CUSTOMER
+
     if request.method == 'POST':
+        selected_role = request.form.get('role', UserRole.CUSTOMER).strip().lower()
+        if selected_role not in [UserRole.CUSTOMER, UserRole.TECHNICIAN]:
+            selected_role = UserRole.CUSTOMER
+
         login_input = request.form.get('login_input', '').strip().lower()
         password = request.form.get('password', '')
         remember = bool(request.form.get('remember'))
@@ -343,7 +383,7 @@ def login():
         # Form validation
         if not login_input or not password:
             flash('Please enter both your email/username and password.', 'danger')
-            return render_template('login.html')
+            return render_template('login.html', selected_role=selected_role, login_input=login_input)
 
         # Case-insensitive lookup by email or username
         user = User.query.filter(
@@ -353,10 +393,20 @@ def login():
         if user and user.check_password(password):
             if not user.is_active:
                 flash('Your account has been suspended. Please contact support.', 'danger')
-                return render_template('login.html')
+                return render_template('login.html', selected_role=selected_role, login_input=login_input)
 
-            # Establish secure session
+            # STRICT BACKEND ROLE VALIDATION
+            # Admin accounts can access via either customer or technician role
+            if not user.is_admin:
+                user_actual_role = UserRole.CUSTOMER if user.is_customer else UserRole.TECHNICIAN
+                if selected_role != user_actual_role:
+                    expected_label = 'Customer' if user_actual_role == UserRole.CUSTOMER else 'Technician'
+                    flash(f'Your account is registered as a {expected_label}. Please select {expected_label} login.', 'danger')
+                    return render_template('login.html', selected_role=selected_role, login_input=login_input)
+
+            # Establish secure session with user_id and actual role
             session['user_id'] = user.id
+            session['role'] = user.role
             if remember:
                 session.permanent = True
             g.current_user = user
@@ -366,15 +416,18 @@ def login():
             if next_url and next_url.startswith('/') and not next_url.startswith('//'):
                 return redirect(next_url)
             
-            # Dynamic role-based redirection from database
+            # Dynamic role-based redirection to dedicated workspace
             if user.is_admin:
                 return redirect(url_for('admin.index'))
-            return redirect(url_for('dashboard.index'))
+            elif user.is_technician:
+                return redirect(url_for('dashboard.technician_workspace'))
+            else:
+                return redirect(url_for('dashboard.index'))
         else:
             flash('Invalid email/username or password. Please check your credentials and try again.', 'danger')
-            return render_template('login.html')
+            return render_template('login.html', selected_role=selected_role, login_input=login_input)
 
-    return render_template('login.html')
+    return render_template('login.html', selected_role=selected_role)
 
 
 @auth_bp.route('/logout')
@@ -425,6 +478,21 @@ def profile():
         user.skills = skills
         user.location = location
 
+        # Technician-specific fields
+        technologies = request.form.get('technologies', '').strip()
+        specialization = request.form.get('specialization', '').strip()
+        experience = request.form.get('experience', '').strip()
+        availability = request.form.get('availability', '').strip()
+
+        if technologies:
+            user.technologies = technologies
+        if specialization:
+            user.specialization = specialization
+        if experience:
+            user.experience = experience
+        if availability:
+            user.availability = availability
+
         try:
             db.session.commit()
             flash('Profile updated successfully!', 'success')
@@ -437,12 +505,43 @@ def profile():
 
 
 @auth_bp.route('/user/<username>')
+@auth_bp.route('/technician/<username>')
 def public_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
     projects = user.projects.order_by(db.desc(db.text('created_at'))).all()
+    repaired_projects = user.assigned_projects.filter_by(status='Completed').order_by(db.desc(db.text('updated_at'))).all()
     reviews = user.reviews_received.order_by(db.desc(db.text('created_at'))).all()
     rating_summary = user.rating_summary
-    return render_template('profile.html', user=user, is_public=True, projects=projects, reviews=reviews, rating_summary=rating_summary)
+
+    current = get_current_user()
+    customer_open_projects = []
+    if current and current.is_customer:
+        from app.models.project import Project
+        customer_open_projects = current.projects.filter(
+            Project.assigned_repairman_id == None,
+            Project.status.in_(['Open', 'Help Needed'])
+        ).all()
+
+    if user.is_technician:
+        return render_template(
+            'technician_profile.html',
+            technician=user,
+            projects=projects,
+            repaired_projects=repaired_projects,
+            reviews=reviews,
+            rating_summary=rating_summary,
+            customer_open_projects=customer_open_projects
+        )
+
+    return render_template(
+        'profile.html',
+        user=user,
+        is_public=True,
+        projects=projects,
+        repaired_projects=repaired_projects,
+        reviews=reviews,
+        rating_summary=rating_summary
+    )
 
 
 # ── Real Google OAuth 2.0 & Identity Services Integration ─────────────────────
