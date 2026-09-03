@@ -118,10 +118,15 @@ def create_app(config_name='default'):
                         bio='Team Lead & Full-Stack Integration at SecondSpark.',
                         skills='Python, Flask, Full-Stack, IoT, Embedded Systems',
                         location='India',
-                        role='user'
+                        role='admin'
                     )
                     hitesh.set_password('Hitesh@12345')
                     db.session.add(hitesh)
+
+                # Ensure karnatihitesh account always has admin role
+                hitesh_acct = User.query.filter((db.func.lower(User.email) == 'karnatihitesh@gmail.com') | (User.username == 'hitesh') | (User.username == 'karnatihitesh')).first()
+                if hitesh_acct and hitesh_acct.role != 'admin':
+                    hitesh_acct.role = 'admin'
 
                 db.session.commit()
         except Exception:
