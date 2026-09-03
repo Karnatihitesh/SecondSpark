@@ -29,8 +29,24 @@ def create_app(config_name='default'):
             db.create_all()
             try:
                 with db.engine.connect() as con:
-                    con.execute(db.text("ALTER TABLE verification_codes ALTER COLUMN code TYPE VARCHAR(255);"))
-                    con.commit()
+                    try:
+                        con.execute(db.text("ALTER TABLE verification_codes ALTER COLUMN code TYPE VARCHAR(255);"))
+                        con.commit()
+                    except Exception:
+                        pass
+
+                    # Idempotently add technician fields if not yet present in remote DB
+                    for col, ctype in [
+                        ("technologies", "VARCHAR(255)"),
+                        ("specialization", "VARCHAR(100)"),
+                        ("experience", "TEXT"),
+                        ("availability", "VARCHAR(30) DEFAULT 'Available'")
+                    ]:
+                        try:
+                            con.execute(db.text(f"ALTER TABLE users ADD COLUMN {col} {ctype};"))
+                            con.commit()
+                        except Exception:
+                            pass
             except Exception:
                 pass
             if Category.query.count() == 0:
