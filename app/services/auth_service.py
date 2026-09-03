@@ -17,9 +17,11 @@ def get_current_user():
     user = db.session.get(User, user_id)
     if user and user.is_active:
         g.current_user = user
+        session['role'] = user.role
         return user
     else:
         session.pop('user_id', None)
+        session.pop('role', None)
         g.current_user = None
         return None
 
@@ -39,6 +41,54 @@ def login_required(f):
                 }), 401
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('auth.login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def customer_required(f):
+    """Decorator to require Customer role (or Admin)."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user = get_current_user()
+        if not user:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+                next_url = request.referrer or request.url
+                return jsonify({
+                    'success': False,
+                    'error': 'Authentication required',
+                    'redirect': url_for('auth.login', next=next_url, role='customer')
+                }), 401
+            flash('Please log in as a Customer to access this page.', 'warning')
+            return redirect(url_for('auth.login', next=request.url, role='customer'))
+        if not (user.is_customer or user.is_admin):
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+                return jsonify({'success': False, 'error': 'Customer role required for this action.'}), 403
+            flash('This page is reserved for Customers. Redirected to your Technician Workspace.', 'info')
+            return redirect(url_for('dashboard.technician_workspace'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def technician_required(f):
+    """Decorator to require Technician role (or Admin)."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user = get_current_user()
+        if not user:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+                next_url = request.referrer or request.url
+                return jsonify({
+                    'success': False,
+                    'error': 'Authentication required',
+                    'redirect': url_for('auth.login', next=next_url, role='technician')
+                }), 401
+            flash('Please log in as a Technician to access this page.', 'warning')
+            return redirect(url_for('auth.login', next=request.url, role='technician'))
+        if not (user.is_technician or user.is_admin):
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+                return jsonify({'success': False, 'error': 'Technician role required for this action.'}), 403
+            flash('This page is reserved for Technicians. Redirected to your Customer Dashboard.', 'info')
+            return redirect(url_for('dashboard.index'))
         return f(*args, **kwargs)
     return decorated_function
 
