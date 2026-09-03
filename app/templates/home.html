@@ -3,6 +3,169 @@
 {% block title %}SecondSpark — Give Unfinished Ideas a Second Spark{% endblock %}
 
 {% block content %}
+  <!-- LOGGED-IN ROLE WORKSPACE BANNER -->
+  {% if current_user %}
+    {% if current_user.is_admin %}
+      <section style="background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%); border-bottom: 2px solid #E9D5FF; padding: 2rem 0; box-shadow: var(--shadow-sm);">
+        <div class="container">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+            <div>
+              <span class="badge" style="background: #EDE9FE; color: #6D28D9; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: var(--radius-full); margin-bottom: 0.5rem; display: inline-block;">
+                <i class="fa-solid fa-shield-halved"></i> ADMIN CONTROL
+              </span>
+              <h2 style="font-size: 1.65rem; margin-bottom: 0.25rem; font-weight: 800; color: #4C1D95;">
+                Welcome back, {{ current_user.full_name }}!
+              </h2>
+              <p style="color: #6B21A8; margin-bottom: 0; font-size: 0.92rem;">
+                Platform administration, system governance, and content moderation workspace.
+              </p>
+            </div>
+            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+              <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary btn-sm" style="background: #6D28D9; border-color: #6D28D9;">
+                <i class="fa-solid fa-chart-line"></i> Admin Dashboard
+              </a>
+              <a href="{{ url_for('admin.dashboard', tab='users') }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-users"></i> Users
+              </a>
+              <a href="{{ url_for('admin.dashboard', tab='technicians') }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-user-gear"></i> Technicians
+              </a>
+              <a href="{{ url_for('admin.dashboard', tab='projects') }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-cubes"></i> Moderate Projects
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    {% elif current_user.is_technician %}
+      <section style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border-bottom: 2px solid #BFDBFE; padding: 2.25rem 0; box-shadow: var(--shadow-sm);">
+        <div class="container">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 1.5rem;">
+            <div>
+              <span class="badge" style="background: #DBEAFE; color: #1E40AF; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: var(--radius-full); margin-bottom: 0.5rem; display: inline-block;">
+                <i class="fa-solid fa-screwdriver-wrench"></i> TECHNICIAN WORKSPACE
+              </span>
+              <h2 style="font-size: 1.65rem; margin-bottom: 0.25rem; font-weight: 800; color: #1E3A8A;">
+                Welcome back, {{ current_user.full_name }}!
+              </h2>
+              <p style="color: #1E40AF; margin-bottom: 0; font-size: 0.92rem;">
+                Browse available customer-uploaded builds, manage assigned repairs, and reply to project owners.
+              </p>
+            </div>
+            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+              <a href="{{ url_for('projects.browse') }}" class="btn btn-primary btn-sm" style="background: #2563EB; border-color: #2563EB;">
+                <i class="fa-solid fa-magnifying-glass"></i> Find Projects
+              </a>
+              <a href="{{ url_for('dashboard.technician_dashboard') }}#my-repairs" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-wrench"></i> My Repairs
+              </a>
+              <a href="{{ url_for('dashboard.technician_dashboard') }}#repair-requests" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-inbox"></i> Repair Requests ({{ current_user.repair_requests_received.filter_by(status='Pending').count() }})
+              </a>
+              <a href="{{ url_for('auth.public_profile', username=current_user.username) }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-user"></i> Technician Profile
+              </a>
+            </div>
+          </div>
+
+          <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 0;">
+            <div class="stat-widget" style="padding: 1rem 1.25rem; background: #fff;">
+              <div class="stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-wrench"></i></div>
+              <div>
+                <div class="stat-val" style="font-size: 1.35rem;">{{ current_user.projects_repaired_count }}</div>
+                <div class="stat-lbl" style="font-size: 0.78rem;">Projects Repaired</div>
+              </div>
+            </div>
+            <div class="stat-widget" style="padding: 1rem 1.25rem; background: #fff;">
+              <div class="stat-icon-wrap" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-spinner"></i></div>
+              <div>
+                <div class="stat-val" style="font-size: 1.35rem;">{{ current_user.active_repairs_count }}</div>
+                <div class="stat-lbl" style="font-size: 0.78rem;">Active Repairs</div>
+              </div>
+            </div>
+            <div class="stat-widget" style="padding: 1rem 1.25rem; background: #fff;">
+              <div class="stat-icon-wrap" style="background: #FEF2F2; color: #DC2626;"><i class="fa-solid fa-star"></i></div>
+              <div>
+                <div class="stat-val" style="font-size: 1.35rem;">{{ current_user.average_rating if current_user.average_rating > 0 else '—' }} <span style="font-size: 0.8rem;">★</span></div>
+                <div class="stat-lbl" style="font-size: 0.78rem;">Rating ({{ current_user.reviews_count }} reviews)</div>
+              </div>
+            </div>
+            <div class="stat-widget" style="padding: 1rem 1.25rem; background: #fff;">
+              <div class="stat-icon-wrap" style="background: #F3E8FF; color: #7C3AED;"><i class="fa-solid fa-inbox"></i></div>
+              <div>
+                <div class="stat-val" style="font-size: 1.35rem;">{{ current_user.repair_requests_received.filter_by(status='Pending').count() }}</div>
+                <div class="stat-lbl" style="font-size: 0.78rem;">Pending Requests</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    {% else %}
+      <section style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border-bottom: 2px solid #A7F3D0; padding: 2.25rem 0; box-shadow: var(--shadow-sm);">
+        <div class="container">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 1.5rem;">
+            <div>
+              <span class="badge" style="background: #D1FAE5; color: #065F46; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: var(--radius-full); margin-bottom: 0.5rem; display: inline-block;">
+                <i class="fa-solid fa-user"></i> CUSTOMER WORKSPACE
+              </span>
+              <h2 style="font-size: 1.65rem; margin-bottom: 0.25rem; font-weight: 800; color: #064E3B;">
+                Welcome back, {{ current_user.full_name }}!
+              </h2>
+              <p style="color: #047857; margin-bottom: 0; font-size: 0.92rem;">
+                Manage your uploaded hardware/software projects, monitor views, review milestones, and collaborate with verified technicians.
+              </p>
+            </div>
+            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+              <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Upload Project
+              </a>
+              <a href="{{ url_for('dashboard.customer_dashboard') }}#my-uploads" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-cubes"></i> My Uploads
+              </a>
+              <a href="{{ url_for('dashboard.customer_dashboard') }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-chart-pie"></i> Customer Dashboard
+              </a>
+              <a href="{{ url_for('dashboard.saved_projects') }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-bookmark"></i> Saved Projects
+              </a>
+            </div>
+          </div>
+
+          <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 0;">
+            <div class="stat-widget" style="padding: 1rem 1.25rem; background: #fff;">
+              <div class="stat-icon-wrap" style="background: #ECFDF5; color: #047857;"><i class="fa-solid fa-cubes"></i></div>
+              <div>
+                <div class="stat-val" style="font-size: 1.35rem;">{{ current_user.projects.count() }}</div>
+                <div class="stat-lbl" style="font-size: 0.78rem;">My Uploads</div>
+              </div>
+            </div>
+            <div class="stat-widget" style="padding: 1rem 1.25rem; background: #fff;">
+              <div class="stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-folder-open"></i></div>
+              <div>
+                <div class="stat-val" style="font-size: 1.35rem;">{{ current_user.customer_active_projects_count }}</div>
+                <div class="stat-lbl" style="font-size: 0.78rem;">Active Projects</div>
+              </div>
+            </div>
+            <div class="stat-widget" style="padding: 1rem 1.25rem; background: #fff;">
+              <div class="stat-icon-wrap" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-wrench"></i></div>
+              <div>
+                <div class="stat-val" style="font-size: 1.35rem;">{{ current_user.customer_in_repair_count }}</div>
+                <div class="stat-lbl" style="font-size: 0.78rem;">In Repair</div>
+              </div>
+            </div>
+            <div class="stat-widget" style="padding: 1rem 1.25rem; background: #fff;">
+              <div class="stat-icon-wrap" style="background: #F3E8FF; color: #7C3AED;"><i class="fa-solid fa-eye"></i></div>
+              <div>
+                <div class="stat-val" style="font-size: 1.35rem;">{{ current_user.total_views }}</div>
+                <div class="stat-lbl" style="font-size: 0.78rem;">Total Views</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    {% endif %}
+  {% endif %}
+
   <!-- HERO SECTION -->
   <section class="hero-section">
     <div class="container">
@@ -18,12 +181,28 @@
             Discover abandoned and incomplete hardware, software, AI, and electronics projects. Connect with skilled makers and engineers to turn stalled ideas into completed possibilities.
           </p>
           <div class="hero-actions">
-            <a href="{{ url_for('projects.browse') }}" class="btn btn-primary btn-lg">
-              <i class="fa-solid fa-compass"></i> Browse Projects
-            </a>
-            <a href="{{ url_for('projects.upload') }}" class="btn btn-secondary btn-lg">
-              <i class="fa-solid fa-cloud-arrow-up"></i> Upload a Project
-            </a>
+            {% if current_user and current_user.is_technician %}
+              <a href="{{ url_for('projects.browse') }}" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-magnifying-glass"></i> Find Projects to Repair
+              </a>
+              <a href="{{ url_for('dashboard.technician_dashboard') }}" class="btn btn-secondary btn-lg">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Technician Dashboard
+              </a>
+            {% elif current_user and current_user.is_admin %}
+              <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary btn-lg" style="background: #6D28D9; border-color: #6D28D9;">
+                <i class="fa-solid fa-shield-halved"></i> Admin Control Panel
+              </a>
+              <a href="{{ url_for('projects.browse') }}" class="btn btn-secondary btn-lg">
+                <i class="fa-solid fa-compass"></i> Browse Projects
+              </a>
+            {% else %}
+              <a href="{{ url_for('projects.browse') }}" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-compass"></i> Browse Projects
+              </a>
+              <a href="{{ url_for('projects.upload') }}" class="btn btn-secondary btn-lg">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload a Project
+              </a>
+            {% endif %}
           </div>
 
           <!-- Hero Micro Stats — Real-time DB counts with animated counters -->
@@ -442,8 +621,16 @@
         <h2>Have an Unfinished Project Sitting in a Drawer?</h2>
         <p>Upload it in under 2 minutes. Get connected with passionate engineers and developers ready to help you complete it.</p>
         <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-          <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-lg">Post Your Project Now</a>
-          <a href="{{ url_for('projects.browse') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">Explore Projects</a>
+          {% if current_user and current_user.is_technician %}
+            <a href="{{ url_for('projects.browse') }}" class="btn btn-primary btn-lg">Browse Open Builds to Repair</a>
+            <a href="{{ url_for('dashboard.technician_dashboard') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">Go to Technician Dashboard</a>
+          {% elif current_user and current_user.is_admin %}
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary btn-lg" style="background: #6D28D9; border-color: #6D28D9;">Admin Control Panel</a>
+            <a href="{{ url_for('projects.browse') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">Explore Projects</a>
+          {% else %}
+            <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-lg">Post Your Project Now</a>
+            <a href="{{ url_for('projects.browse') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);">Explore Projects</a>
+          {% endif %}
         </div>
       </div>
     </div>
