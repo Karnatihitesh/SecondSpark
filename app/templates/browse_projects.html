@@ -142,10 +142,14 @@
   {% if projects %}
     <div class="projects-grid">
       {% for project in projects %}
-        <div class="project-card">
+        <div class="project-card"
+             data-href="{{ url_for('projects.details', id=project.id) }}"
+             role="link"
+             tabindex="0"
+             aria-label="View project: {{ project.title }}">
           <div class="project-card-media">
             <img src="{{ project.primary_image }}" alt="{{ project.title }}" class="project-card-img" />
-            <button class="project-card-save-btn save-project-btn {% if project.id in saved_project_ids %}saved{% endif %}" data-project-id="{{ project.id }}" title="Bookmark Project">
+            <button class="project-card-save-btn save-project-btn {% if project.id in saved_project_ids %}saved{% endif %}" data-project-id="{{ project.id }}" data-prevent-card-click="true" title="Bookmark Project">
               <i class="{% if project.id in saved_project_ids %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %}"></i>
             </button>
             <div class="project-card-badge">
@@ -156,7 +160,7 @@
           <div class="project-card-body">
             <div class="project-card-cat">{{ project.category.name if project.category else 'General' }}</div>
             <h3 class="project-card-title">
-              <a href="{{ url_for('projects.details', id=project.id) }}">{{ project.title }}</a>
+              <a href="{{ url_for('projects.details', id=project.id) }}" class="project-card-title-link">{{ project.title }}</a>
             </h3>
             <p class="project-card-summary">{{ project.short_summary }}</p>
 
