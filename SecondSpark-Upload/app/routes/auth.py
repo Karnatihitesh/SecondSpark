@@ -499,8 +499,7 @@ def login():
 
 @auth_bp.route('/logout')
 def logout():
-    session.pop('user_id', None)
-    session.pop('oauth_state', None)
+    session.clear()
     g.current_user = None
     flash('You have been logged out safely.', 'info')
     return redirect(url_for('main.index'))
