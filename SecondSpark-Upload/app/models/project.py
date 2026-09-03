@@ -128,3 +128,12 @@ class SavedProject(db.Model):
 
     user = db.relationship('User', back_populates='saved_projects')
     project = db.relationship('Project', back_populates='saved_by')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'project_id': self.project_id,
+            'project': self.project.to_dict() if self.project else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
