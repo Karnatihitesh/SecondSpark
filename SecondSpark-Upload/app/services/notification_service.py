@@ -38,12 +38,16 @@ def send_email_async(to_email, subject, html_content):
                 print(f"[Email Service] Failed to send email to {to_email}: {err}")
         else:
             # Simulated email dispatch with rich console preview
-            print("\n" + "="*60)
-            print(f"[SecondSpark Email Notification Dispatch]")
-            print(f" To:      {to_email}")
-            print(f" Subject: [SecondSpark] {subject}")
-            print(f" Status:  Delivered (Dev/Simulation Mode)")
-            print("="*60 + "\n")
+            try:
+                clean_subj = subject.encode('ascii', errors='replace').decode('ascii')
+                print("\n" + "="*60)
+                print(f"[SecondSpark Email Notification Dispatch]")
+                print(f" To:      {to_email}")
+                print(f" Subject: [SecondSpark] {clean_subj}")
+                print(f" Status:  Delivered (Dev/Simulation Mode)")
+                print("="*60 + "\n")
+            except Exception:
+                pass
 
     threading.Thread(target=_send, daemon=True).start()
 
