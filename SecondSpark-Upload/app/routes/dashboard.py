@@ -14,17 +14,35 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 @dashboard_bp.route('/')
 @login_required
 def index():
-    """Primary dashboard entrypoint. Routes user directly to their role-specific workspace."""
+    """Primary dashboard entrypoint. Centralizes routing to user's strict role dashboard."""
+    user = get_current_user()
+    if user.is_admin:
+        return redirect(url_for('admin.dashboard'))
+    elif user.is_technician:
+        return redirect(url_for('dashboard.technician_dashboard'))
+    return redirect(url_for('dashboard.customer_dashboard'))
+
+
+@dashboard_bp.route('/customer/dashboard')
+@dashboard_bp.route('/customer')
+@dashboard_bp.route('/customer/')
+@customer_required
+def customer_dashboard():
+    """CUSTOMER DASHBOARD: Shows customer's uploaded builds, views, repair status, and milestones."""
     user = get_current_user()
     if user.is_technician:
-        return redirect(url_for('dashboard.technician_workspace'))
+        return redirect(url_for('dashboard.technician_dashboard'))
+    if user.is_admin:
+        return redirect(url_for('admin.dashboard'))
 
-    # CUSTOMER DASHBOARD
     my_projects = user.projects.order_by(Project.created_at.desc()).all()
     total_projects = len(my_projects)
     active_projects = [p for p in my_projects if p.status in ['Open', 'Help Needed', 'In Discussion', 'In Progress', 'Awaiting Customer Approval', 'Revision Required']]
     completed_projects = [p for p in my_projects if p.status == 'Completed']
     saved_count = user.saved_projects.count()
+
+    # Total Views calculated dynamically from database
+    total_views = sum(p.views_count or 0 for p in my_projects)
 
     # Pending customer approval requests on user's own projects
     pending_approvals = [p for p in my_projects if p.status == 'Awaiting Customer Approval']
@@ -51,7 +69,9 @@ def index():
     stats = {
         'total_projects': total_projects,
         'active_projects': len(active_projects),
+        'projects_in_repair': len(active_repairs),
         'completed_projects': len(completed_projects),
+        'total_views': total_views,
         'saved_count': saved_count,
         'unread_messages': unread_messages,
         'pending_approvals_count': len(pending_approvals),
@@ -73,12 +93,17 @@ def index():
     )
 
 
+@dashboard_bp.route('/technician/dashboard')
 @dashboard_bp.route('/technician')
 @dashboard_bp.route('/technician/')
 @technician_required
-def technician_workspace():
-    """Dedicated Technician Workspace for managing assigned repairs, incoming requests, and reputation."""
+def technician_dashboard():
+    """TECHNICIAN DASHBOARD: Dedicated workspace for assigned repairs, repair requests, reviews, and skills."""
     user = get_current_user()
+    if user.is_customer:
+        return redirect(url_for('dashboard.customer_dashboard'))
+    if user.is_admin:
+        return redirect(url_for('admin.dashboard'))
 
     # Assigned repairs
     assigned_repairs = user.assigned_projects.order_by(Project.updated_at.desc()).all()
@@ -117,13 +142,19 @@ def technician_workspace():
     notifications = user.notifications.order_by(Notification.created_at.desc()).limit(5).all()
 
     stats = {
+        'projects_repaired': user.projects_repaired_count,
+        'active_repairs': len(active_repairs),
+        'completed_projects': len(completed_repairs),
+        'pending_requests': len(incoming_requests),
+        'average_rating': user.average_rating,
+        'review_count': user.reviews_count,
+        'success_rate': user.success_rate,
         'active_repairs_count': len(active_repairs),
         'incoming_requests_count': len(incoming_requests),
         'completed_repairs_count': len(completed_repairs),
         'pending_approvals_count': len(pending_approval_repairs),
         'rating': user.average_rating,
         'reviews_count': user.reviews_count,
-        'success_rate': user.success_rate,
         'unread_messages': unread_messages
     }
 
@@ -138,6 +169,10 @@ def technician_workspace():
         reviews=reviews,
         notifications=notifications
     )
+
+
+# Alias for backward compatibility
+technician_workspace = technician_dashboard
 
 
 @dashboard_bp.route('/my-projects')
