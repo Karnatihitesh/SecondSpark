@@ -11,6 +11,10 @@ class Review(db.Model):
     reviewee_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     
     rating = db.Column(db.Integer, nullable=False)  # 1 to 5
+    quality_rating = db.Column(db.Integer, default=5, nullable=True)
+    communication_rating = db.Column(db.Integer, default=5, nullable=True)
+    timeliness_rating = db.Column(db.Integer, default=5, nullable=True)
+    technical_skill_rating = db.Column(db.Integer, default=5, nullable=True)
     comment = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
@@ -34,6 +38,10 @@ class Review(db.Model):
                 'avatar_url': self.reviewer.avatar_url
             } if self.reviewer else None,
             'rating': self.rating,
+            'quality_rating': self.quality_rating,
+            'communication_rating': self.communication_rating,
+            'timeliness_rating': self.timeliness_rating,
+            'technical_skill_rating': self.technical_skill_rating,
             'comment': self.comment,
             'created_at': self.created_at.strftime('%b %d, %Y') if self.created_at else ''
         }
