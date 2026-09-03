@@ -108,11 +108,8 @@
                 <a href="{{ url_for('admin.dashboard', tab='reviews') }}" class="dropdown-item">
                   <i class="fa-solid fa-star"></i> Reviews
                 </a>
-                <a href="{{ url_for('admin.dashboard', tab='reports') }}" class="dropdown-item">
-                  <i class="fa-solid fa-triangle-exclamation"></i> Reports
-                </a>
                 <a href="{{ url_for('auth.profile') }}" class="dropdown-item">
-                  <i class="fa-solid fa-gear"></i> Settings
+                  <i class="fa-solid fa-gear"></i> Profile & Settings
                 </a>
               {% elif current_user.is_technician %}
                 <div style="padding: 0.5rem 1rem; font-size: 0.72rem; font-weight: 700; color: #1D4ED8; background: #EFF6FF; border-bottom: 1px solid #DBEAFE; margin-bottom: 0.35rem;">
@@ -133,11 +130,11 @@
                 <a href="{{ url_for('dashboard.technician_dashboard') }}#my-reviews" class="dropdown-item">
                   <i class="fa-solid fa-star"></i> My Reviews
                 </a>
-                <a href="{{ url_for('auth.public_profile', username=current_user.username) }}" class="dropdown-item">
-                  <i class="fa-solid fa-id-badge"></i> Public Freelancer Profile
+                <a href="{{ url_for('dashboard.technician_dashboard') }}#my-skills" class="dropdown-item">
+                  <i class="fa-solid fa-user-gear"></i> My Skills / Technician Profile
                 </a>
                 <a href="{{ url_for('auth.profile') }}" class="dropdown-item">
-                  <i class="fa-solid fa-user-gear"></i> My Skills / Profile
+                  <i class="fa-solid fa-gear"></i> Profile & Settings
                 </a>
               {% else %}
                 <div style="padding: 0.5rem 1rem; font-size: 0.72rem; font-weight: 700; color: #047857; background: #ECFDF5; border-bottom: 1px solid #D1FAE5; margin-bottom: 0.35rem;">
@@ -146,7 +143,7 @@
                 <a href="{{ url_for('dashboard.customer_dashboard') }}" class="dropdown-item">
                   <i class="fa-solid fa-chart-pie"></i> Customer Dashboard
                 </a>
-                <a href="{{ url_for('dashboard.my_projects') }}" class="dropdown-item">
+                <a href="{{ url_for('dashboard.customer_dashboard') }}#my-uploads" class="dropdown-item">
                   <i class="fa-solid fa-cubes"></i> My Uploads
                 </a>
                 <a href="{{ url_for('projects.upload') }}" class="dropdown-item">
@@ -155,14 +152,8 @@
                 <a href="{{ url_for('dashboard.saved_projects') }}" class="dropdown-item">
                   <i class="fa-solid fa-bookmark"></i> Saved Projects
                 </a>
-                <a href="{{ url_for('messages.index') }}" class="dropdown-item">
-                  <i class="fa-solid fa-comments"></i> Messages
-                </a>
-                <a href="{{ url_for('notifications.index') }}" class="dropdown-item">
-                  <i class="fa-solid fa-bell"></i> Notifications
-                </a>
                 <a href="{{ url_for('auth.profile') }}" class="dropdown-item">
-                  <i class="fa-solid fa-user-gear"></i> Profile & Settings
+                  <i class="fa-solid fa-gear"></i> Profile & Settings
                 </a>
               {% endif %}
 
@@ -227,10 +218,11 @@
           <li><a href="{{ url_for('projects.browse') }}" class="mobile-drawer-link"><i class="fa-solid fa-magnifying-glass"></i> Find Projects</a></li>
           <li><a href="{{ url_for('dashboard.technician_dashboard') }}#my-repairs" class="mobile-drawer-link"><i class="fa-solid fa-wrench"></i> My Repairs</a></li>
           <li><a href="{{ url_for('dashboard.technician_dashboard') }}#repair-requests" class="mobile-drawer-link"><i class="fa-solid fa-inbox"></i> Repair Requests</a></li>
-          <li><a href="{{ url_for('auth.public_profile', username=current_user.username) }}" class="mobile-drawer-link"><i class="fa-solid fa-id-badge"></i> Public Freelancer Profile</a></li>
+          <li><a href="{{ url_for('dashboard.technician_dashboard') }}#my-reviews" class="mobile-drawer-link"><i class="fa-solid fa-star"></i> My Reviews</a></li>
+          <li><a href="{{ url_for('dashboard.technician_dashboard') }}#my-skills" class="mobile-drawer-link"><i class="fa-solid fa-screwdriver-wrench"></i> My Skills / Profile</a></li>
         {% else %}
           <li><a href="{{ url_for('dashboard.customer_dashboard') }}" class="mobile-drawer-link" style="color: #059669; font-weight: 700;"><i class="fa-solid fa-chart-pie"></i> Customer Dashboard</a></li>
-          <li><a href="{{ url_for('dashboard.my_projects') }}" class="mobile-drawer-link"><i class="fa-solid fa-cubes"></i> My Uploads</a></li>
+          <li><a href="{{ url_for('dashboard.customer_dashboard') }}#my-uploads" class="mobile-drawer-link"><i class="fa-solid fa-cubes"></i> My Uploads</a></li>
           <li><a href="{{ url_for('projects.upload') }}" class="mobile-drawer-link"><i class="fa-solid fa-plus-circle"></i> Upload Project</a></li>
           <li><a href="{{ url_for('dashboard.saved_projects') }}" class="mobile-drawer-link"><i class="fa-solid fa-bookmark"></i> Saved Projects</a></li>
         {% endif %}
