@@ -55,15 +55,15 @@ class User(db.Model):
 
     @property
     def is_admin(self):
-        return self.role == UserRole.ADMIN
+        return (self.role or '').strip().lower() in [UserRole.ADMIN, 'admin']
 
     @property
     def is_customer(self):
-        return self.role in [UserRole.CUSTOMER, 'user']
+        return (self.role or '').strip().lower() in [UserRole.CUSTOMER, 'customer', 'user']
 
     @property
     def is_technician(self):
-        return self.role == UserRole.TECHNICIAN
+        return (self.role or '').strip().lower() in [UserRole.TECHNICIAN, 'technician']
 
     @property
     def display_role(self):
@@ -108,6 +108,16 @@ class User(db.Model):
     @property
     def total_views(self):
         return sum(p.views_count or 0 for p in self.projects.all())
+
+    @property
+    def customer_in_repair_count(self):
+        from app.models.project import Project
+        return self.projects.filter(Project.assigned_repairman_id != None, Project.status != 'Completed').count()
+
+    @property
+    def customer_active_projects_count(self):
+        from app.models.project import Project
+        return self.projects.filter(Project.status.in_(['Open', 'Help Needed', 'In Discussion', 'In Progress', 'Awaiting Customer Approval', 'Revision Required'])).count()
 
     @property
     def projects_repaired_count(self):
