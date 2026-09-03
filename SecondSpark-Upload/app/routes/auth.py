@@ -20,6 +20,56 @@ def setup():
     from app.services.auth_service import slugify
     results = []
 
+    # 1. Run PostgreSQL/SQLite/MySQL migrations for columns
+    try:
+        with db.engine.connect() as con:
+            for sql in [
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS technologies VARCHAR(255);",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS specialization VARCHAR(100);",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS experience TEXT;",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS availability VARCHAR(30) DEFAULT 'Available';",
+                "ALTER TABLE projects ADD COLUMN IF NOT EXISTS assigned_repairman_id INTEGER REFERENCES users(id);",
+                "ALTER TABLE projects ADD COLUMN IF NOT EXISTS current_progress INTEGER DEFAULT 0;"
+            ]:
+                try:
+                    con.execute(db.text(sql))
+                    con.commit()
+                except Exception as ex:
+                    con.rollback()
+            results.append("Schema columns verified!")
+    except Exception as e:
+        results.append(f"Migration error: {e}")
+
+    # 2. Create missing tables
+    try:
+        db.create_all()
+        results.append("Tables verified with create_all()")
+    except Exception as e:
+        results.append(f"create_all error: {e}")
+
+    # 3. Provision or update default technicians
+    tech_accounts = [
+        ("alex_chen", "alex@secondspark.com", "Alex Chen", "technician", "Embedded Robotics & Automation", "Firmware, ROS 2, PCB Layout, RTOS", "Robotics & Hardware", "8+ years designing embedded robotics, consumer hardware, and high-frequency communication protocols.", "Available"),
+        ("priya_sharma", "priya@secondspark.com", "Priya Sharma", "technician", "Edge AI & Vision Systems", "PyTorch, TensorRT, CUDA, ONNX", "Edge AI & Deep Learning", "6+ years deploying neural networks to edge devices, Jetson platforms, and real-time computer vision setups.", "Available"),
+        ("marcus_vance", "marcus@secondspark.com", "Marcus Vance", "technician", "IoT Architecture & Firmware", "C/C++, FreeRTOS, ESP32, MQTT", "IoT & Sensor Systems", "7+ years designing low-power IoT networks, custom PCBAs, and robust firmware.", "Busy"),
+        ("elena_rostova", "elena@secondspark.com", "Elena Rostova", "technician", "Mechanical CAD & Precision Fab", "SolidWorks, Fusion 360, CNC, FEA", "Mechanical Engineering", "9+ years precision CNC machining, additive manufacturing, and rapid physical enclosure prototyping.", "Available")
+    ]
+    for uname, email, fname, role, bio, techs, spec, exp, avail in tech_accounts:
+        u = User.query.filter((User.username == uname) | (User.email == email)).first()
+        if not u:
+            u = User(username=uname, email=email, full_name=fname, role=role, bio=bio,
+                     skills=techs, technologies=techs, specialization=spec, experience=exp, availability=avail)
+            u.set_password('Password123!')
+            db.session.add(u)
+            results.append(f"Technician created: {uname}")
+        else:
+            u.role = role
+            u.technologies = techs
+            u.specialization = spec
+            u.experience = exp
+            u.availability = avail
+            results.append(f"Technician updated: {uname}")
+
     # Seed categories if missing
     if Category.query.count() == 0:
         categories_data = [
@@ -49,16 +99,18 @@ def setup():
     else:
         results.append("Admin already exists")
 
-    # Create Hitesh account
-    if not User.query.filter_by(username='karnatihitesh').first():
+    # Create / update Hitesh account
+    hitesh_user = User.query.filter((User.username == 'karnatihitesh') | (User.email == 'karnatihitesh@gmail.com')).first()
+    if not hitesh_user:
         u = User(username='karnatihitesh', email='karnatihitesh@gmail.com',
                  full_name='Karnati Hitesh',
-                 skills='Python, Flask, IoT', location='India', role='user')
+                 skills='Python, Flask, IoT', location='India', role='customer')
         u.set_password('Hitesh@12345')
         db.session.add(u)
         results.append("Creator account created: karnatihitesh / Hitesh@12345")
     else:
-        results.append("karnatihitesh already exists")
+        hitesh_user.role = 'customer'
+        results.append("karnatihitesh updated to role: customer")
 
     try:
         db.session.commit()
