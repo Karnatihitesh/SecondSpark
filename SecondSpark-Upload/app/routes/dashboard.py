@@ -9,6 +9,7 @@ from app.services.auth_service import get_current_user, login_required
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
 
+@dashboard_bp.route('')
 @dashboard_bp.route('/')
 @login_required
 def index():
