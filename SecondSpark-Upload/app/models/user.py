@@ -106,6 +106,10 @@ class User(db.Model):
         return self.projects.count()
 
     @property
+    def total_views(self):
+        return sum(p.views_count or 0 for p in self.projects.all())
+
+    @property
     def projects_repaired_count(self):
         from app.models.project import Project
         return self.assigned_projects.filter(Project.status == 'Completed').count()
