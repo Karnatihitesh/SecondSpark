@@ -103,18 +103,18 @@ def setup():
     else:
         results.append("Admin already exists")
 
-    # Create / update Hitesh account
-    hitesh_user = User.query.filter((User.username == 'karnatihitesh') | (User.email == 'karnatihitesh@gmail.com')).first()
+    # Create / update Hitesh admin account
+    hitesh_user = User.query.filter((db.func.lower(User.email) == 'karnatihitesh@gmail.com') | (User.username == 'karnatihitesh') | (User.username == 'hitesh')).first()
     if not hitesh_user:
         u = User(username='karnatihitesh', email='karnatihitesh@gmail.com',
                  full_name='Karnati Hitesh',
-                 skills='Python, Flask, IoT', location='India', role='customer')
+                 skills='Python, Flask, IoT', location='India', role='admin')
         u.set_password('Hitesh@12345')
         db.session.add(u)
-        results.append("Creator account created: karnatihitesh / Hitesh@12345")
+        results.append("Admin account created: karnatihitesh / Hitesh@12345")
     else:
-        hitesh_user.role = 'customer'
-        results.append("karnatihitesh updated to role: customer")
+        hitesh_user.role = 'admin'
+        results.append("karnatihitesh updated to role: admin")
 
     try:
         db.session.commit()
@@ -325,9 +325,11 @@ from app.models.user import db, User, VerificationCode, UserRole
 def register():
     if get_current_user():
         u = get_current_user()
-        if u.is_technician:
-            return redirect(url_for('dashboard.technician_workspace'))
-        return redirect(url_for('dashboard.index'))
+        if u.is_admin:
+            return redirect(url_for('admin.dashboard'))
+        elif u.is_technician:
+            return redirect(url_for('dashboard.technician_dashboard'))
+        return redirect(url_for('dashboard.customer_dashboard'))
 
     if request.method == 'POST':
         role = request.form.get('role', UserRole.CUSTOMER).strip().lower()
@@ -404,8 +406,8 @@ def register():
             flash(f'Welcome to SecondSpark, {user.full_name}! Your {role_label} account has been created.', 'success')
 
             if user.is_technician:
-                return redirect(url_for('dashboard.technician_workspace'))
-            return redirect(url_for('dashboard.index'))
+                return redirect(url_for('dashboard.technician_dashboard'))
+            return redirect(url_for('dashboard.customer_dashboard'))
         except Exception as e:
             db.session.rollback()
             flash('An error occurred during registration. Please try again.', 'danger')
@@ -419,9 +421,11 @@ def register():
 def login():
     if get_current_user():
         u = get_current_user()
-        if u.is_technician:
-            return redirect(url_for('dashboard.technician_workspace'))
-        return redirect(url_for('dashboard.index'))
+        if u.is_admin:
+            return redirect(url_for('admin.dashboard'))
+        elif u.is_technician:
+            return redirect(url_for('dashboard.technician_dashboard'))
+        return redirect(url_for('dashboard.customer_dashboard'))
 
     selected_role = request.args.get('role', UserRole.CUSTOMER).strip().lower()
     if selected_role not in [UserRole.CUSTOMER, UserRole.TECHNICIAN]:
@@ -468,17 +472,22 @@ def login():
             g.current_user = user
 
             flash(f'Welcome back, {user.full_name}!', 'success')
+            
+            # Centralized role-based post-login redirection
+            if user.is_admin:
+                target_url = url_for('admin.dashboard')
+            elif user.is_technician:
+                target_url = url_for('dashboard.technician_dashboard')
+            else:
+                target_url = url_for('dashboard.customer_dashboard')
+
             next_url = request.args.get('next')
             if next_url and next_url.startswith('/') and not next_url.startswith('//'):
-                return redirect(next_url)
-            
-            # Dynamic role-based redirection to dedicated workspace
-            if user.is_admin:
-                return redirect(url_for('admin.index'))
-            elif user.is_technician:
-                return redirect(url_for('dashboard.technician_workspace'))
-            else:
-                return redirect(url_for('dashboard.index'))
+                # Ignore generic dashboard paths so role landing is strictly enforced
+                if not any(next_url.startswith(p) for p in ['/dashboard', '/customer/dashboard', '/technician/dashboard', '/admin']):
+                    target_url = next_url
+
+            return redirect(target_url)
         else:
             flash('Invalid email/username or password. Please check your credentials and try again.', 'danger')
             return render_template('login.html', selected_role=selected_role, login_input=login_input)
