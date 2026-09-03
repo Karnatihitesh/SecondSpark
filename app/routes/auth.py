@@ -440,9 +440,10 @@ def profile():
 def public_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
     projects = user.projects.order_by(db.desc(db.text('created_at'))).all()
+    repaired_projects = user.assigned_projects.filter_by(status='Completed').order_by(db.desc(db.text('updated_at'))).all()
     reviews = user.reviews_received.order_by(db.desc(db.text('created_at'))).all()
     rating_summary = user.rating_summary
-    return render_template('profile.html', user=user, is_public=True, projects=projects, reviews=reviews, rating_summary=rating_summary)
+    return render_template('profile.html', user=user, is_public=True, projects=projects, repaired_projects=repaired_projects, reviews=reviews, rating_summary=rating_summary)
 
 
 # ── Real Google OAuth 2.0 & Identity Services Integration ─────────────────────
