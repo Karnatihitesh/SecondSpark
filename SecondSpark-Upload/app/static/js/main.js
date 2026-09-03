@@ -158,25 +158,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ══════════════════════════════════════════════
      SAVE / UNSAVE PROJECT (heart button)
+     Single unified handler managing bookmarking across all pages
   ══════════════════════════════════════════════ */
-  document.querySelectorAll('.save-project-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
+  window.handleProjectSaveToggle = async function (btn) {
+    if (!btn || btn.dataset.saving === 'true') return;
+    const projectId = btn.dataset.projectId || btn.getAttribute('data-project-id');
+    if (!projectId) return;
+
+    btn.dataset.saving = 'true';
+    try {
+      const res = await fetch(`/api/projects/${projectId}/save`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (res.status === 401) {
+        const data = await res.json().catch(() => ({}));
+        window.location.href = data.redirect || ('/auth/login?next=' + encodeURIComponent(window.location.pathname));
+        return;
+      }
+
+      if (!res.ok) {
+        console.error('Save failed with status:', res.status);
+        return;
+      }
+
+      const data = await res.json();
+      if (!data || !data.success) return;
+
+      // Update all buttons for this project ID on the current page
+      const allBtns = document.querySelectorAll(`.save-project-btn[data-project-id="${projectId}"]`);
+      allBtns.forEach(b => {
+        const textSpan = b.querySelector('.save-btn-text');
+        if (data.saved) {
+          b.classList.add('saved');
+          b.setAttribute('title', 'Remove Bookmark');
+          b.innerHTML = '<i class="fa-solid fa-heart" style="color: #EF4444;"></i>' + (textSpan ? ' <span class="save-btn-text">Bookmarked</span>' : '');
+          b.style.color = '#EF4444';
+        } else {
+          b.classList.remove('saved');
+          b.setAttribute('title', 'Save Project');
+          b.innerHTML = '<i class="fa-regular fa-heart"></i>' + (textSpan ? ' <span class="save-btn-text">Save Project</span>' : '');
+          b.style.color = '';
+        }
+      });
+
+      // Update save count if present
+      document.querySelectorAll(`.save-count-${projectId}`).forEach(el => {
+        if (data.saves_count !== undefined) el.textContent = data.saves_count;
+      });
+
+      // If user is on the Saved Projects page, smoothly remove the unsaved project card
+      if (!data.saved) {
+        const isSavedPage = window.location.pathname.includes('/saved');
+        if (isSavedPage) {
+          const card = btn.closest('.project-card');
+          if (card) {
+            card.style.transition = 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.92) translateY(-10px)';
+            setTimeout(() => {
+              card.remove();
+              const grid = document.querySelector('.projects-grid');
+              if (grid && grid.querySelectorAll('.project-card').length === 0) {
+                const container = grid.parentElement;
+                grid.remove();
+                if (container && !container.querySelector('.empty-state')) {
+                  const empty = document.createElement('div');
+                  empty.className = 'empty-state';
+                  empty.innerHTML = `
+                    <i class="fa-regular fa-bookmark empty-state-icon"></i>
+                    <h3>No Saved Projects Yet</h3>
+                    <p>Browse through incomplete hardware and software builds and click the heart icon to save them here for later.</p>
+                    <a href="/projects/browse" class="btn btn-primary">Browse Projects</a>
+                  `;
+                  container.appendChild(empty);
+                }
+              }
+            }, 350);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling save status:', err);
+    } finally {
+      delete btn.dataset.saving;
+    }
+  };
+
+  // Delegated listener for all save project buttons
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.save-project-btn');
+    if (btn) {
       e.preventDefault();
       e.stopPropagation();
-      const id = btn.dataset.projectId;
-      try {
-        const res = await fetch(`/projects/${id}/save`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        const data = await res.json();
-        const icon = btn.querySelector('i');
-        if (data.saved) {
-          icon.className = 'fa-solid fa-heart';
-          btn.style.color = '#EF4444';
-        } else {
-          icon.className = 'fa-regular fa-heart';
-          btn.style.color = '';
-        }
-      } catch (_) {}
-    });
+      window.handleProjectSaveToggle(btn);
+    }
   });
 
   /* ══════════════════════════════════════════════
