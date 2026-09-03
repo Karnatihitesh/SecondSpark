@@ -1164,12 +1164,18 @@ textarea.form-control {
   flex-direction: column;
   transition: all var(--transition-normal);
   position: relative;
+  cursor: pointer;
 }
 
 .project-card:hover {
   border-color: var(--primary-border);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.06);
   transform: translateY(-4px);
+}
+
+.project-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
 
 .project-card-media {
