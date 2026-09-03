@@ -169,8 +169,8 @@
                  aria-label="View project: {{ project.title }}">
               <div class="project-card-media">
                 <img src="{{ project.primary_image }}" alt="{{ project.title }}" class="project-card-img" />
-                <button class="project-card-save-btn save-project-btn" data-project-id="{{ project.id }}" data-prevent-card-click="true" title="Save Project">
-                  <i class="fa-regular fa-heart"></i>
+                <button class="project-card-save-btn save-project-btn {% if project.id in saved_project_ids %}saved{% endif %}" data-project-id="{{ project.id }}" data-prevent-card-click="true" title="{% if project.id in saved_project_ids %}Remove Bookmark{% else %}Save Project{% endif %}">
+                  <i class="{% if project.id in saved_project_ids %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %}" {% if project.id in saved_project_ids %}style="color: #EF4444;"{% endif %}></i>
                 </button>
                 <div class="project-card-badge">
                   <span class="badge badge-open"><i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> {{ project.status }}</span>
@@ -239,8 +239,8 @@
                  aria-label="View project: {{ project.title }}">
               <div class="project-card-media">
                 <img src="{{ project.primary_image }}" alt="{{ project.title }}" class="project-card-img" />
-                <button class="project-card-save-btn save-project-btn" data-project-id="{{ project.id }}" data-prevent-card-click="true" title="Save Project">
-                  <i class="fa-regular fa-heart"></i>
+                <button class="project-card-save-btn save-project-btn {% if project.id in saved_project_ids %}saved{% endif %}" data-project-id="{{ project.id }}" data-prevent-card-click="true" title="{% if project.id in saved_project_ids %}Remove Bookmark{% else %}Save Project{% endif %}">
+                  <i class="{% if project.id in saved_project_ids %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %}" {% if project.id in saved_project_ids %}style="color: #EF4444;"{% endif %}></i>
                 </button>
                 <div class="project-card-badge">
                   <span class="badge badge-open"><i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> {{ project.status }}</span>
