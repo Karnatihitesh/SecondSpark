@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.save-project-btn').forEach(btn => {
     btn.addEventListener('click', function (e) {
       e.preventDefault();
+      e.stopPropagation();
       const projectId = this.getAttribute('data-project-id');
       if (!projectId) return;
 
