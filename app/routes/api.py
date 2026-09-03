@@ -75,21 +75,24 @@ def user_counts():
 @api_bp.route('/projects/<int:id>/save', methods=['POST'])
 @login_required
 def toggle_save(id):
+    """Toggle save/bookmark status of a project for the authenticated user."""
     user = get_current_user()
-    project = Project.query.get_or_404(id)
+    project = db.session.get(Project, id)
+    if not project:
+        return jsonify({'success': False, 'error': 'Project not found'}), 404
 
     existing = SavedProject.query.filter_by(user_id=user.id, project_id=project.id).first()
     if existing:
         db.session.delete(existing)
         db.session.commit()
         saved = False
-        msg = 'Removed from saved projects.'
+        msg = 'Project removed from bookmarks.'
     else:
         sp = SavedProject(user_id=user.id, project_id=project.id)
         db.session.add(sp)
         db.session.commit()
         saved = True
-        msg = 'Project saved!'
+        msg = 'Project saved to bookmarks!'
 
     return jsonify({
         'success': True,
@@ -97,3 +100,99 @@ def toggle_save(id):
         'message': msg,
         'saves_count': project.saves_count
     })
+
+
+@api_bp.route('/projects/<int:id>/save-action', methods=['POST'])
+@login_required
+def save_project_explicit(id):
+    """Explicitly save a project (idempotent, prevents duplicate saves)."""
+    user = get_current_user()
+    project = db.session.get(Project, id)
+    if not project:
+        return jsonify({'success': False, 'error': 'Project not found'}), 404
+
+    existing = SavedProject.query.filter_by(user_id=user.id, project_id=project.id).first()
+    if not existing:
+        sp = SavedProject(user_id=user.id, project_id=project.id)
+        db.session.add(sp)
+        db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'saved': True,
+        'message': 'Project saved to bookmarks!',
+        'saves_count': project.saves_count
+    })
+
+
+@api_bp.route('/projects/<int:id>/unsave', methods=['POST', 'DELETE'])
+@api_bp.route('/projects/<int:id>/save', methods=['DELETE'])
+@login_required
+def unsave_project_explicit(id):
+    """Explicitly unsave/remove a project (idempotent)."""
+    user = get_current_user()
+    project = db.session.get(Project, id)
+    if not project:
+        return jsonify({'success': False, 'error': 'Project not found'}), 404
+
+    existing = SavedProject.query.filter_by(user_id=user.id, project_id=project.id).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'saved': False,
+        'message': 'Project removed from bookmarks.',
+        'saves_count': project.saves_count
+    })
+
+
+@api_bp.route('/projects/<int:id>/is-saved', methods=['GET'])
+@api_bp.route('/projects/<int:id>/save', methods=['GET'])
+def check_is_saved(id):
+    """Check whether a project is currently saved by the authenticated user."""
+    project = db.session.get(Project, id)
+    if not project:
+        return jsonify({'success': False, 'error': 'Project not found'}), 404
+
+    user = get_current_user()
+    is_saved = False
+    if user:
+        is_saved = SavedProject.query.filter_by(user_id=user.id, project_id=project.id).first() is not None
+
+    return jsonify({
+        'success': True,
+        'is_saved': is_saved,
+        'saves_count': project.saves_count
+    })
+
+
+@api_bp.route('/user/saved-projects', methods=['GET'])
+@login_required
+def get_user_saved_projects():
+    """Retrieve all saved projects for the currently authenticated user."""
+    user = get_current_user()
+    saved_items = user.saved_projects.order_by(SavedProject.created_at.desc()).all()
+    results = []
+    for sp in saved_items:
+        if sp.project:
+            p = sp.project
+            results.append({
+                'id': p.id,
+                'title': p.title,
+                'slug': p.slug,
+                'category': p.category.name if p.category else 'General',
+                'status': p.status,
+                'budget': p.budget,
+                'image': p.primary_image,
+                'url': f"/projects/{p.id}",
+                'saved_at': sp.created_at.isoformat() if sp.created_at else None
+            })
+
+    return jsonify({
+        'success': True,
+        'count': len(results),
+        'saved_projects': results
+    })
+
