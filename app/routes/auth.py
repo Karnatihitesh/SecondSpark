@@ -114,7 +114,9 @@ def setup():
         results.append("Admin account created: karnatihitesh / Hitesh@12345")
     else:
         hitesh_user.role = 'admin'
-        results.append("karnatihitesh updated to role: admin")
+        hitesh_user.email = 'karnatihitesh@gmail.com'
+        hitesh_user.set_password('Hitesh@12345')
+        results.append(f"karnatihitesh (username: {hitesh_user.username}, email: {hitesh_user.email}) role set to admin, password reset to Hitesh@12345")
 
     try:
         db.session.commit()
