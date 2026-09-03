@@ -8,6 +8,7 @@ from app.services.notification_service import create_notification
 reviews_bp = Blueprint('reviews', __name__, url_prefix='/reviews')
 
 
+@reviews_bp.route('')
 @reviews_bp.route('/')
 def index():
     """Community reviews & success feedback."""
