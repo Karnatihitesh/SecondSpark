@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Admin Control Center — SecondSpark{% endblock %}
+{% block title %}Admin Control Panel — SecondSpark{% endblock %}
 
 {% block content %}
 <div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
@@ -8,41 +8,97 @@
   <!-- Header -->
   <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <span class="badge" style="background: #EDE9FE; color: #6D28D9; margin-bottom: 0.5rem;"><i class="fa-solid fa-shield-halved"></i> Administrator Privileges</span>
-      <h1 style="font-size: 2.2rem;">Platform Moderation & Control</h1>
+      <span class="badge" style="background: #EDE9FE; color: #6D28D9; margin-bottom: 0.5rem;">
+        <i class="fa-solid fa-shield-halved"></i> Administrator Privileges
+      </span>
+      <h1 style="font-size: 2.2rem; margin-bottom: 0.25rem;">ADMIN CONTROL PANEL</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 0;">
+        Centralized platform administration, user management, technician monitoring, and content moderation.
+      </p>
     </div>
-    <div style="display: flex; gap: 0.5rem;">
-      <a href="{{ url_for('admin.index', tab='overview') }}" class="btn btn-sm {% if tab == 'overview' %}btn-primary{% else %}btn-outline{% endif %}">Overview</a>
-      <a href="{{ url_for('admin.index', tab='users') }}" class="btn btn-sm {% if tab == 'users' %}btn-primary{% else %}btn-outline{% endif %}">Users ({{ stats.total_users }})</a>
-      <a href="{{ url_for('admin.index', tab='projects') }}" class="btn btn-sm {% if tab == 'projects' %}btn-primary{% else %}btn-outline{% endif %}">Projects ({{ stats.total_projects }})</a>
-      <a href="{{ url_for('admin.index', tab='reports') }}" class="btn btn-sm {% if tab == 'reports' %}btn-primary{% else %}btn-outline{% endif %}">Reports ({{ stats.pending_reports }})</a>
-      <a href="{{ url_for('admin.index', tab='categories') }}" class="btn btn-sm {% if tab == 'categories' %}btn-primary{% else %}btn-outline{% endif %}">Categories</a>
-      <a href="{{ url_for('admin.index', tab='contacts') }}" class="btn btn-sm {% if tab == 'contacts' %}btn-primary{% else %}btn-outline{% endif %}">Inquiries ({{ stats.unread_contacts }})</a>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="{{ url_for('admin.dashboard', tab='overview') }}" class="btn btn-sm {% if tab == 'overview' %}btn-primary{% else %}btn-outline{% endif %}">Overview</a>
+      <a href="{{ url_for('admin.dashboard', tab='users') }}" class="btn btn-sm {% if tab == 'users' %}btn-primary{% else %}btn-outline{% endif %}">Users ({{ stats.total_users }})</a>
+      <a href="{{ url_for('admin.dashboard', tab='technicians') }}" class="btn btn-sm {% if tab == 'technicians' %}btn-primary{% else %}btn-outline{% endif %}">Technicians ({{ stats.total_technicians }})</a>
+      <a href="{{ url_for('admin.dashboard', tab='projects') }}" class="btn btn-sm {% if tab == 'projects' %}btn-primary{% else %}btn-outline{% endif %}">Projects ({{ stats.total_projects }})</a>
+      <a href="{{ url_for('admin.dashboard', tab='reviews') }}" class="btn btn-sm {% if tab == 'reviews' %}btn-primary{% else %}btn-outline{% endif %}">Reviews ({{ stats.total_reviews }})</a>
+      <a href="{{ url_for('admin.dashboard', tab='reports') }}" class="btn btn-sm {% if tab == 'reports' %}btn-primary{% else %}btn-outline{% endif %}">Reports ({{ stats.pending_reports }})</a>
+      <a href="{{ url_for('admin.dashboard', tab='categories') }}" class="btn btn-sm {% if tab == 'categories' %}btn-primary{% else %}btn-outline{% endif %}">Categories</a>
+      <a href="{{ url_for('admin.dashboard', tab='contacts') }}" class="btn btn-sm {% if tab == 'contacts' %}btn-primary{% else %}btn-outline{% endif %}">Inquiries ({{ stats.unread_contacts }})</a>
     </div>
   </div>
 
   <!-- TAB: OVERVIEW -->
   {% if tab == 'overview' %}
-    <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 3rem;">
+    <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 2.5rem;">
       <div class="stat-widget">
         <div class="stat-icon-wrap"><i class="fa-solid fa-users"></i></div>
         <div>
           <div class="stat-val">{{ stats.total_users }}</div>
-          <div class="stat-lbl">Total Registered Users</div>
+          <div class="stat-lbl">Total Users</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon-wrap" style="background: #ECFDF5; color: #047857;"><i class="fa-solid fa-user"></i></div>
+        <div>
+          <div class="stat-val">{{ stats.total_customers }}</div>
+          <div class="stat-lbl">Total Customers</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <div>
+          <div class="stat-val">{{ stats.total_technicians }}</div>
+          <div class="stat-lbl">Total Technicians</div>
         </div>
       </div>
       <div class="stat-widget">
         <div class="stat-icon-wrap" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-cubes"></i></div>
         <div>
           <div class="stat-val">{{ stats.total_projects }}</div>
-          <div class="stat-lbl">Total Projects ({{ stats.active_projects }} Active)</div>
+          <div class="stat-lbl">Total Projects</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon-wrap" style="background: #EFF6FF; color: #1E40AF;"><i class="fa-solid fa-bullhorn"></i></div>
+        <div>
+          <div class="stat-val">{{ stats.published_projects }}</div>
+          <div class="stat-lbl">Published Builds</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon-wrap" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-gears"></i></div>
+        <div>
+          <div class="stat-val">{{ stats.active_repairs }}</div>
+          <div class="stat-lbl">Active Repairs</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon-wrap" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+          <div class="stat-val">{{ stats.completed_projects }}</div>
+          <div class="stat-lbl">Completed Projects</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon-wrap" style="background: #F3E8FF; color: #7C3AED;"><i class="fa-solid fa-inbox"></i></div>
+        <div>
+          <div class="stat-val">{{ stats.pending_requests }}</div>
+          <div class="stat-lbl">Pending Requests</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon-wrap" style="background: #FEF2F2; color: #DC2626;"><i class="fa-solid fa-star"></i></div>
+        <div>
+          <div class="stat-val">{{ stats.total_reviews }}</div>
+          <div class="stat-lbl">Total Reviews</div>
         </div>
       </div>
       <div class="stat-widget">
         <div class="stat-icon-wrap" style="background: #FEF2F2; color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <div>
           <div class="stat-val">{{ stats.pending_reports }}</div>
-          <div class="stat-lbl">Pending Moderation Reports</div>
+          <div class="stat-lbl">Pending Reports</div>
         </div>
       </div>
     </div>
@@ -92,16 +148,33 @@
   <!-- TAB: USERS -->
   {% elif tab == 'users' %}
     <div class="glass-card" style="padding: 1.5rem; background: #fff; overflow-x: auto;">
-      <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;">User Management</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <h3 style="font-size: 1.2rem; margin-bottom: 0;">User Management ({{ users|length }})</h3>
+        
+        <!-- Search and Filter Form -->
+        <form action="{{ url_for('admin.dashboard') }}" method="GET" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <input type="hidden" name="tab" value="users" />
+          <input type="text" name="q" value="{{ search_query or '' }}" placeholder="Search username, email, or name..." class="form-control" style="font-size: 0.85rem; padding: 0.4rem 0.75rem; width: 220px;" />
+          <select name="role" class="form-control" style="font-size: 0.85rem; padding: 0.4rem 0.75rem; width: 130px;" onchange="this.form.submit()">
+            <option value="all" {% if role_filter == 'all' %}selected{% endif %}>All Roles</option>
+            <option value="customer" {% if role_filter == 'customer' %}selected{% endif %}>Customers</option>
+            <option value="technician" {% if role_filter == 'technician' %}selected{% endif %}>Technicians</option>
+            <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admins</option>
+          </select>
+          <button type="submit" class="btn btn-outline btn-sm">Search</button>
+        </form>
+      </div>
+
       <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
         <thead>
           <tr style="border-bottom: 2px solid var(--border-subtle); text-align: left; color: var(--text-muted);">
             <th style="padding: 0.75rem;">User</th>
             <th style="padding: 0.75rem;">Email</th>
             <th style="padding: 0.75rem;">Role</th>
+            <th style="padding: 0.75rem;">Joined</th>
             <th style="padding: 0.75rem;">Status</th>
-            <th style="padding: 0.75rem;">Projects</th>
-            <th style="padding: 0.75rem; text-align: right;">Action</th>
+            <th style="padding: 0.75rem;">Projects / Rating</th>
+            <th style="padding: 0.75rem; text-align: right;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -115,19 +188,109 @@
                 </div>
               </td>
               <td style="padding: 0.75rem;">{{ u.email }}</td>
-              <td style="padding: 0.75rem;"><span class="badge {% if u.is_admin %}badge-discussion{% else %}badge-open{% endif %}">{{ u.role }}</span></td>
+              <td style="padding: 0.75rem;">
+                <span class="badge {% if u.is_admin %}badge-discussion{% elif u.is_technician %}badge-open{% else %}badge-completed{% endif %}" style="{% if u.is_admin %}background: #EDE9FE; color: #6D28D9;{% elif u.is_technician %}background: #EFF6FF; color: #2563EB;{% endif %}">
+                  {{ u.role }}
+                </span>
+              </td>
+              <td style="padding: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+                {{ u.created_at.strftime('%b %d, %Y') if u.created_at else '—' }}
+              </td>
               <td style="padding: 0.75rem;">
                 <span class="badge {% if u.is_active %}badge-completed{% else %}badge-closed{% endif %}">
                   {{ 'Active' if u.is_active else 'Suspended' }}
                 </span>
               </td>
-              <td style="padding: 0.75rem;">{{ u.projects.count() }}</td>
+              <td style="padding: 0.75rem; font-size: 0.85rem;">
+                {% if u.is_technician %}
+                  <span style="color: #F59E0B;"><i class="fa-solid fa-star"></i> {{ u.average_rating if u.average_rating > 0 else '—' }}</span> ({{ u.reviews_count }} rev)
+                {% else %}
+                  {{ u.projects.count() }} builds
+                {% endif %}
+              </td>
               <td style="padding: 0.75rem; text-align: right;">
-                <form action="{{ url_for('admin.toggle_user_status', id=u.id) }}" method="POST" style="display: inline;">
-                  <button type="submit" class="btn btn-sm {% if u.is_active %}btn-danger{% else %}btn-primary{% endif %}">
-                    {{ 'Suspend' if u.is_active else 'Activate' }}
-                  </button>
-                </form>
+                <div style="display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center;">
+                  {% if u.is_technician %}
+                    <a href="{{ url_for('auth.public_profile', username=u.username) }}" class="btn btn-outline btn-sm" target="_blank" title="View Profile">
+                      <i class="fa-solid fa-id-badge"></i>
+                    </a>
+                  {% endif %}
+                  <!-- Change Role Form -->
+                  <form action="{{ url_for('admin.change_user_role', id=u.id) }}" method="POST" style="display: inline;">
+                    <select name="role" class="form-control" style="font-size: 0.75rem; padding: 0.2rem 0.4rem; display: inline-block; width: auto;" onchange="this.form.submit()">
+                      <option value="customer" {% if u.is_customer %}selected{% endif %}>Customer</option>
+                      <option value="technician" {% if u.is_technician %}selected{% endif %}>Technician</option>
+                      <option value="admin" {% if u.is_admin %}selected{% endif %}>Admin</option>
+                    </select>
+                  </form>
+                  <!-- Suspend/Activate -->
+                  <form action="{{ url_for('admin.toggle_user_status', id=u.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-sm {% if u.is_active %}btn-danger{% else %}btn-primary{% endif %}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                      {{ 'Suspend' if u.is_active else 'Activate' }}
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  <!-- TAB: TECHNICIANS -->
+  {% elif tab == 'technicians' %}
+    <div class="glass-card" style="padding: 1.5rem; background: #fff; overflow-x: auto;">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;">Technician Roster & Performance ({{ technicians|length }})</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border-subtle); text-align: left; color: var(--text-muted);">
+            <th style="padding: 0.75rem;">Technician</th>
+            <th style="padding: 0.75rem;">Specialization / Skills</th>
+            <th style="padding: 0.75rem;">Repaired</th>
+            <th style="padding: 0.75rem;">Completed</th>
+            <th style="padding: 0.75rem;">Active Repairs</th>
+            <th style="padding: 0.75rem;">Rating</th>
+            <th style="padding: 0.75rem;">Status</th>
+            <th style="padding: 0.75rem; text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in technicians %}
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                <img src="{{ t.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" alt="" />
+                <div>
+                  <div style="font-weight: 600;">{{ t.full_name }}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-light);">@{{ t.username }}</div>
+                </div>
+              </td>
+              <td style="padding: 0.75rem; font-size: 0.85rem;">
+                <strong>{{ t.specialization or 'General Technician' }}</strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ t.skills[:45] if t.skills else 'No skills listed' }}</div>
+              </td>
+              <td style="padding: 0.75rem; font-weight: 700;">{{ t.projects_repaired_count }}</td>
+              <td style="padding: 0.75rem;">{{ t.projects_repaired_count }}</td>
+              <td style="padding: 0.75rem;"><span class="badge badge-open" style="background: #EFF6FF; color: #2563EB;">{{ t.active_repairs_count }}</span></td>
+              <td style="padding: 0.75rem;">
+                <span style="color: #F59E0B; font-weight: 700;"><i class="fa-solid fa-star"></i> {{ t.average_rating if t.average_rating > 0 else '—' }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">({{ t.reviews_count }})</span>
+              </td>
+              <td style="padding: 0.75rem;">
+                <span class="badge {% if t.is_active %}badge-completed{% else %}badge-closed{% endif %}">
+                  {{ 'Active' if t.is_active else 'Suspended' }}
+                </span>
+              </td>
+              <td style="padding: 0.75rem; text-align: right;">
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                  <a href="{{ url_for('auth.public_profile', username=t.username) }}" class="btn btn-outline btn-sm" target="_blank">
+                    Profile
+                  </a>
+                  <form action="{{ url_for('admin.toggle_user_status', id=t.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-sm {% if t.is_active %}btn-danger{% else %}btn-primary{% endif %}">
+                      {{ 'Suspend' if t.is_active else 'Activate' }}
+                    </button>
+                  </form>
+                </div>
               </td>
             </tr>
           {% endfor %}
@@ -138,15 +301,17 @@
   <!-- TAB: PROJECTS -->
   {% elif tab == 'projects' %}
     <div class="glass-card" style="padding: 1.5rem; background: #fff; overflow-x: auto;">
-      <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;">Project Moderation</h3>
+      <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;">Project Moderation ({{ projects|length }})</h3>
       <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
         <thead>
           <tr style="border-bottom: 2px solid var(--border-subtle); text-align: left; color: var(--text-muted);">
             <th style="padding: 0.75rem;">Title</th>
             <th style="padding: 0.75rem;">Category</th>
             <th style="padding: 0.75rem;">Owner</th>
+            <th style="padding: 0.75rem;">Assigned Technician</th>
             <th style="padding: 0.75rem;">Status</th>
-            <th style="padding: 0.75rem;">Featured</th>
+            <th style="padding: 0.75rem;">Progress</th>
+            <th style="padding: 0.75rem;">Views</th>
             <th style="padding: 0.75rem; text-align: right;">Actions</th>
           </tr>
         </thead>
@@ -158,23 +323,76 @@
               </td>
               <td style="padding: 0.75rem;">{{ p.category.name if p.category else 'General' }}</td>
               <td style="padding: 0.75rem;">{{ p.owner.full_name if p.owner else 'Unknown' }}</td>
+              <td style="padding: 0.75rem;">{{ p.assigned_repairman.full_name if p.assigned_repairman else '—' }}</td>
               <td style="padding: 0.75rem;"><span class="badge badge-open">{{ p.status }}</span></td>
-              <td style="padding: 0.75rem;">
-                <form action="{{ url_for('admin.toggle_project_feature', id=p.id) }}" method="POST" style="display: inline;">
-                  <button type="submit" class="btn btn-sm {% if p.is_featured %}btn-primary{% else %}btn-outline{% endif %}">
-                    <i class="fa-solid fa-star"></i> {{ 'Featured' if p.is_featured else 'Feature' }}
-                  </button>
-                </form>
-              </td>
+              <td style="padding: 0.75rem;">{{ p.current_progress }}%</td>
+              <td style="padding: 0.75rem; font-weight: 700; color: #7C3AED;">{{ p.views_count or 0 }}</td>
               <td style="padding: 0.75rem; text-align: right;">
-                <form action="{{ url_for('admin.delete_project', id=p.id) }}" method="POST" onsubmit="return confirm('Permanently remove this project?');" style="display: inline;">
-                  <button type="submit" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i></button>
-                </form>
+                <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
+                  <form action="{{ url_for('admin.toggle_project_feature', id=p.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-sm {% if p.is_featured %}btn-primary{% else %}btn-outline{% endif %}">
+                      <i class="fa-solid fa-star"></i>
+                    </button>
+                  </form>
+                  <form action="{{ url_for('admin.delete_project', id=p.id) }}" method="POST" onsubmit="return confirm('Permanently remove this project?');" style="display: inline;">
+                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i></button>
+                  </form>
+                </div>
               </td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
+    </div>
+
+  <!-- TAB: REVIEWS -->
+  {% elif tab == 'reviews' %}
+    <div class="glass-card" style="padding: 1.5rem; background: #fff; overflow-x: auto;">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;">Customer Reviews & Ratings Moderation ({{ reviews|length }})</h3>
+      {% if reviews %}
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-subtle); text-align: left; color: var(--text-muted);">
+              <th style="padding: 0.75rem;">Project</th>
+              <th style="padding: 0.75rem;">Reviewer (Customer)</th>
+              <th style="padding: 0.75rem;">Technician</th>
+              <th style="padding: 0.75rem;">Rating</th>
+              <th style="padding: 0.75rem;">Comment</th>
+              <th style="padding: 0.75rem;">Date</th>
+              <th style="padding: 0.75rem; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rev in reviews %}
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 0.75rem; font-weight: 600;">
+                  {% if rev.project %}
+                    <a href="{{ url_for('projects.details', id=rev.project.id) }}">{{ rev.project.title }}</a>
+                  {% else %}
+                    Direct Review
+                  {% endif %}
+                </td>
+                <td style="padding: 0.75rem;">{{ rev.reviewer.full_name if rev.reviewer else 'Unknown' }}</td>
+                <td style="padding: 0.75rem;"><strong>{{ rev.reviewee.full_name if rev.reviewee else 'Unknown' }}</strong></td>
+                <td style="padding: 0.75rem; color: #F59E0B; font-weight: 700;">{{ rev.rating }} ★</td>
+                <td style="padding: 0.75rem; font-size: 0.85rem; max-width: 250px;">"{{ rev.comment }}"</td>
+                <td style="padding: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">{{ rev.created_at | timeago }}</td>
+                <td style="padding: 0.75rem; text-align: right;">
+                  <form action="{{ url_for('admin.delete_review', id=rev.id) }}" method="POST" onsubmit="return confirm('Permanently remove this review?');" style="display: inline;">
+                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i></button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">
+          <i class="fa-regular fa-star empty-state-icon"></i>
+          <h3>No Reviews Yet</h3>
+          <p>Client reviews will appear here once projects reach 100% completion.</p>
+        </div>
+      {% endif %}
     </div>
 
   <!-- TAB: REPORTS -->
