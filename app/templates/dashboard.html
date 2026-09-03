@@ -1,16 +1,24 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard — SecondSpark{% endblock %}
+{% block title %}Customer Workspace — SecondSpark{% endblock %}
 
 {% block content %}
 <div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
 
   <!-- Header & Quick Actions -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.25rem; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <h1 style="font-size: 2.2rem; margin-bottom: 0.25rem;">Workspace & Analytics</h1>
-      <p style="color: var(--text-muted);">Welcome back, {{ current_user.full_name }}! Here is a summary of your active projects and collaboration requests.</p>
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+        <h1 style="font-size: 2.1rem; margin-bottom: 0; font-weight: 800;">Customer Dashboard</h1>
+        <span class="badge" style="background: var(--primary); color: #fff; font-size: 0.75rem; padding: 0.3rem 0.7rem; font-weight: 700; border-radius: var(--radius-full);">
+          <i class="fa-solid fa-user"></i> PROJECT OWNER
+        </span>
+      </div>
+      <p style="color: var(--text-muted); margin-bottom: 0;">
+        Welcome back, <strong>{{ current_user.full_name }}</strong>! Manage your uploaded builds, track technician progress, and approve milestones.
+      </p>
     </div>
+    
     <div style="display: flex; gap: 0.75rem;">
       <a href="{{ url_for('projects.upload') }}" class="btn btn-primary">
         <i class="fa-solid fa-plus-circle"></i> Upload New Project
@@ -21,16 +29,15 @@
     </div>
   </div>
 
-  <!-- KPI Statistics Widgets -->
-  <!-- Actionable Alert Banners -->
+  <!-- Actionable Alert: Deliverables Awaiting Customer Approval -->
   {% if pending_approvals %}
-    <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 1rem 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <i class="fa-solid fa-clock-rotate-left" style="color: #D97706; font-size: 1.25rem;"></i>
+    <div style="background: #FEF3C7; border-left: 5px solid #F59E0B; padding: 1.15rem 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.75rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); flex-wrap: wrap; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.85rem;">
+        <i class="fa-solid fa-clock-rotate-left" style="color: #D97706; font-size: 1.4rem;"></i>
         <div>
-          <strong style="color: #92400E;">Action Required: Progress Awaiting Your Approval</strong>
+          <strong style="color: #92400E; font-size: 1rem;">Action Required: Deliverables Awaiting Your Sign-Off</strong>
           <div style="font-size: 0.85rem; color: #78350F; margin-top: 0.15rem;">
-            Your assigned repairman has submitted updates on {{ pending_approvals|length }} project{{ 's' if pending_approvals|length != 1 else '' }}. Review and approve deliverables to update official progress.
+            Your assigned technician has submitted milestone updates on {{ pending_approvals|length }} build{{ 's' if pending_approvals|length != 1 else '' }}. Review and sign off to advance official project progress.
           </div>
         </div>
       </div>
@@ -38,166 +45,105 @@
     </div>
   {% endif %}
 
-  {% if incoming_requests %}
-    <div style="background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 1rem 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <i class="fa-solid fa-handshake-angle" style="color: #2563EB; font-size: 1.25rem;"></i>
-        <div>
-          <strong style="color: #1E40AF;">New Repair Request Received!</strong>
-          <div style="font-size: 0.85rem; color: #1E3A8A; margin-top: 0.15rem;">
-            You have {{ incoming_requests|length }} invitation{{ 's' if incoming_requests|length != 1 else '' }} to collaborate and repair community projects.
-          </div>
-        </div>
-      </div>
-      <a href="#incoming-requests-section" class="btn btn-primary btn-sm" style="background: #2563EB; border-color: #2563EB;">View Requests</a>
-    </div>
-  {% endif %}
-
-  {% if stats %}
-    <div class="dashboard-grid">
-      <div class="stat-widget">
-        <div class="stat-icon-wrap"><i class="fa-solid fa-cubes"></i></div>
-        <div>
-          <div class="stat-val">{{ stats.total_projects }}</div>
-          <div class="stat-lbl">My Projects</div>
-        </div>
-      </div>
-
-      <div class="stat-widget">
-        <div class="stat-icon-wrap" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-        <div>
-          <div class="stat-val">{{ stats.assigned_repairs_count }}</div>
-          <div class="stat-lbl">Assigned Repairs</div>
-        </div>
-      </div>
-
-      <div class="stat-widget">
-        <div class="stat-icon-wrap" style="background: #D1FAE5; color: #047857;"><i class="fa-solid fa-circle-check"></i></div>
-        <div>
-          <div class="stat-val">{{ stats.projects_repaired_count }}</div>
-          <div class="stat-lbl">Repairs Completed</div>
-        </div>
-      </div>
-
-      <div class="stat-widget">
-        <div class="stat-icon-wrap" style="background: #FEE2E2; color: #DC2626;"><i class="fa-solid fa-star"></i></div>
-        <div>
-          <div class="stat-val">{{ stats.rating if stats.rating > 0 else '—' }} <span style="font-size: 0.85rem;">★</span></div>
-          <div class="stat-lbl">Maker Rating</div>
-        </div>
+  <!-- Customer KPI Widgets Grid -->
+  <div class="dashboard-grid" style="margin-bottom: 2.25rem;">
+    <div class="stat-widget">
+      <div class="stat-icon-wrap" style="background: #ECFDF5; color: #047857;"><i class="fa-solid fa-cubes"></i></div>
+      <div>
+        <div class="stat-val">{{ stats.total_projects }}</div>
+        <div class="stat-lbl">My Projects</div>
       </div>
     </div>
-  {% endif %}
 
-  <!-- Dashboard Main Layout -->
-  <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 2rem; align-items: start;">
-    
-    <!-- Left Column: My Projects & Assigned Repairs -->
+    <div class="stat-widget">
+      <div class="stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-spinner"></i></div>
+      <div>
+        <div class="stat-val">{{ stats.active_projects }}</div>
+        <div class="stat-lbl">Active Builds</div>
+      </div>
+    </div>
+
+    <div class="stat-widget">
+      <div class="stat-icon-wrap" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+      <div>
+        <div class="stat-val">{{ stats.active_repairs_count }}</div>
+        <div class="stat-lbl">Repairs in Progress</div>
+      </div>
+    </div>
+
+    <div class="stat-widget">
+      <div class="stat-icon-wrap" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-circle-check"></i></div>
+      <div>
+        <div class="stat-val">{{ stats.completed_projects }}</div>
+        <div class="stat-lbl">Completed Builds</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main 2-Column Layout -->
+  <div style="display: grid; grid-template-columns: 1.7fr 1fr; gap: 2rem; align-items: start;">
+
+    <!-- Left Column: My Projects & Active Repairs -->
     <div>
-      <!-- INCOMING REPAIR REQUESTS -->
-      {% if incoming_requests %}
-        <div id="incoming-requests-section" style="margin-bottom: 2.5rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2 style="font-size: 1.3rem; color: #1E3A8A; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-bell-concierge" style="color: #2563EB;"></i> Incoming Repair Requests
-              <span class="badge" style="background: #2563EB; color: #fff; font-size: 0.75rem;">{{ incoming_requests|length }}</span>
-            </h2>
-          </div>
 
-          <div style="display: flex; flex-direction: column; gap: 1rem;">
-            {% for req in incoming_requests %}
-              <div class="glass-card" style="padding: 1.25rem; background: #fff; border-left: 4px solid #2563EB;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem;">
-                  <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <img src="{{ req.customer.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover;" alt="{{ req.customer.full_name }}" />
-                    <div>
-                      <h4 style="font-size: 1rem; margin-bottom: 0.15rem;">
-                        <a href="{{ url_for('projects.details', id=req.project_id) }}">{{ req.project.title }}</a>
-                      </h4>
-                      <div style="font-size: 0.8rem; color: var(--text-muted);">
-                        Requested by <strong>{{ req.customer.full_name }}</strong> • {{ req.created_at | timeago }}
-                      </div>
-                    </div>
-                  </div>
-                  <span class="badge badge-open" style="background: #DBEAFE; color: #1D4ED8;">Pending Your Response</span>
-                </div>
-
-                {% if req.message %}
-                  <p style="font-size: 0.86rem; color: var(--dark-700); background: var(--bg-subtle); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; line-height: 1.5;">
-                    "{{ req.message }}"
-                  </p>
-                {% endif %}
-
-                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-                  <form action="{{ url_for('projects.respond_repair_request', request_id=req.id) }}" method="POST" style="display: inline;">
-                    <input type="hidden" name="action" value="reject" />
-                    <button type="submit" class="btn btn-outline btn-sm" style="color: var(--text-muted);">Decline</button>
-                  </form>
-                  <form action="{{ url_for('projects.respond_repair_request', request_id=req.id) }}" method="POST" style="display: inline;">
-                    <input type="hidden" name="action" value="accept" />
-                    <button type="submit" class="btn btn-primary btn-sm" style="background: #2563EB; border-color: #2563EB;">
-                      <i class="fa-solid fa-check"></i> Accept Repair
-                    </button>
-                  </form>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-      {% endif %}
-
-      <!-- ASSIGNED REPAIRS (AS REPAIRMAN) -->
-      {% if assigned_repairs %}
+      <!-- ACTIVE REPAIRS IN PROGRESS (WITH TECHNICIAN) -->
+      {% if active_repairs %}
         <div style="margin-bottom: 2.5rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2 style="font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-screwdriver-wrench" style="color: var(--primary);"></i> Assigned Repairs in Progress
-              <span class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.75rem;">{{ assigned_repairs|length }}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.35rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.5rem; color: #1E40AF;">
+              <i class="fa-solid fa-screwdriver-wrench" style="color: #2563EB;"></i> Builds Currently Under Repair
             </h2>
+            <span class="badge badge-open" style="background: #EFF6FF; color: #2563EB;">{{ active_repairs|length }} in repair</span>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 1rem;">
-            {% for ap in assigned_repairs %}
-              <div class="glass-card" style="padding: 1.25rem; background: #fff;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem;">
-                  <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                    <img src="{{ ap.primary_image }}" alt="{{ ap.title }}" style="width: 52px; height: 52px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0;" />
-                    <div style="min-width: 0;">
-                      <h4 style="font-size: 1rem; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        <a href="{{ url_for('projects.details', id=ap.id) }}">{{ ap.title }}</a>
-                      </h4>
-                      <div style="font-size: 0.8rem; color: var(--text-muted);">
-                        Owner: <strong>{{ ap.owner.full_name }}</strong> • {{ ap.category.name if ap.category else 'General' }}
-                      </div>
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            {% for p in active_repairs %}
+              <div class="glass-card" style="padding: 1.5rem; background: #fff; border-left: 5px solid #2563EB;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                  <div>
+                    <h3 style="font-size: 1.15rem; margin-bottom: 0.2rem;">
+                      <a href="{{ url_for('projects.details', id=p.id) }}">{{ p.title }}</a>
+                    </h3>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                      Assigned Technician: <strong>{{ p.assigned_repairman.full_name }}</strong> • 
+                      <span style="color: #F59E0B;"><i class="fa-solid fa-star"></i> {{ p.assigned_repairman.average_rating if p.assigned_repairman.reviews_count > 0 else '4.0' }}</span>
                     </div>
                   </div>
-                  <span class="badge {% if ap.status == 'Completed' %}badge-completed{% elif ap.status == 'Awaiting Customer Approval' %}badge-discussions{% else %}badge-progress{% endif %}" style="font-size: 0.75rem;">
-                    {{ ap.status }}
-                  </span>
+                  {% if p.status == 'Awaiting Customer Approval' %}
+                    <span class="badge" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-hourglass-half"></i> Approval Needed</span>
+                  {% else %}
+                    <span class="badge badge-open">{{ p.status }}</span>
+                  {% endif %}
                 </div>
 
-                <!-- Progress Bar -->
-                <div style="margin-bottom: 0.85rem;">
-                  <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.35rem;">
-                    <span>Official Approved Progress</span>
-                    <span style="color: var(--primary);">{{ ap.current_progress }}%</span>
-                  </div>
-                  <div style="height: 8px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden;">
-                    <div style="height: 100%; width: {{ ap.current_progress }}%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 4px;"></div>
-                  </div>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                  <span style="color: var(--text-muted);">
-                    {% if ap.status == 'Awaiting Customer Approval' %}
-                      <i class="fa-solid fa-hourglass-half" style="color: #D97706;"></i> Update submitted: Awaiting customer sign-off
-                    {% elif ap.status == 'Completed' %}
-                      <i class="fa-solid fa-circle-check" style="color: #10B981;"></i> 100% Repaired & Delivered
-                    {% else %}
-                      Active: Milestone in progress
+                <!-- Progress Tracker -->
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.35rem;">
+                    <span>Official Approved: <strong style="color: var(--primary);">{{ p.current_progress }}%</strong></span>
+                    {% if p.pending_progress and p.pending_progress > p.current_progress %}
+                      <span style="color: #D97706; font-weight: 700;">Proposed Deliverables: {{ p.pending_progress }}%</span>
                     {% endif %}
+                  </div>
+                  <div style="height: 10px; background: var(--bg-subtle); border-radius: 5px; overflow: hidden; position: relative;">
+                    <div style="height: 100%; width: {{ p.current_progress }}%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 5px;"></div>
+                    {% if p.pending_progress and p.pending_progress > p.current_progress %}
+                      <div style="position: absolute; top: 0; left: {{ p.current_progress }}%; width: {{ p.pending_progress - p.current_progress }}%; height: 100%; background: repeating-linear-gradient(45deg, #F59E0B, #F59E0B 6px, #FBBF24 6px, #FBBF24 12px); opacity: 0.7;"></div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+                  <span style="font-size: 0.8rem; color: var(--text-muted);">
+                    Target: {{ p.deadline or 'Flexible' }} • {{ p.budget | currency }}
                   </span>
-                  <a href="{{ url_for('projects.details', id=ap.id) }}" class="btn btn-outline btn-sm">View Project & Submit Progress</a>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <a href="{{ url_for('messages.start_conversation', user_id=p.assigned_repairman_id, project_id=p.id) }}" class="btn btn-outline btn-sm">
+                      <i class="fa-solid fa-envelope"></i> Message Tech
+                    </a>
+                    <a href="{{ url_for('projects.details', id=p.id) }}" class="btn btn-primary btn-sm">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Build
+                    </a>
+                  </div>
                 </div>
               </div>
             {% endfor %}
@@ -206,148 +152,136 @@
       {% endif %}
 
       <!-- MY UPLOADED PROJECTS -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-        <h2 style="font-size: 1.4rem;">My Uploaded Projects</h2>
-        <a href="{{ url_for('projects.upload') }}" class="btn btn-outline btn-sm"><i class="fa-solid fa-plus"></i> Add</a>
-      </div>
+      <div style="margin-bottom: 2.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+          <h2 style="font-size: 1.35rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-cubes" style="color: var(--primary);"></i> My Uploaded Builds
+          </h2>
+          <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus"></i> Post Another Build
+          </a>
+        </div>
 
-      {% set project_list = projects if view_mode == 'my_projects' else recent_projects %}
-      {% if project_list %}
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          {% for p in project_list %}
-            <div class="glass-card" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; background: #fff;">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 1rem; min-width: 0;">
-                  <img src="{{ p.primary_image }}" alt="{{ p.title }}" style="width: 60px; height: 60px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0;" />
-                  <div style="min-width: 0;">
-                    <h4 style="font-size: 1.05rem; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        {% if my_projects %}
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            {% for p in my_projects %}
+              <div class="glass-card" style="padding: 1.25rem 1.5rem; background: #fff;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">
                       <a href="{{ url_for('projects.details', id=p.id) }}">{{ p.title }}</a>
-                    </h4>
-                    <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center;">
-                      <span class="badge badge-open" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ p.status }}</span>
-                      <span>{{ p.category.name if p.category else 'General' }}</span>
-                      <span>• {{ p.created_at | timeago }}</span>
-                      {% if p.assigned_repairman %}
-                        <span style="color: var(--primary); font-weight: 600;">• Maker: {{ p.assigned_repairman.full_name }}</span>
-                      {% endif %}
+                    </h3>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                      {{ p.category.name if p.category else 'General' }} • Posted {{ p.created_at | timeago }}
                     </div>
                   </div>
+                  {% if p.status == 'Completed' %}
+                    <span class="badge badge-completed"><i class="fa-solid fa-circle-check"></i> 100% Completed</span>
+                  {% elif p.status == 'Awaiting Customer Approval' %}
+                    <span class="badge" style="background: #FEF3C7; color: #B45309;"><i class="fa-solid fa-clock"></i> Sign-Off Needed</span>
+                  {% else %}
+                    <span class="badge badge-open">{{ p.status }}</span>
+                  {% endif %}
                 </div>
 
-                <!-- Project Management Action Dropdown / Links -->
-                <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                  <a href="{{ url_for('projects.details', id=p.id) }}" class="btn btn-outline btn-sm" title="View Project"><i class="fa-regular fa-eye"></i></a>
-                  <a href="{{ url_for('projects.edit', id=p.id) }}" class="btn btn-secondary btn-sm" title="Edit Details"><i class="fa-solid fa-pen"></i></a>
-                  <form action="{{ url_for('projects.delete', id=p.id) }}" method="POST" onsubmit="return confirm('Permanently delete this project?');" style="display: inline;">
-                    <button type="submit" class="btn btn-danger btn-sm" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
-                  </form>
+                <p style="font-size: 0.85rem; color: var(--dark-700); margin-bottom: 0.85rem; line-height: 1.4;">
+                  {{ p.short_summary[:110] }}...
+                </p>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.65rem;">
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    Progress: <strong style="color: var(--primary);">{{ p.current_progress }}%</strong>
+                    {% if p.assigned_repairman %}
+                      • Technician: <strong>{{ p.assigned_repairman.full_name }}</strong>
+                    {% else %}
+                      • <span style="color: #D97706;">No Technician Assigned</span>
+                    {% endif %}
+                  </div>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <a href="{{ url_for('projects.edit', id=p.id) }}" class="btn btn-outline btn-sm">Edit</a>
+                    <a href="{{ url_for('projects.details', id=p.id) }}" class="btn btn-secondary btn-sm">View</a>
+                  </div>
                 </div>
               </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state" style="padding: 2.5rem; background: #fff; border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); text-align: center;">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--text-light); margin-bottom: 0.75rem; display: block;"></i>
+            <h4 style="margin-bottom: 0.35rem;">No Projects Uploaded Yet</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+              Upload your stalled hardware prototypes or software projects and get matched with skilled technicians.
+            </p>
+            <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-sm">Upload Project</a>
+          </div>
+        {% endif %}
+      </div>
 
-              <!-- Progress Bar if Assigned or In Progress -->
-              {% if p.assigned_repairman or p.current_progress > 0 %}
-                <div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.76rem; font-weight: 700; margin-bottom: 0.25rem;">
-                    <span>Approved Progress</span>
-                    <span style="color: var(--primary);">{{ p.current_progress }}%</span>
-                  </div>
-                  <div style="height: 6px; background: var(--bg-subtle); border-radius: 3px; overflow: hidden;">
-                    <div style="height: 100%; width: {{ p.current_progress }}%; background: var(--primary); border-radius: 3px;"></div>
-                  </div>
-                </div>
-              {% endif %}
+    </div>
 
-              <!-- Customer Approval Alert on Card -->
-              {% if p.status == 'Awaiting Customer Approval' %}
-                <div style="background: #FEF3C7; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.8rem; color: #92400E; display: flex; justify-content: space-between; align-items: center;">
-                  <span><i class="fa-solid fa-circle-exclamation"></i> Progress update submitted! Review deliverables.</span>
-                  <a href="{{ url_for('projects.details', id=p.id) }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.6rem; background: #D97706; border-color: #D97706;">Review</a>
-                </div>
-              {% endif %}
+    <!-- Right Column: Recommended Technicians & Quick Actions -->
+    <div>
+
+      <!-- RECOMMENDED TECHNICIANS FOR CUSTOMER'S BUILDS -->
+      {% if recommended_technicians %}
+        <div class="glass-card" style="padding: 1.75rem; background: #fff; margin-bottom: 2rem; border-top: 4px solid var(--secondary);">
+          <div style="margin-bottom: 1rem;">
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--secondary);"></i> Recommended Technicians
+            </h3>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">
+              Top specialists matched to your active builds
             </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-state">
-          <i class="fa-solid fa-folder-open empty-state-icon"></i>
-          <h3>No Projects Uploaded Yet</h3>
-          <p>Have an unfinished build, broken device, or incomplete software prototype? Post it today.</p>
-          <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-sm">Post a Project</a>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for rec in recommended_technicians %}
+              {% set u = rec.repairman %}
+              <div style="border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-subtle);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <img src="{{ u.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="{{ u.full_name }}" />
+                    <div>
+                      <h4 style="font-size: 0.95rem; margin-bottom: 0.1rem;">
+                        <a href="{{ url_for('auth.public_profile', username=u.username) }}">{{ u.full_name }}</a>
+                      </h4>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);">{{ u.specialization or 'Hardware Maker' }}</div>
+                    </div>
+                  </div>
+                  <span class="badge" style="background: #ECFDF5; color: #047857; font-weight: 700; font-size: 0.72rem;">
+                    {{ rec.match_score }}% Match
+                  </span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.65rem;">
+                  <span><i class="fa-solid fa-star" style="color: #F59E0B;"></i> {{ u.average_rating if u.reviews_count > 0 else '4.0' }} ({{ u.reviews_count }})</span>
+                  <span>{{ rec.projects_repaired }} repairs completed</span>
+                </div>
+
+                <a href="{{ url_for('auth.public_profile', username=u.username) }}" class="btn btn-outline btn-sm btn-block">
+                  View Technician Profile
+                </a>
+              </div>
+            {% endfor %}
+          </div>
         </div>
       {% endif %}
-    </div>
 
-    <!-- Right Column: Recent Messages & Activity -->
-    <div>
-      <!-- Recent Conversations -->
-      <div style="margin-bottom: 2rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-          <h2 style="font-size: 1.4rem;">Recent Messages</h2>
-          <a href="{{ url_for('messages.index') }}" class="btn btn-outline btn-sm">View All</a>
-        </div>
-
-        {% if conversations %}
-          <div class="glass-card" style="padding: 0.5rem; background: #fff;">
-            {% for conv in conversations %}
-              {% set other = conv.get_other_user(current_user.id) %}
-              <a href="{{ url_for('messages.index', conversation_id=conv.id) }}" class="dropdown-item" style="padding: 0.85rem 1rem; border-radius: var(--radius-md); border-bottom: 1px solid var(--border-subtle);">
-                <img src="{{ other.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;" alt="{{ other.full_name }}" />
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between;">
-                    <span>{{ other.full_name }}</span>
-                    <span style="font-size: 0.72rem; color: var(--text-light); font-weight: normal;">{{ conv.last_message_at | timeago }}</span>
-                  </div>
-                  <div style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    {{ conv.last_message or 'Conversation started' }}
-                  </div>
-                </div>
-              </a>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty-state" style="padding: 2rem 1rem;">
-            <i class="fa-regular fa-comments empty-state-icon" style="font-size: 2rem;"></i>
-            <h4>No Messages Yet</h4>
-            <p style="font-size: 0.82rem;">Conversations started on your projects will appear here.</p>
-          </div>
-        {% endif %}
-      </div>
-
-      <!-- Recent Notifications -->
-      <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-          <h2 style="font-size: 1.4rem;">Notifications</h2>
-          <a href="{{ url_for('notifications.index') }}" class="btn btn-outline btn-sm">All</a>
-        </div>
-
-        {% if notifications %}
-          <div class="glass-card" style="padding: 0.5rem; background: #fff;">
-            {% for n in notifications %}
-              <div style="padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 0.75rem; align-items: flex-start;">
-                <i class="fa-solid fa-bell" style="color: var(--primary); margin-top: 0.2rem;"></i>
-                <div style="flex: 1;">
-                  <div style="font-weight: 600; font-size: 0.88rem;">{{ n.title }}</div>
-                  <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">{{ n.message }}</div>
-                  <div style="font-size: 0.72rem; color: var(--text-light); margin-top: 0.25rem;">{{ n.created_at | timeago }}</div>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty-state" style="padding: 2rem 1rem;">
-            <i class="fa-regular fa-bell empty-state-icon" style="font-size: 2rem;"></i>
-            <h4>All Caught Up</h4>
-            <p style="font-size: 0.82rem;">No pending notifications.</p>
-          </div>
-        {% endif %}
+      <!-- Customer Support / Collaboration Tips -->
+      <div class="glass-card" style="padding: 1.75rem; background: #fff;">
+        <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+          <i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> Owner Protection
+        </h3>
+        <ul style="font-size: 0.85rem; color: var(--dark-700); line-height: 1.6; padding-left: 1.25rem; margin-bottom: 0;">
+          <li style="margin-bottom: 0.4rem;">Official progress only updates when <strong>you approve</strong> technician deliverables.</li>
+          <li style="margin-bottom: 0.4rem;">You can request revisions if hardware benchmarks or code tests do not meet requirements.</li>
+          <li>Reviews unlock strictly once your build reaches <strong>100% verified completion</strong>.</li>
+        </ul>
       </div>
 
     </div>
+
   </div>
 
 </div>
-{% endblock %}
-
-{% block extra_js %}
-  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
