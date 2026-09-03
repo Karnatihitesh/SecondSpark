@@ -89,49 +89,83 @@
               <i class="fa-solid fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
             </button>
             <div class="dropdown-menu">
-              {% if current_user.is_technician %}
-                <div style="padding: 0.5rem 1rem; font-size: 0.72rem; font-weight: 700; color: #1D4ED8; background: #EFF6FF; border-bottom: 1px solid #DBEAFE; margin-bottom: 0.35rem;">
-                  <i class="fa-solid fa-certificate"></i> VERIFIED TECHNICIAN
+              {% if current_user.is_admin %}
+                <div style="padding: 0.5rem 1rem; font-size: 0.72rem; font-weight: 700; color: #6D28D9; background: #EDE9FE; border-bottom: 1px solid #DDD6FE; margin-bottom: 0.35rem;">
+                  <i class="fa-solid fa-shield-halved"></i> ADMIN CONTROL
                 </div>
-                <a href="{{ url_for('dashboard.technician_workspace') }}" class="dropdown-item">
-                  <i class="fa-solid fa-screwdriver-wrench"></i> Technician Workspace
+                <a href="{{ url_for('admin.dashboard') }}" class="dropdown-item">
+                  <i class="fa-solid fa-chart-line"></i> Admin Dashboard
+                </a>
+                <a href="{{ url_for('admin.dashboard', tab='users') }}" class="dropdown-item">
+                  <i class="fa-solid fa-users"></i> Users
+                </a>
+                <a href="{{ url_for('admin.dashboard', tab='technicians') }}" class="dropdown-item">
+                  <i class="fa-solid fa-user-gear"></i> Technicians
+                </a>
+                <a href="{{ url_for('admin.dashboard', tab='projects') }}" class="dropdown-item">
+                  <i class="fa-solid fa-cubes"></i> Projects
+                </a>
+                <a href="{{ url_for('admin.dashboard', tab='reviews') }}" class="dropdown-item">
+                  <i class="fa-solid fa-star"></i> Reviews
+                </a>
+                <a href="{{ url_for('admin.dashboard', tab='reports') }}" class="dropdown-item">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Reports
+                </a>
+                <a href="{{ url_for('auth.profile') }}" class="dropdown-item">
+                  <i class="fa-solid fa-gear"></i> Settings
+                </a>
+              {% elif current_user.is_technician %}
+                <div style="padding: 0.5rem 1rem; font-size: 0.72rem; font-weight: 700; color: #1D4ED8; background: #EFF6FF; border-bottom: 1px solid #DBEAFE; margin-bottom: 0.35rem;">
+                  <i class="fa-solid fa-screwdriver-wrench"></i> TECHNICIAN ACCOUNT
+                </div>
+                <a href="{{ url_for('dashboard.technician_dashboard') }}" class="dropdown-item">
+                  <i class="fa-solid fa-chart-pie"></i> Technician Dashboard
                 </a>
                 <a href="{{ url_for('projects.browse') }}" class="dropdown-item">
-                  <i class="fa-solid fa-magnifying-glass"></i> Find Builds to Repair
+                  <i class="fa-solid fa-magnifying-glass"></i> Find Projects
+                </a>
+                <a href="{{ url_for('dashboard.technician_dashboard') }}#my-repairs" class="dropdown-item">
+                  <i class="fa-solid fa-wrench"></i> My Repairs
+                </a>
+                <a href="{{ url_for('dashboard.technician_dashboard') }}#repair-requests" class="dropdown-item">
+                  <i class="fa-solid fa-inbox"></i> Repair Requests
+                </a>
+                <a href="{{ url_for('dashboard.technician_dashboard') }}#my-reviews" class="dropdown-item">
+                  <i class="fa-solid fa-star"></i> My Reviews
                 </a>
                 <a href="{{ url_for('auth.public_profile', username=current_user.username) }}" class="dropdown-item">
                   <i class="fa-solid fa-id-badge"></i> Public Freelancer Profile
                 </a>
                 <a href="{{ url_for('auth.profile') }}" class="dropdown-item">
-                  <i class="fa-solid fa-user-gear"></i> Skills & Settings
+                  <i class="fa-solid fa-user-gear"></i> My Skills / Profile
                 </a>
               {% else %}
                 <div style="padding: 0.5rem 1rem; font-size: 0.72rem; font-weight: 700; color: #047857; background: #ECFDF5; border-bottom: 1px solid #D1FAE5; margin-bottom: 0.35rem;">
                   <i class="fa-solid fa-user"></i> CUSTOMER ACCOUNT
                 </div>
-                <a href="{{ url_for('dashboard.index') }}" class="dropdown-item">
+                <a href="{{ url_for('dashboard.customer_dashboard') }}" class="dropdown-item">
                   <i class="fa-solid fa-chart-pie"></i> Customer Dashboard
+                </a>
+                <a href="{{ url_for('dashboard.my_projects') }}" class="dropdown-item">
+                  <i class="fa-solid fa-cubes"></i> My Uploads
                 </a>
                 <a href="{{ url_for('projects.upload') }}" class="dropdown-item">
                   <i class="fa-solid fa-plus-circle"></i> Upload Project
                 </a>
-                <a href="{{ url_for('dashboard.my_projects') }}" class="dropdown-item">
-                  <i class="fa-solid fa-cubes"></i> My Uploaded Builds
-                </a>
                 <a href="{{ url_for('dashboard.saved_projects') }}" class="dropdown-item">
                   <i class="fa-solid fa-bookmark"></i> Saved Projects
+                </a>
+                <a href="{{ url_for('messages.index') }}" class="dropdown-item">
+                  <i class="fa-solid fa-comments"></i> Messages
+                </a>
+                <a href="{{ url_for('notifications.index') }}" class="dropdown-item">
+                  <i class="fa-solid fa-bell"></i> Notifications
                 </a>
                 <a href="{{ url_for('auth.profile') }}" class="dropdown-item">
                   <i class="fa-solid fa-user-gear"></i> Profile & Settings
                 </a>
               {% endif %}
 
-              {% if current_user.is_admin %}
-                <div class="dropdown-divider"></div>
-                <a href="{{ url_for('admin.index') }}" class="dropdown-item" style="color: var(--primary-dark); font-weight: 600;">
-                  <i class="fa-solid fa-shield-halved"></i> Admin Control
-                </a>
-              {% endif %}
               <div class="dropdown-divider"></div>
               <a href="{{ url_for('auth.logout') }}" class="dropdown-item" style="color: var(--danger);">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
@@ -139,9 +173,13 @@
             </div>
           </div>
 
-          {% if current_user.is_technician %}
-            <a href="{{ url_for('dashboard.technician_workspace') }}" class="btn btn-primary btn-sm nav-auth-desktop" style="background: #2563EB; border-color: #2563EB;">
-              <i class="fa-solid fa-screwdriver-wrench"></i> Workspace
+          {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary btn-sm nav-auth-desktop" style="background: #6D28D9; border-color: #6D28D9;">
+              <i class="fa-solid fa-shield-halved"></i> Admin Control
+            </a>
+          {% elif current_user.is_technician %}
+            <a href="{{ url_for('dashboard.technician_dashboard') }}" class="btn btn-primary btn-sm nav-auth-desktop" style="background: #2563EB; border-color: #2563EB;">
+              <i class="fa-solid fa-screwdriver-wrench"></i> Technician Dashboard
             </a>
           {% else %}
             <a href="{{ url_for('projects.upload') }}" class="btn btn-primary btn-sm nav-auth-desktop">
@@ -179,19 +217,26 @@
       <li><a href="{{ url_for('main.about') }}" class="mobile-drawer-link"><i class="fa-solid fa-circle-info"></i> About</a></li>
       <li><a href="{{ url_for('main.contact') }}" class="mobile-drawer-link"><i class="fa-solid fa-envelope"></i> Contact</a></li>
       {% if current_user %}
-        {% if current_user.is_technician %}
-          <li><a href="{{ url_for('dashboard.technician_workspace') }}" class="mobile-drawer-link"><i class="fa-solid fa-screwdriver-wrench"></i> Technician Workspace</a></li>
-          <li><a href="{{ url_for('projects.browse') }}" class="mobile-drawer-link"><i class="fa-solid fa-magnifying-glass"></i> Find Builds to Repair</a></li>
+        {% if current_user.is_admin %}
+          <li><a href="{{ url_for('admin.dashboard') }}" class="mobile-drawer-link" style="color: #6D28D9; font-weight: 700;"><i class="fa-solid fa-shield-halved"></i> Admin Dashboard</a></li>
+          <li><a href="{{ url_for('admin.dashboard', tab='users') }}" class="mobile-drawer-link"><i class="fa-solid fa-users"></i> Manage Users</a></li>
+          <li><a href="{{ url_for('admin.dashboard', tab='technicians') }}" class="mobile-drawer-link"><i class="fa-solid fa-user-gear"></i> Manage Technicians</a></li>
+          <li><a href="{{ url_for('admin.dashboard', tab='projects') }}" class="mobile-drawer-link"><i class="fa-solid fa-cubes"></i> Moderate Projects</a></li>
+        {% elif current_user.is_technician %}
+          <li><a href="{{ url_for('dashboard.technician_dashboard') }}" class="mobile-drawer-link" style="color: #2563EB; font-weight: 700;"><i class="fa-solid fa-screwdriver-wrench"></i> Technician Dashboard</a></li>
+          <li><a href="{{ url_for('projects.browse') }}" class="mobile-drawer-link"><i class="fa-solid fa-magnifying-glass"></i> Find Projects</a></li>
+          <li><a href="{{ url_for('dashboard.technician_dashboard') }}#my-repairs" class="mobile-drawer-link"><i class="fa-solid fa-wrench"></i> My Repairs</a></li>
+          <li><a href="{{ url_for('dashboard.technician_dashboard') }}#repair-requests" class="mobile-drawer-link"><i class="fa-solid fa-inbox"></i> Repair Requests</a></li>
+          <li><a href="{{ url_for('auth.public_profile', username=current_user.username) }}" class="mobile-drawer-link"><i class="fa-solid fa-id-badge"></i> Public Freelancer Profile</a></li>
         {% else %}
-          <li><a href="{{ url_for('dashboard.index') }}" class="mobile-drawer-link"><i class="fa-solid fa-chart-pie"></i> Customer Dashboard</a></li>
+          <li><a href="{{ url_for('dashboard.customer_dashboard') }}" class="mobile-drawer-link" style="color: #059669; font-weight: 700;"><i class="fa-solid fa-chart-pie"></i> Customer Dashboard</a></li>
+          <li><a href="{{ url_for('dashboard.my_projects') }}" class="mobile-drawer-link"><i class="fa-solid fa-cubes"></i> My Uploads</a></li>
           <li><a href="{{ url_for('projects.upload') }}" class="mobile-drawer-link"><i class="fa-solid fa-plus-circle"></i> Upload Project</a></li>
+          <li><a href="{{ url_for('dashboard.saved_projects') }}" class="mobile-drawer-link"><i class="fa-solid fa-bookmark"></i> Saved Projects</a></li>
         {% endif %}
         <li><a href="{{ url_for('messages.index') }}" class="mobile-drawer-link"><i class="fa-solid fa-comments"></i> Messages ({{ unread_msgs_count }})</a></li>
         <li><a href="{{ url_for('notifications.index') }}" class="mobile-drawer-link"><i class="fa-solid fa-bell"></i> Notifications ({{ unread_notifs_count }})</a></li>
         <li><a href="{{ url_for('auth.profile') }}" class="mobile-drawer-link"><i class="fa-solid fa-user"></i> Profile & Settings</a></li>
-        {% if current_user.is_admin %}
-          <li><a href="{{ url_for('admin.index') }}" class="mobile-drawer-link" style="color: var(--primary-dark);"><i class="fa-solid fa-shield-halved"></i> Admin Control</a></li>
-        {% endif %}
         <li style="margin-top: 1rem;"><a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-block"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
       {% else %}
         <li style="margin-top: 1.5rem;"><a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-block">Log In</a></li>
