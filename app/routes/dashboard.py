@@ -4,8 +4,9 @@ from app.models.project import Project, SavedProject, RepairRequest
 from app.models.message import Conversation, Message
 from app.models.notification import Notification
 from app.models.review import Review
+from app.models.category import Category
 from app.services.auth_service import get_current_user, login_required, customer_required, technician_required
-from app.services.recommendation_service import recommend_repairmen_for_project
+from app.services.recommendation_service import recommend_repairmen_for_project, recommend_projects_for_technician
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
@@ -114,23 +115,19 @@ def technician_dashboard():
     # Incoming repair invitations from customers
     incoming_requests = user.repair_requests_received.filter_by(status='Pending').order_by(RepairRequest.created_at.desc()).all()
 
-    # Find open projects matching technician's skills
-    tech_skills = set(s.lower() for s in user.skills_list)
-    available_projects_query = Project.query.filter(
+    # Recommended Projects matching technician's skills
+    rec_results = recommend_projects_for_technician(user, limit=8)
+    suitable_projects = rec_results.get('projects', [])
+
+    # All available public customer-uploaded projects
+    available_projects = Project.query.filter(
         Project.assigned_repairman_id == None,
         Project.status.in_(['Open', 'Help Needed']),
         Project.user_id != user.id
     ).order_by(Project.created_at.desc()).limit(12).all()
 
-    suitable_projects = []
-    for p in available_projects_query:
-        p_skills = set(s.lower() for s in p.skills_list)
-        overlap = len(tech_skills.intersection(p_skills)) if tech_skills and p_skills else 0
-        match_pct = int(min(100, max(40, (overlap / max(1, len(p_skills))) * 100))) if overlap > 0 else 45
-        suitable_projects.append({'project': p, 'match_pct': match_pct, 'matching_skills': list(tech_skills.intersection(p_skills))})
-
-    # Sort suitable projects by match percentage
-    suitable_projects.sort(key=lambda x: x['match_pct'], reverse=True)
+    # Categories for filters
+    categories = Category.query.order_by(Category.name.asc()).all()
 
     # Reviews received from customers
     reviews = user.reviews_received.order_by(Review.created_at.desc()).all()
@@ -144,6 +141,7 @@ def technician_dashboard():
     stats = {
         'projects_repaired': user.projects_repaired_count,
         'active_repairs': len(active_repairs),
+        'completed_repairs': len(completed_repairs),
         'completed_projects': len(completed_repairs),
         'pending_requests': len(incoming_requests),
         'average_rating': user.average_rating,
@@ -165,7 +163,9 @@ def technician_dashboard():
         incoming_requests=incoming_requests,
         completed_repairs=completed_repairs,
         pending_approval_repairs=pending_approval_repairs,
-        suitable_projects=suitable_projects[:6],
+        suitable_projects=suitable_projects,
+        available_projects=available_projects,
+        categories=categories,
         reviews=reviews,
         notifications=notifications
     )
@@ -178,9 +178,8 @@ technician_workspace = technician_dashboard
 @dashboard_bp.route('/my-projects')
 @customer_required
 def my_projects():
-    user = get_current_user()
-    projects = user.projects.order_by(Project.created_at.desc()).all()
-    return render_template('dashboard.html', view_mode='my_projects', my_projects=projects)
+    """Customer My Uploads route. Renders customer dashboard ensuring all stats and empty states load with HTTP 200."""
+    return customer_dashboard()
 
 
 @dashboard_bp.route('/saved')
