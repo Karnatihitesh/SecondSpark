@@ -6,6 +6,14 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 
+class UserRole:
+    CUSTOMER = 'customer'
+    TECHNICIAN = 'technician'
+    ADMIN = 'admin'
+
+    CHOICES = [CUSTOMER, TECHNICIAN, ADMIN]
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -16,9 +24,13 @@ class User(db.Model):
     full_name = db.Column(db.String(100), nullable=False)
     bio = db.Column(db.Text, nullable=True)
     skills = db.Column(db.String(255), nullable=True)  # Comma-separated or JSON string
+    technologies = db.Column(db.String(255), nullable=True)  # Comma-separated frameworks & tools
+    specialization = db.Column(db.String(100), nullable=True)  # Primary domain
+    experience = db.Column(db.Text, nullable=True)  # Years of experience / background
+    availability = db.Column(db.String(30), default='Available')  # 'Available', 'Busy', 'Not Available'
     location = db.Column(db.String(100), nullable=True)
     avatar_url = db.Column(db.String(255), nullable=True, default='/static/images/default-avatar.svg')
-    role = db.Column(db.String(20), nullable=False, default='user')  # 'user', 'admin'
+    role = db.Column(db.String(20), nullable=False, default=UserRole.CUSTOMER)  # 'customer', 'technician', 'admin'
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -43,13 +55,35 @@ class User(db.Model):
 
     @property
     def is_admin(self):
-        return self.role == 'admin'
+        return self.role == UserRole.ADMIN
+
+    @property
+    def is_customer(self):
+        return self.role in [UserRole.CUSTOMER, 'user']
+
+    @property
+    def is_technician(self):
+        return self.role == UserRole.TECHNICIAN
+
+    @property
+    def display_role(self):
+        if self.is_admin:
+            return 'Administrator'
+        elif self.is_technician:
+            return 'Verified Technician'
+        return 'Customer'
 
     @property
     def skills_list(self):
         if not self.skills:
             return []
         return [s.strip() for s in self.skills.split(',') if s.strip()]
+
+    @property
+    def technologies_list(self):
+        if not self.technologies:
+            return []
+        return [t.strip() for t in self.technologies.split(',') if t.strip()]
 
     @property
     def rating_summary(self):
@@ -99,9 +133,14 @@ class User(db.Model):
             'full_name': self.full_name,
             'bio': self.bio,
             'skills': self.skills_list,
+            'technologies': self.technologies_list,
+            'specialization': self.specialization,
+            'experience': self.experience,
+            'availability': self.availability,
             'location': self.location,
             'avatar_url': self.avatar_url,
             'role': self.role,
+            'display_role': self.display_role,
             'rating': self.average_rating,
             'reviews_count': self.reviews_count,
             'projects_repaired_count': self.projects_repaired_count,
