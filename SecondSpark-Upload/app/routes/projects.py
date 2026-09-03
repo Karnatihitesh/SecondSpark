@@ -10,7 +10,9 @@ from app.services.notification_service import create_notification
 projects_bp = Blueprint('projects', __name__, url_prefix='/projects')
 
 
+@projects_bp.route('')
 @projects_bp.route('/')
+@projects_bp.route('/browse')
 def browse():
     search = request.args.get('q', '').strip()
     category_slug = request.args.get('category', 'all').strip()
