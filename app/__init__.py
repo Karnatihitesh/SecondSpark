@@ -47,6 +47,17 @@ def create_app(config_name='default'):
                             con.commit()
                         except Exception:
                             pass
+
+                    # Idempotently add repairman & progress fields to projects table if missing
+                    for col, ctype in [
+                        ("assigned_repairman_id", "INTEGER REFERENCES users(id)"),
+                        ("current_progress", "INTEGER DEFAULT 0")
+                    ]:
+                        try:
+                            con.execute(db.text(f"ALTER TABLE projects ADD COLUMN {col} {ctype};"))
+                            con.commit()
+                        except Exception:
+                            pass
             except Exception:
                 pass
             if Category.query.count() == 0:
