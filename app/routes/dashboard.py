@@ -63,10 +63,10 @@ def my_projects():
 
 
 @dashboard_bp.route('/saved')
+@dashboard_bp.route('/saved/')
 @login_required
 def saved_projects():
     user = get_current_user()
     saved = user.saved_projects.order_by(SavedProject.created_at.desc()).all()
-    projects = [sp.project_id for sp in saved]
     project_objs = [sp.project for sp in saved if sp.project]
     return render_template('saved_projects.html', saved_items=saved, projects=project_objs)
