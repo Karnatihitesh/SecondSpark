@@ -310,36 +310,34 @@
   <div id="terms-consent-modal" class="terms-modal-overlay" style="display: none;">
     <div class="terms-modal-card">
       <div class="terms-modal-header">
-        <div class="terms-modal-badge">
-          <i class="fa-solid fa-shield-halved"></i>
-        </div>
-        <div>
-          <h3>Platform Disclaimer & Terms</h3>
-          <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">Please review and accept our policy before proceeding</p>
-        </div>
+        <span class="terms-pill">Platform Notice</span>
+        <h3 class="terms-title">Terms of Service &amp; Disclaimer</h3>
+        <p class="terms-subtitle">Please review and acknowledge platform conditions before proceeding</p>
       </div>
+
       <div class="terms-modal-body">
-        <p style="margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--dark-800);">
-          Welcome to <strong>SecondSpark</strong>! We connect creators of unfinished prototypes with skilled makers and engineers.
-        </p>
-        <div class="terms-highlight-box">
-          <i class="fa-solid fa-triangle-exclamation" style="margin-top: 2px; font-size: 1.1rem; flex-shrink: 0; color: #D97706;"></i>
-          <div>
-            <strong style="display: block; margin-bottom: 0.25rem; color: #92400E;">Platform Connection Notice:</strong>
-            SecondSpark is strictly an introductory platform. SecondSpark is <strong>not responsible or liable</strong> for any private contracts, agreements, payments, timelines, hardware safety, or deliverables agreed upon between users.
-          </div>
+        <div class="terms-glass-callout">
+          <h4 class="terms-callout-heading">Independent Maker Collaboration</h4>
+          <p class="terms-callout-text">
+            SecondSpark operates exclusively as an introductory discovery network. SecondSpark is <strong>not a party to, nor liable for</strong>, any contracts, private agreements, financial transactions, project timelines, hardware safety, or deliverables negotiated between individual users.
+          </p>
         </div>
-        <p style="font-size: 0.86rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
-          Any collaboration, payment, or physical hardware exchange is undertaken entirely at your own discretion. Read our <a href="{{ url_for('main.terms') }}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Full Terms of Service</a>.
+
+        <p class="terms-body-note">
+          All prototype exchanges, co-development, and external engagements are conducted solely at your own discretion. Review our <a href="{{ url_for('main.terms') }}" target="_blank" class="terms-inline-link">Terms of Service</a> for full details.
         </p>
-        <label class="terms-checkbox-label" for="terms-agree-checkbox">
-          <input type="checkbox" id="terms-agree-checkbox" />
-          <span>I understand and agree that SecondSpark is strictly for connecting people and is not responsible for any contracts, payments, or agreements made between users.</span>
+
+        <label class="terms-checkbox-wrap" for="terms-agree-checkbox">
+          <input type="checkbox" id="terms-agree-checkbox" class="terms-checkbox-input" />
+          <span class="terms-checkbox-text">
+            I understand and agree that SecondSpark is strictly for connecting people and holds no liability or responsibility for contracts or agreements formed between users.
+          </span>
         </label>
       </div>
+
       <div class="terms-modal-footer">
-        <button type="button" id="terms-agree-btn" class="btn btn-primary btn-lg" disabled style="width: 100%; opacity: 0.45; cursor: not-allowed;">
-          I Agree &amp; Continue
+        <button type="button" id="terms-agree-btn" class="terms-submit-btn" disabled>
+          Acknowledge &amp; Continue
         </button>
       </div>
     </div>
