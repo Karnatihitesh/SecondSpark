@@ -56,10 +56,16 @@ class SecondSparkTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Karnati Hitesh', response.data)
         self.assertIn(b'Sadineni Mrudul', response.data)
-        self.assertIn(b'Annepalli Jashwanth Reddy', response.data)
+        self.assertIn(b'Annepalli Jashwanth', response.data)
         self.assertIn(b'Siripanga Manikumar', response.data)
         self.assertIn(b'Nandala Supriya', response.data)
         self.assertIn(b'Mamidi Vydhika', response.data)
+
+    def test_terms_page(self):
+        response = self.client.get('/terms')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Platform Disclaimer', response.data)
+        self.assertIn(b'SecondSpark is strictly an introductory', response.data)
 
     def test_contact_page(self):
         response = self.client.get('/contact')
@@ -186,7 +192,7 @@ class SecondSparkTestCase(unittest.TestCase):
         # Admin accessing admin portal should succeed
         admin_ok = self.client.get('/admin/')
         self.assertEqual(admin_ok.status_code, 200)
-        self.assertIn(b'Platform Moderation & Control', admin_ok.data)
+        self.assertIn(b'ADMIN CONTROL PANEL', admin_ok.data)
 
 if __name__ == '__main__':
     unittest.main()

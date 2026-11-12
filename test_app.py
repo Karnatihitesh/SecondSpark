@@ -56,7 +56,7 @@ class SecondSparkTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Karnati Hitesh', response.data)
         self.assertIn(b'Sadineni Mrudul', response.data)
-        self.assertIn(b'Annepalli Jashwanth Reddy', response.data)
+        self.assertIn(b'Annepalli Jashwanth', response.data)
         self.assertIn(b'Siripanga Manikumar', response.data)
         self.assertIn(b'Nandala Supriya', response.data)
         self.assertIn(b'Mamidi Vydhika', response.data)

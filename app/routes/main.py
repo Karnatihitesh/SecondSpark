@@ -75,7 +75,7 @@ def about():
             'initials': 'MK'
         },
         {
-            'name': 'Annepalli Jashwanth Reddy',
+            'name': 'Annepalli Jashwanth',
             'role': 'Authentication',
             'bio': 'Implementing user authentication, session security, and access control.',
             'initials': 'AJ'
