@@ -52,8 +52,8 @@ def about():
         },
         {
             'name': 'Karnati Hitesh',
-            'role': 'Frontend & Backend Development',
-            'bio': 'Developing frontend architecture, backend services, database models, and end-to-end platform workflows. Contact: karnatihitesh@gmail.com / +91 9490682602',
+            'role': 'Team Lead & Full-Stack Development',
+            'bio': 'Leading the project architecture, frontend interface, backend services, and end-to-end platform workflows. Contact: karnatihitesh@gmail.com / +91 9490682602',
             'initials': 'KH'
         },
         {
