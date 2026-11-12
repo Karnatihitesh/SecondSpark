@@ -42,7 +42,7 @@
       <!-- Brand Logo with Custom Animated Glass Logo -->
       <a href="{{ url_for('main.index') }}" class="brand-logo" aria-label="SecondSpark Home">
         <div class="brand-logo-badge">
-          <img src="{{ url_for('static', filename='images/brand-logo-animated.webp') }}" alt="SecondSpark Logo" class="brand-logo-img" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/brand-logo-circle.png') }}';">
+          <img src="{{ url_for('static', filename='images/brand-logo-animated.webp') }}" alt="SecondSpark Logo" class="brand-logo-img" decoding="async" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/brand-logo-circle.png') }}';">
           <div class="glass-sheen"></div>
         </div>
         <span class="brand-text">Second<span class="brand-spark">Spark</span></span>
@@ -249,7 +249,7 @@
         <div class="footer-brand">
           <div class="brand-logo" style="color: #fff;">
             <div class="brand-logo-badge">
-              <img src="{{ url_for('static', filename='images/brand-logo-animated.webp') }}" alt="SecondSpark Logo" class="brand-logo-img" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/brand-logo-circle.png') }}';">
+              <img src="{{ url_for('static', filename='images/brand-logo-animated.webp') }}" alt="SecondSpark Logo" class="brand-logo-img" decoding="async" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/brand-logo-circle.png') }}';">
               <div class="glass-sheen"></div>
             </div>
             <span>Second<span class="brand-spark">Spark</span></span>
@@ -302,8 +302,8 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block extra_js %}{% endblock %}
 
   <!-- Mandatory Terms & Conditions Acceptance Modal -->

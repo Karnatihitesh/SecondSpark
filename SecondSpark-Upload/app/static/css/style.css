@@ -2254,3 +2254,23 @@ main {
   border-top: 1px solid var(--border-subtle);
   background: #FAFAFA;
 }
+
+/* ==========================================================================
+   HARDWARE ACCELERATION & SCROLL PERFORMANCE
+   Promotes glassmorphic elements to dedicated GPU composite layers
+   ========================================================================== */
+.navbar-dock,
+.glass-card,
+.team-card,
+.project-card-modern,
+.category-card {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+#hero-3d-canvas {
+  will-change: transform;
+  contain: paint size;
+}
