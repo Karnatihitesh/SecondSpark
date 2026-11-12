@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SecondSpark — High-Resolution Realtime Interactive 3D Cyber Core & Energy Gyroscope
  * Features: High-poly cybernetic quantum core, dual orbital gyroscope rings,
  *           drag-to-rotate with kinetic momentum, click-to-pulse shockwave,
@@ -61,12 +61,22 @@
     draw();
   }
 
-  if (typeof THREE === 'undefined' || !hasWebGL()) {
-    init2DFallback();
-    return;
-  }
+  function initHero() {
+    if (typeof THREE === 'undefined') {
+      if (document.readyState !== 'complete') {
+        window.addEventListener('load', initHero);
+        return;
+      }
+      init2DFallback();
+      return;
+    }
 
-  try {
+    if (!hasWebGL()) {
+      init2DFallback();
+      return;
+    }
+
+    try {
     let W = container.clientWidth, H = container.clientHeight;
 
     const scene = new THREE.Scene();
@@ -75,9 +85,7 @@
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(W, H);
-    const isMobile = window.innerWidth < 768;
-    const maxDpr = isMobile ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.5);
-    renderer.setPixelRatio(maxDpr);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
     renderer.domElement.id = 'hero-3d-canvas';
@@ -341,54 +349,30 @@
     rootAssembly.add(particleSystem);
 
     /* ══════════════════════════════════════════════
-       DYNAMIC ELECTRIC ARCS (Pre-allocated, 0 GPU Leaks)
+       DYNAMIC ELECTRIC ARCS (Lines)
     ══════════════════════════════════════════════ */
     const arcGroup = new THREE.Group();
     rootAssembly.add(arcGroup);
 
-    const arcCount = Math.floor(satellites.length / 2);
-    const arcLines = [];
-    for (let i = 0; i < arcCount; i++) {
-      const positions = new Float32Array(9);
-      const arcGeo = new THREE.BufferGeometry();
-      arcGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      const arcMat = new THREE.LineBasicMaterial({
-        color: 0x35C98A,
-        transparent: true,
-        opacity: 0.35,
-        blending: THREE.AdditiveBlending
-      });
-      const line = new THREE.Line(arcGeo, arcMat);
-      line.visible = false;
-      arcGroup.add(line);
-      arcLines.push(line);
-    }
-
     function updateArcs(time) {
-      for (let i = 0; i < arcLines.length; i++) {
-        const satIdx = i * 2;
-        const sat = satellites[satIdx];
-        const line = arcLines[i];
-        if (!sat || !line) continue;
+      while (arcGroup.children.length > 0) arcGroup.remove(arcGroup.children[0]);
 
+      for (let i = 0; i < satellites.length; i += 2) {
+        const sat = satellites[i];
         const dist = sat.position.length();
         if (dist < 9.5) {
-          line.visible = true;
-          const posAttr = line.geometry.attributes.position;
-          const pos = posAttr.array;
-
-          pos[0] = 0; pos[1] = 0; pos[2] = 0;
-          pos[3] = sat.position.x * 0.5 + Math.sin(time * 5 + satIdx) * 0.3;
-          pos[4] = sat.position.y * 0.5 + Math.cos(time * 5 + satIdx) * 0.3;
-          pos[5] = sat.position.z * 0.5;
-          pos[6] = sat.position.x;
-          pos[7] = sat.position.y;
-          pos[8] = sat.position.z;
-
-          posAttr.needsUpdate = true;
-          line.material.opacity = 0.25 + 0.25 * Math.sin(time * 6 + satIdx);
-        } else {
-          line.visible = false;
+          const arcGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(
+              sat.position.x * 0.5 + Math.sin(time * 5 + i) * 0.3,
+              sat.position.y * 0.5 + Math.cos(time * 5 + i) * 0.3,
+              sat.position.z * 0.5
+            ),
+            sat.position
+          ]);
+          const alpha = 0.25 + 0.25 * Math.sin(time * 6 + i);
+          const arcMat = new THREE.LineBasicMaterial({ color: 0x35C98A, transparent: true, opacity: alpha });
+          arcGroup.add(new THREE.Line(arcGeo, arcMat));
         }
       }
     }
@@ -505,19 +489,13 @@
     });
 
     /* ══════════════════════════════════════════════
-       PHYSICS & ANIMATION LOOP (Viewport-Aware)
+       PHYSICS & ANIMATION LOOP
     ══════════════════════════════════════════════ */
     const clock = new THREE.Clock();
     let arcTimer = 0;
-    let isVisible = true;
-    let animId = null;
 
     function animate() {
-      if (!isVisible) {
-        animId = null;
-        return;
-      }
-      animId = requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
       const dt = clock.getDelta();
       const time = clock.getElapsedTime();
 
@@ -613,24 +591,17 @@
       renderer.render(scene, camera);
     }
 
-    if ('IntersectionObserver' in window) {
-      const heroObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          const prev = isVisible;
-          isVisible = entry.isIntersecting;
-          if (isVisible && !prev) {
-            clock.getDelta();
-            if (!animId) animId = requestAnimationFrame(animate);
-          }
-        });
-      }, { threshold: 0.05 });
-      heroObserver.observe(container);
+    animate();
+
+    } catch (err) {
+      console.warn('Three.js failed, using fallback:', err);
+      init2DFallback();
     }
+  }
 
-    animId = requestAnimationFrame(animate);
-
-  } catch (err) {
-    console.warn('Three.js failed, using fallback:', err);
-    init2DFallback();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHero);
+  } else {
+    initHero();
   }
 })();
