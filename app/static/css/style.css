@@ -2132,3 +2132,125 @@ main {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+
+/* ==========================================================================
+   TERMS & CONDITIONS CONSENT MODAL
+   ========================================================================== */
+.terms-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.terms-modal-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-xl);
+  max-width: 580px;
+  width: 100%;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  animation: modalScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalScaleUp {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.terms-modal-header {
+  padding: 1.75rem 2rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.terms-modal-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.terms-modal-header h3 {
+  font-size: 1.3rem;
+  margin: 0;
+  color: var(--dark-900);
+}
+
+.terms-modal-body {
+  padding: 1.5rem 2rem;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.terms-highlight-box {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  margin: 1.15rem 0;
+  display: flex;
+  gap: 0.85rem;
+  color: #166534;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.terms-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-top: 1.4rem;
+  padding: 1rem;
+  background: #F8FAFC;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.terms-checkbox-label:hover {
+  background: #F1F5F9;
+  border-color: var(--primary);
+}
+
+.terms-checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.terms-checkbox-label span {
+  font-size: 0.9rem;
+  color: var(--dark-900);
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.terms-modal-footer {
+  padding: 1.25rem 2rem 1.75rem;
+  border-top: 1px solid var(--border-subtle);
+  background: #FAFAFA;
+}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Terms of Service & Platform Disclaimer — SecondSpark{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3.5rem; padding-bottom: 5rem;">
+
+  <!-- Header Banner -->
+  <div style="text-align: center; max-width: 760px; margin: 0 auto 3.5rem;">
+    <span class="section-tag">Platform Policies & Legal</span>
+    <h1 style="font-size: 2.6rem; line-height: 1.25; margin-bottom: 1rem;">
+      Terms of Service & <span class="highlight-green">Platform Disclaimer</span>
+    </h1>
+    <p class="text-lead" style="color: var(--text-muted);">
+      Please read these terms carefully before accessing or participating in the SecondSpark collaborative ecosystem.
+    </p>
+  </div>
+
+  <!-- Primary Liability Notice Box -->
+  <div class="glass-card" style="padding: 2.5rem; background: #FFFBEB; border: 1px solid #FCD34D; border-radius: var(--radius-lg); margin-bottom: 3.5rem;">
+    <div style="display: flex; gap: 1.25rem; align-items: flex-start;">
+      <div style="width: 48px; height: 48px; border-radius: 12px; background: #FDE68A; color: #B45309; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 1.35rem; color: #92400E; margin-bottom: 0.65rem;">
+          Important Connection-Only Platform Notice
+        </h3>
+        <p style="color: #78350F; line-height: 1.7; font-size: 1rem; margin-bottom: 0.5rem;">
+          <strong>SecondSpark is strictly an introductory and collaboration matching platform.</strong> We connect individuals who have incomplete, stalled, or prototype builds with makers, developers, and engineers who may be interested in co-developing, repairing, or completing them.
+        </p>
+        <p style="color: #78350F; line-height: 1.7; font-size: 0.95rem;">
+          <strong>SecondSpark is not a party to, nor liable or legally responsible for, any private contracts, oral or written agreements, milestones, financial arrangements, fee transactions, safety compliance, or deliverables agreed upon between users.</strong> All collaborations and engagements are undertaken strictly at the users' own risk and sole responsibility.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Articles Grid -->
+  <div style="display: flex; flex-direction: column; gap: 2rem; max-width: 900px; margin: 0 auto;">
+
+    <!-- Section 1 -->
+    <div class="glass-card" style="padding: 2.2rem; background: #fff; border-radius: var(--radius-lg);">
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.85rem; color: var(--dark-900);">
+        1. Nature of the Platform
+      </h3>
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem;">
+        SecondSpark acts exclusively as a discovery directory and messaging medium for unfinished hardware and software prototypes. We do not provide engineering guarantees, hardware certification, code auditing, or legal mediation services. SecondSpark does not employ makers or guarantee the quality, suitability, safety, or completion of any project listed.
+      </p>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="glass-card" style="padding: 2.2rem; background: #fff; border-radius: var(--radius-lg);">
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.85rem; color: var(--dark-900);">
+        2. User Agreements & External Contracts
+      </h3>
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem; margin-bottom: 0.75rem;">
+        Any agreement, whether concerning pricing, timeline, intellectual property licensing, escrow, parts shipping, or technical deliverables, is established solely and directly between the project creator and the collaborator.
+      </p>
+      <ul style="color: var(--text-muted); line-height: 1.7; font-size: 0.92rem; padding-left: 1.5rem;">
+        <li>Users are strongly advised to perform their own due diligence before transferring funds, proprietary schematics, or physical hardware.</li>
+        <li>SecondSpark disclaims any obligation to enforce external contracts, resolve interpersonal disputes, or recover funds or property.</li>
+      </ul>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="glass-card" style="padding: 2.2rem; background: #fff; border-radius: var(--radius-lg);">
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.85rem; color: var(--dark-900);">
+        3. Hardware Safety & Component Handling
+      </h3>
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem;">
+        Physical electronics, high-voltage circuits, lithium batteries, CNC machinery, and prototype robotics carry inherent physical risks. Users must follow certified electrical and mechanical safety practices. SecondSpark assumes no liability for bodily injury, property damage, fire, short circuits, or defective components arising from prototype experimentation.
+      </p>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="glass-card" style="padding: 2.2rem; background: #fff; border-radius: var(--radius-lg);">
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.85rem; color: var(--dark-900);">
+        4. Intellectual Property & Code Ownership
+      </h3>
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem;">
+        Project creators retain full ownership of materials and prototypes uploaded to SecondSpark, subject to the open-source or proprietary licenses they specify. SecondSpark does not claim ownership of user-submitted schematics, source code, 3D models, or design documentation.
+      </p>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="glass-card" style="padding: 2.2rem; background: #fff; border-radius: var(--radius-lg);">
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.85rem; color: var(--dark-900);">
+        5. Limitation of Liability
+      </h3>
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem;">
+        To the maximum extent permitted by applicable law, SecondSpark, its founders, team members, and affiliates shall not be liable for any direct, indirect, incidental, punitive, or consequential damages resulting from the use or inability to use this platform, unauthorized access to user transmissions, or dealings with other platform members.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Bottom CTA -->
+  <div style="text-align: center; margin-top: 3.5rem;">
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-lg">Return to Home</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -45,43 +45,46 @@ def index():
 def about():
     team_members = [
         {
+            'name': 'Mamidi Vydhika',
+            'role': 'UI Designing & Documentation',
+            'bio': 'Designing user interface wireframes, visual aesthetics, and comprehensive project documentation.',
+            'initials': 'MV'
+        },
+        {
             'name': 'Karnati Hitesh',
-            'role': 'Team Lead & Full-Stack Integration',
-            'bio': 'Architecting the full-stack system, database design, and end-to-end platform workflows. Contact: karnatihitesh@gmail.com / +91 9490682602',
+            'role': 'Frontend & Backend Development',
+            'bio': 'Developing frontend architecture, backend services, database models, and end-to-end platform workflows. Contact: karnatihitesh@gmail.com / +91 9490682602',
             'initials': 'KH'
         },
         {
             'name': 'Sadineni Mrudul',
-            'role': 'Frontend Development',
-            'bio': 'Designing responsive glassmorphism UI, interactive components, and smooth UX states.',
+            'role': 'Testing & Debugging',
+            'bio': 'Conducting quality assurance testing, identifying issues, and debugging system components.',
             'initials': 'SM'
         },
         {
-            'name': 'Annepalli Jashwanth Reddy',
-            'role': 'Authentication & Backend',
-            'bio': 'Implementing secure authentication, session management, and backend REST APIs.',
-            'initials': 'AJ'
-        },
-        {
-            'name': 'Siripanga Manikumar',
-            'role': 'Project Management Module',
-            'bio': 'Developing project upload lifecycle, multi-criteria filtering, and status workflows.',
-            'initials': 'MK'
-        },
-        {
             'name': 'Nandala Supriya',
-            'role': 'Communication Module',
-            'bio': 'Building real-time messaging, conversation threads, and notification pipelines.',
+            'role': 'Presentation & PPT',
+            'bio': 'Crafting project presentations, slide decks, and visual showcases.',
             'initials': 'NS'
         },
         {
-            'name': 'Mamidi Vydhika',
-            'role': 'Testing & Documentation',
-            'bio': 'Ensuring quality assurance, end-to-end integration testing, and API documentation.',
-            'initials': 'MV'
+            'name': 'Siripanga Manikumar',
+            'role': '',
+            'bio': '',
+            'initials': 'MK'
+        },
+        {
+            'name': 'Annepalli Jashwanth Reddy',
+            'role': 'Authentication',
+            'bio': 'Implementing user authentication, session security, and access control.',
+            'initials': 'AJ'
         }
     ]
     return render_template('about.html', team_members=team_members)
+@main_bp.route('/terms')
+def terms():
+    return render_template('terms.html')
 
 
 

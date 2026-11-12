@@ -167,6 +167,13 @@ def send_otp_email(to: str, otp_code: str, name: str = 'Maker') -> bool:
     )
     html_text = build_otp_html(name=name, otp_code=otp_code, to_email=to)
 
+    try:
+        if current_app and current_app.config.get('TESTING'):
+            logger.info(f'[EmailService] TESTING mode active. Mocking email delivery to {to}')
+            return True
+    except Exception:
+        pass
+
     # Provider 1: Brevo HTTPS REST API (Port 443 - sends directly from karnatihitesh@gmail.com)
     brevo_api_key = os.environ.get('BREVO_API_KEY')
     if brevo_api_key:

@@ -48,6 +48,9 @@ class Config:
 
     DATABASE_URL = os.environ.get('DATABASE_URL')
     if DATABASE_URL:
+        # Convert legacy postgres:// prefix to postgresql:// for SQLAlchemy 1.4+
+        if DATABASE_URL.startswith("postgres://"):
+            DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
     elif MYSQL_USER and MYSQL_PASSWORD:
         SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8mb4"
@@ -56,10 +59,19 @@ class Config:
         SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(basedir, 'secondspark.db')}"
         
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_recycle': 280,
-        'pool_pre_ping': True,
-    } if 'mysql' in SQLALCHEMY_DATABASE_URI else {}
+    
+    # Connection pooling and pre-ping for all remote databases (PostgreSQL, MySQL) to prevent 500s from stale connections
+    if 'sqlite' not in SQLALCHEMY_DATABASE_URI.lower():
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'pool_recycle': 280,
+            'pool_pre_ping': True,
+            'pool_size': 10,
+            'max_overflow': 20,
+        }
+    else:
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'connect_args': {'timeout': 30}
+        }
 
 
 class DevelopmentConfig(Config):

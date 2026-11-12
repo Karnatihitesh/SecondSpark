@@ -85,7 +85,7 @@
           <div class="user-menu-wrap">
             <button class="user-btn" aria-haspopup="true">
               <img src="{{ current_user.avatar_url or url_for('static', filename='images/default-avatar.svg') }}" class="user-avatar" alt="{{ current_user.full_name }}">
-              <span class="user-name">{{ current_user.full_name.split(' ')[0] }}</span>
+              <span class="user-name">{{ current_user.first_name }}</span>
               <i class="fa-solid fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
             </button>
             <div class="dropdown-menu">
@@ -272,6 +272,7 @@
           <ul class="footer-links">
             <li><a href="{{ url_for('main.about') }}">About Us</a></li>
             <li><a href="{{ url_for('main.about') }}#team">Meet Our Team</a></li>
+            <li><a href="{{ url_for('main.terms') }}">Terms & Disclaimer</a></li>
             <li><a href="{{ url_for('main.contact') }}">Contact Us</a></li>
             <li><a href="{{ url_for('main.index') }}#faq">FAQs</a></li>
           </ul>
@@ -304,5 +305,85 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block extra_js %}{% endblock %}
+
+  <!-- Mandatory Terms & Conditions Acceptance Modal -->
+  <div id="terms-consent-modal" class="terms-modal-overlay" style="display: none;">
+    <div class="terms-modal-card">
+      <div class="terms-modal-header">
+        <div class="terms-modal-badge">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h3>Platform Disclaimer & Terms</h3>
+          <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">Please review and accept our policy before proceeding</p>
+        </div>
+      </div>
+      <div class="terms-modal-body">
+        <p style="margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--dark-800);">
+          Welcome to <strong>SecondSpark</strong>! We connect creators of unfinished prototypes with skilled makers and engineers.
+        </p>
+        <div class="terms-highlight-box">
+          <i class="fa-solid fa-triangle-exclamation" style="margin-top: 2px; font-size: 1.1rem; flex-shrink: 0; color: #D97706;"></i>
+          <div>
+            <strong style="display: block; margin-bottom: 0.25rem; color: #92400E;">Platform Connection Notice:</strong>
+            SecondSpark is strictly an introductory platform. SecondSpark is <strong>not responsible or liable</strong> for any private contracts, agreements, payments, timelines, hardware safety, or deliverables agreed upon between users.
+          </div>
+        </div>
+        <p style="font-size: 0.86rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
+          Any collaboration, payment, or physical hardware exchange is undertaken entirely at your own discretion. Read our <a href="{{ url_for('main.terms') }}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Full Terms of Service</a>.
+        </p>
+        <label class="terms-checkbox-label" for="terms-agree-checkbox">
+          <input type="checkbox" id="terms-agree-checkbox" />
+          <span>I understand and agree that SecondSpark is strictly for connecting people and is not responsible for any contracts, payments, or agreements made between users.</span>
+        </label>
+      </div>
+      <div class="terms-modal-footer">
+        <button type="button" id="terms-agree-btn" class="btn btn-primary btn-lg" disabled style="width: 100%; opacity: 0.45; cursor: not-allowed;">
+          I Agree &amp; Continue
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const TERMS_KEY = 'secondspark_terms_consent_v1';
+      const modal = document.getElementById('terms-consent-modal');
+      const checkbox = document.getElementById('terms-agree-checkbox');
+      const btn = document.getElementById('terms-agree-btn');
+
+      if (!modal || !checkbox || !btn) return;
+
+      if (!localStorage.getItem(TERMS_KEY)) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      checkbox.addEventListener('change', function() {
+        if (this.checked) {
+          btn.removeAttribute('disabled');
+          btn.style.opacity = '1';
+          btn.style.cursor = 'pointer';
+        } else {
+          btn.setAttribute('disabled', 'disabled');
+          btn.style.opacity = '0.45';
+          btn.style.cursor = 'not-allowed';
+        }
+      });
+
+      btn.addEventListener('click', function() {
+        if (checkbox.checked) {
+          localStorage.setItem(TERMS_KEY, 'true');
+          modal.style.opacity = '0';
+          modal.style.transition = 'opacity 0.25s ease';
+          setTimeout(function() {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+          }, 250);
+        }
+      });
+    })();
+  </script>
+
 </body>
 </html>

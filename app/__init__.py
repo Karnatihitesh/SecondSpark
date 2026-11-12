@@ -135,16 +135,21 @@ def create_app(config_name='default'):
     # Context processors to make user and global stats accessible in all templates
     @app.context_processor
     def inject_globals():
-        user = get_current_user()
-        categories = Category.query.order_by(Category.name.asc()).all()
-
+        user = None
+        categories = []
         unread_notifs = 0
         unread_msgs = 0
         saved_project_ids = set()
-        if user:
-            unread_notifs = Notification.query.filter_by(user_id=user.id, is_read=False).count()
-            unread_msgs = Message.query.filter_by(receiver_id=user.id, is_read=False).count()
-            saved_project_ids = set(sp.project_id for sp in user.saved_projects.all())
+        try:
+            user = get_current_user()
+            categories = Category.query.order_by(Category.name.asc()).all()
+            if user:
+                unread_notifs = Notification.query.filter_by(user_id=user.id, is_read=False).count()
+                unread_msgs = Message.query.filter_by(receiver_id=user.id, is_read=False).count()
+                saved_project_ids = set(sp.project_id for sp in user.saved_projects.all())
+        except Exception as e:
+            app.logger.warning(f"[inject_globals] Transient context error: {e}")
+            db.session.rollback()
 
         return {
             'current_user': user,
@@ -242,6 +247,7 @@ def create_app(config_name='default'):
 
     @app.errorhandler(500)
     def internal_server_error(error):
+        app.logger.error(f"Internal Server Error (500): {error}", exc_info=True)
         db.session.rollback()
         return render_template('errors/500.html'), 500
 
