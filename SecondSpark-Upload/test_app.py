@@ -65,7 +65,7 @@ class SecondSparkTestCase(unittest.TestCase):
         response = self.client.get('/terms')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Platform Disclaimer', response.data)
-        self.assertIn(b'SecondSpark is strictly an introductory', response.data)
+        self.assertIn(b'SecondSpark only helps users connect with each other', response.data)
 
     def test_contact_page(self):
         response = self.client.get('/contact')
